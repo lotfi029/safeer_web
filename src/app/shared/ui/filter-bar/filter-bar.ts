@@ -16,7 +16,6 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Button } from '../button/button';
 import { DrawerFrame, DrawerService } from '../drawer/drawer';
-import { Control } from '../field/field';
 import { Icon } from '../icon/icon';
 
 export interface FilterChip {
@@ -34,7 +33,7 @@ let nextId = 0;
  */
 @Component({
   selector: 'app-filter-bar',
-  imports: [NgTemplateOutlet, RouterLink, TranslocoPipe, Button, Control, DrawerFrame, Icon],
+  imports: [NgTemplateOutlet, RouterLink, TranslocoPipe, Button, DrawerFrame, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex flex-col gap-3 sm:flex-row sm:items-center' },
   template: `
@@ -45,10 +44,10 @@ let nextId = 0;
           name="search"
           class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-decor"
         />
+        <!-- Plain .control, not appControl: outside <app-field> that directive binds id="null". -->
         <input
-          appControl
           type="search"
-          class="ps-12"
+          class="control ps-12"
           [id]="searchId"
           [value]="searchValue()"
           [attr.placeholder]="placeholder() || null"
