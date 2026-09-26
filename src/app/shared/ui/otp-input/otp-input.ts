@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -75,14 +76,14 @@ export function onlyDigits(text: string): string {
 export class OtpInput implements FormValueControl<string> {
   readonly value = model('');
   readonly length = input(6);
-  readonly disabled = input(false);
-  readonly readonly = input(false);
-  readonly invalid = input(false);
+  readonly disabled = input(false, { transform: booleanAttribute });
+  readonly readonly = input(false, { transform: booleanAttribute });
+  readonly invalid = input(false, { transform: booleanAttribute });
   /**
    * Invalid styling shows only once touched (Signal Forms binds both; `invalid` is true for an
    * empty required code from the start). Standalone use: pass `[invalid]` and `[touched]="true"`.
    */
-  readonly touched = input(false);
+  readonly touched = input(false, { transform: booleanAttribute });
   readonly name = input('');
   /** Accessible name (translated). Defaults to 'ui.otp.label'. Ignored when `labelledBy` is set. */
   readonly label = input<string | null>(null);

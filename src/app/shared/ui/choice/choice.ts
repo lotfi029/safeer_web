@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 let nextId = 0;
 
@@ -40,7 +40,7 @@ export class ChoiceGroup {
   readonly legend = input.required<string>();
   readonly hint = input<string | null>(null);
   readonly error = input<string | null>(null);
-  readonly required = input(false);
+  readonly required = input(false, { transform: booleanAttribute });
   /** Grid columns from `sm` up (always 1 column below 480px). */
   readonly columns = input<1 | 2 | 3>(1);
 

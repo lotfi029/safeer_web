@@ -133,7 +133,7 @@ const ICONS: Record<ToastKind, IconName> = {
         [class.note-warn]="toast.kind === 'error'"
         [attr.data-kind]="toast.kind"
       >
-        <app-icon [name]="icons[toast.kind]" />
+        <app-icon [name]="iconFor(toast.kind)" />
         <p class="min-w-0 flex-1">{{ toast.message }}</p>
         <button
           type="button"
@@ -149,7 +149,9 @@ const ICONS: Record<ToastKind, IconName> = {
 })
 export class ToastOutlet {
   protected readonly toasts = inject(ToastService);
-  protected readonly icons = ICONS;
+  protected iconFor(kind: ToastKind): IconName {
+    return ICONS[kind];
+  }
   protected readonly polite = computed(() => this.toasts.toasts().filter((t) => t.kind !== 'error'));
   protected readonly assertive = computed(() =>
     this.toasts.toasts().filter((t) => t.kind === 'error'),

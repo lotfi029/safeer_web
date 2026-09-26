@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DigitsPipe, FileSizePipe } from '../../pipes/format';
 import { Button } from '../button/button';
@@ -101,7 +101,7 @@ let nextId = 0;
 export class FileDrop {
   readonly accept = input(DOCUMENT_ACCEPT);
   readonly maxBytes = input(DOCUMENT_MAX_BYTES);
-  readonly multiple = input(false);
+  readonly multiple = input(false, { transform: booleanAttribute });
   /** Visible title (translated). Defaults to 'ui.fileDrop.title'. */
   readonly label = input<string | null>(null);
   /** Hint under the title (translated). Defaults to 'ui.fileDrop.hint' with the size limit. */
@@ -111,9 +111,9 @@ export class FileDrop {
   readonly status = input<FileDropStatus>('idle');
   /** External (server) error message, already translated. */
   readonly error = input<string | null>(null);
-  readonly disabled = input(false);
+  readonly disabled = input(false, { transform: booleanAttribute });
   /** Force the drag-over look (kit/docs only). */
-  readonly highlight = input(false);
+  readonly highlight = input(false, { transform: booleanAttribute });
 
   readonly filesSelected = output<File[]>();
   readonly rejected = output<FileRejection[]>();

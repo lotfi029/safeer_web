@@ -46,7 +46,10 @@ export function parseStat(value: string): ParsedStat | null {
 
 export function formatStat(p: ParsedStat, n: number): string {
   const num = p.grouped
-    ? n.toLocaleString('en-US', { minimumFractionDigits: p.decimals, maximumFractionDigits: p.decimals })
+    ? n.toLocaleString('en-US', {
+        minimumFractionDigits: p.decimals,
+        maximumFractionDigits: p.decimals,
+      })
     : n.toFixed(p.decimals);
   return `${p.prefix}${num}${p.suffix}`;
 }

@@ -8,7 +8,10 @@ export function motionAllowed(win: (Window & typeof globalThis) | null | undefin
   if (!win || typeof win.IntersectionObserver !== 'function') {
     return false;
   }
-  return !(typeof win.matchMedia === 'function' && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  return !(
+    typeof win.matchMedia === 'function' &&
+    win.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
 }
 
 /** True when any part of the element is inside the current viewport (above-the-fold content). */

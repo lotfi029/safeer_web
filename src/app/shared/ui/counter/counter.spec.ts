@@ -46,7 +46,13 @@ async function render(value: string | null, duration = 1600) {
 
 describe('parseStat / formatStat', () => {
   it('keeps prefix and suffix', () => {
-    expect(parseStat('500+')).toEqual({ prefix: '', target: 500, decimals: 0, grouped: false, suffix: '+' });
+    expect(parseStat('500+')).toEqual({
+      prefix: '',
+      target: 500,
+      decimals: 0,
+      grouped: false,
+      suffix: '+',
+    });
     expect(parseStat('~1,200 طالب')?.target).toBe(1200);
     expect(parseStat('٢')?.target).toBe(2);
     expect(parseStat('—')).toBeNull();
@@ -88,7 +94,10 @@ describe('Counter', () => {
 
   it('does not animate under prefers-reduced-motion', async () => {
     vi.stubGlobal('IntersectionObserver', FakeObserver);
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce') }) as MediaQueryList);
+    vi.stubGlobal(
+      'matchMedia',
+      (q: string) => ({ matches: q.includes('reduce') }) as MediaQueryList,
+    );
     const { shown } = await render('500+');
     expect(FakeObserver.last).toBeNull();
     expect(shown()).toBe('٥٠٠+');

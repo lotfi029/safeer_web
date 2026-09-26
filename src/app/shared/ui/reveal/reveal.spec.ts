@@ -31,7 +31,8 @@ class FakeObserver {
 function mockMatchMedia(reduce: boolean) {
   vi.stubGlobal(
     'matchMedia',
-    (query: string) => ({ matches: reduce && query.includes('reduce'), media: query }) as MediaQueryList,
+    (query: string) =>
+      ({ matches: reduce && query.includes('reduce'), media: query }) as MediaQueryList,
   );
 }
 

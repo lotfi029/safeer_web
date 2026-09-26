@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DigitsPipe } from '../../pipes/format';
 
@@ -44,7 +44,7 @@ export class Progress {
   readonly value = input<number | null>(0);
   readonly label = input.required<string>();
   /** Visible percentage text next to the bar. */
-  readonly showValue = input(false);
+  readonly showValue = input(false, { transform: booleanAttribute });
 
   protected readonly percent = computed(() => clampPercent(this.value()));
 }

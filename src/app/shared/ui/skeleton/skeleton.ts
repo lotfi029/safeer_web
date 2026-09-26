@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 /**
  * Loading placeholder (spec `.skeleton`, pulse stops under reduced motion). Always aria-hidden:
@@ -32,7 +32,7 @@ export class Skeleton {
   readonly height = input('1em');
   readonly lines = input(1);
   /** Fully rounded (avatars, pills). */
-  readonly rounded = input(false);
+  readonly rounded = input(false, { transform: booleanAttribute });
 
   protected readonly lineList = computed(() =>
     Array.from({ length: Math.max(1, Math.floor(this.lines())) }, (_, i) => i),

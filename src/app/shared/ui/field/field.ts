@@ -12,9 +12,8 @@ let nextId = 0;
 
 /** A validation error as produced by Signal Forms (`kind` + optional `message`) or the API. */
 export interface FieldErrorLike {
-  kind: string;
-  message?: string;
-  [key: string]: unknown;
+  readonly kind: string;
+  readonly message?: string;
 }
 
 /** The part of a Signal Forms `FieldState` the field wrapper reads. */
@@ -57,7 +56,7 @@ export interface FieldStateLike {
     @if (showErrors()) {
       <p class="field-error" [id]="errorId" role="alert">
         @for (error of visibleErrors(); track $index) {
-          <span class="block">{{ error.message || ('validation.' + error.kind | transloco: error) }}</span>
+          <span class="block">{{ error.message || ('validation.' + error.kind | transloco: $any(error)) }}</span>
         }
       </p>
     }

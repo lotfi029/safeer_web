@@ -71,7 +71,7 @@ export function pageWindow(current: number, count: number, siblings = 1): PageIt
             }
           </li>
 
-          <li class="px-2 t-small sm:hidden" aria-current="page">
+          <li class="px-2 t-small sm:hidden">
             {{ 'ui.pagination.summary' | transloco: { page: (current() | digits), total: (pageCount() | digits) } }}
           </li>
 

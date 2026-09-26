@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { Icon } from '../icon/icon';
 import type { IconName } from '../icon/icon-names';
 
@@ -34,7 +34,7 @@ const DEFAULT_ICON: Record<NoteKind, IconName> = {
 export class Note {
   readonly kind = input<NoteKind>('info');
   readonly icon = input<IconName | null>(null);
-  readonly live = input(false);
+  readonly live = input(false, { transform: booleanAttribute });
 
   protected readonly iconName = computed(() => this.icon() ?? DEFAULT_ICON[this.kind()]);
   protected readonly role = computed(() =>
