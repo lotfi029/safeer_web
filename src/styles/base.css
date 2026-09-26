@@ -1,0 +1,117 @@
+/* Base element styles. Logical properties only (RTL default, LTR for /en). */
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-block-start: 96px;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.85;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  html[dir='ltr'] body {
+    font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      font-size: 17px;
+    }
+  }
+
+  a {
+    color: var(--secondary);
+    text-underline-offset: 3px;
+  }
+
+  a:hover {
+    color: var(--primary);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    color: var(--heading);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  img,
+  svg {
+    max-inline-size: 100%;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--secondary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--secondary-light);
+    color: var(--heading);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Phone, email, references, file names: always LTR inside RTL text (spec §2). */
+  .ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+
+  .wrap {
+    max-inline-size: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--pad);
+  }
+
+  .section {
+    padding-block: var(--section-gap);
+  }
+
+  /* Directional icons (arrows, chevrons) point the reading direction. */
+  [dir='rtl'] .flip-rtl {
+    transform: scaleX(-1);
+  }
+}

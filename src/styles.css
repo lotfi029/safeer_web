@@ -1,7 +1,18 @@
 @import 'tailwindcss';
+@import './styles/fonts.css';
 @import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/typography.css';
+@import './styles/motion.css';
+@import './styles/components.css';
+@import '@angular/cdk/overlay-prebuilt.css';
+@import '@angular/cdk/a11y-prebuilt.css';
 
+/* Tailwind maps to the design tokens only (no palette outside the spec). */
 @theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-secondary: var(--secondary);
@@ -9,24 +20,34 @@
   --color-surface: var(--surface);
   --color-bg: var(--bg);
   --color-card: var(--card);
+  --color-raise: var(--raise);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
+  --color-decor: var(--muted-decor);
   --color-border: var(--border);
+  --color-alert: var(--alert);
+  --color-alert-bg: var(--alert-bg);
+  --color-alert-text: var(--alert-text);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
   --color-on-primary: var(--on-primary);
+  --color-heading: var(--heading);
+  --color-band: var(--band);
+  --color-band-text: var(--band-text);
+  --color-band-soft: var(--band-soft);
+  --color-band-card: var(--band-card);
+  --color-hero: var(--hero);
+  --radius-card: var(--radius-card);
+  --radius-btn: var(--radius-btn);
+  --radius-tile: var(--radius-tile);
 }
 
-html {
-  background: var(--bg);
-  color: var(--text);
-}
-
-body {
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.85;
-}
-
-:focus-visible {
-  outline: 3px solid var(--secondary);
-  outline-offset: 2px;
+/* Breakpoints (plan §5): xs 360 · sm 480 · md 768 · lg 1024 · nav 1100 (header only, F7) · xl 1280. */
+@theme {
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-nav: 1100px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
 }

@@ -1,6 +1,10 @@
 /*
- * Design tokens — docs/safeer-design-spec.md §2, used literally.
- * This is the ONLY file allowed to contain hex colours (scripts/lint-styles.mjs).
+ * Design tokens — docs/safeer-design-spec.md §2 (values used literally) and the prototype's derived
+ * tokens (alert/ok tints, band, raise). This is the ONLY file allowed to contain hex colours
+ * (scripts/lint-styles.mjs).
+ *
+ * Theme selection: `data-theme="light|dark"` on <html> (cookie, rendered by SSR) wins; with no
+ * attribute the OS preference applies.
  */
 :root {
   --primary: #0b4343;
@@ -10,30 +14,156 @@
   --surface: #f6faf9;
   --bg: #ffffff;
   --card: #ffffff;
+  --raise: #eef6f5;
   --text: #183333;
   --text-muted: #4f6b6b; /* adjusted from #668080 for WCAG AA (spec §2) */
   --muted-decor: #668080; /* icons/decoration only, never text */
   --border: #dce8e7;
   --alert: #b4532a;
+  --alert-bg: #fff0e8;
+  --alert-border: #e8d5cb;
+  --alert-text: #8a3d1e;
   --success: #1e6b3c;
+  --success-bg: #e4f3e9;
   --on-primary: #ffffff;
+  --heading: #0b4343;
+  --hero: #f6faf9;
+  --band: #0b4343;
+  --band-text: #ffffff;
+  --band-soft: #c9e6e4;
+  --band-dim: #8fc9c7;
+  --band-card: #063333;
+  --onband-bg: #ffffff;
+  --onband-text: #0b4343;
+  --app-bg: #f6faf9;
+  --thead: #f6faf9;
+  --sidebar: #063333;
+  --footer-bg: #063333;
+  --footer-text: #ffffff;
+  --footer-link: #c9e6e4;
+  --footer-muted: #a2c9c7;
+  --logo-chip: #ffffff;
+  --scrim: rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 2px 16px rgb(11 67 67 / 0.07);
+  --shadow-md: 0 14px 34px rgb(11 67 67 / 0.1);
+  --lines-opacity: 0.18;
   color-scheme: light;
 }
 
-/* Dark mode: four-step elevation scale (spec §2), not an inversion. */
+/* Dark mode: a four-step elevation ladder (spec §2), not an inversion. */
+
 :root[data-theme='dark'] {
   --bg: #06191b;
   --surface: #0c2326;
   --card: #102a2d;
   --raise: #16373a;
   --border: #1f4649;
-  --sidebar: #041214;
-  --app-bg: #0a1f21;
-  --band: #0a2e31;
-  --primary: #3fb8b4;
-  --on-primary: #052021;
-  --secondary: #6ed3ce;
   --text: #e9f4f3;
   --text-muted: #9db7b6;
+  --muted-decor: #6e9190;
+  --primary: #3fb8b4;
+  --primary-dark: #57c9c5;
+  --secondary: #6ed3ce;
+  --secondary-light: #173538;
+  --on-primary: #052021;
+  --heading: #e9f4f3;
+  --alert: #e08b63;
+  --alert-bg: #3a2017;
+  --alert-border: #5c3524;
+  --alert-text: #f3bfa5;
+  --success: #74ce95;
+  --success-bg: #12331f;
+  --hero: #0a2326;
+  --band: #0a2e31;
+  --band-text: #eaf6f5;
+  --band-soft: #a9c9c7;
+  --band-dim: #6ed3ce;
+  --band-card: #0f3a3d;
+  --onband-bg: #3fb8b4;
+  --onband-text: #052021;
+  --app-bg: #0a1f21;
+  --thead: #16373a;
+  --sidebar: #041214;
+  --footer-bg: #0c2326;
+  --footer-text: #e9f4f3;
+  --footer-link: #9db7b6;
+  --footer-muted: #9db7b6;
+  --shadow-sm: 0 2px 16px rgb(0 0 0 / 0.45);
+  --shadow-md: 0 16px 40px rgb(0 0 0 / 0.55);
+  --lines-opacity: 0.34;
   color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #06191b;
+    --surface: #0c2326;
+    --card: #102a2d;
+    --raise: #16373a;
+    --border: #1f4649;
+    --text: #e9f4f3;
+    --text-muted: #9db7b6;
+    --muted-decor: #6e9190;
+    --primary: #3fb8b4;
+    --primary-dark: #57c9c5;
+    --secondary: #6ed3ce;
+    --secondary-light: #173538;
+    --on-primary: #052021;
+    --heading: #e9f4f3;
+    --alert: #e08b63;
+    --alert-bg: #3a2017;
+    --alert-border: #5c3524;
+    --alert-text: #f3bfa5;
+    --success: #74ce95;
+    --success-bg: #12331f;
+    --hero: #0a2326;
+    --band: #0a2e31;
+    --band-text: #eaf6f5;
+    --band-soft: #a9c9c7;
+    --band-dim: #6ed3ce;
+    --band-card: #0f3a3d;
+    --onband-bg: #3fb8b4;
+    --onband-text: #052021;
+    --app-bg: #0a1f21;
+    --thead: #16373a;
+    --sidebar: #041214;
+    --footer-bg: #0c2326;
+    --footer-text: #e9f4f3;
+    --footer-link: #9db7b6;
+    --footer-muted: #9db7b6;
+    --shadow-sm: 0 2px 16px rgb(0 0 0 / 0.45);
+    --shadow-md: 0 16px 40px rgb(0 0 0 / 0.55);
+    --lines-opacity: 0.34;
+    color-scheme: dark;
+  }
+}
+
+/* Shape, spacing and motion (spec §2 "التخطيط" / "الحركة"). */
+:root {
+  --radius-card: 20px;
+  --radius-btn: 10px;
+  --radius-tile: 14px;
+  --maxw: 1280px;
+  --pad: 20px;
+  --section-gap: 56px;
+  --dur-hover-btn: 200ms;
+  --dur-hover-card: 280ms;
+  --dur-reveal: 600ms;
+  --reveal-stagger: 100ms;
+  --dur-counter: 1600ms;
+  --dur-route: 300ms;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --pad: 28px;
+    --section-gap: 88px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --pad: 60px;
+    --section-gap: 96px;
+  }
 }

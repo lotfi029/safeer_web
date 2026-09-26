@@ -1,0 +1,6 @@
+[
+  { "id": "1", "name": "[...]", "email": "admin@mock.invalid", "role": "admin", "isLocked": false, "status": "active", "lastLoginAt": null },
+  { "id": "2", "name": "[...]", "email": "reviewer@mock.invalid", "role": "reviewer", "isLocked": false, "status": "active", "lastLoginAt": null },
+  { "id": "3", "name": "[...]", "email": "editor@mock.invalid", "role": "editor", "isLocked": false, "status": "active", "lastLoginAt": null },
+  { "id": "4", "name": "[...]", "email": "support@mock.invalid", "role": "support", "isLocked": false, "status": "active", "lastLoginAt": null }
+]

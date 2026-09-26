@@ -1,0 +1,65 @@
+/* Motion — spec §2 "الحركة". Everything stops under prefers-reduced-motion (hard rule 8). */
+@layer components {
+  /* Scroll reveal: the hidden start state is only ever added by RevealDirective after hydration,
+     so SSR output (and no-JS visitors, crawlers) always see content. */
+  .reveal-init {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .reveal-in {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur-reveal) ease,
+      transform var(--dur-reveal) ease;
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  /* Route transition (View Transitions API): opacity + 8px, ~300ms. */
+  ::view-transition-old(root) {
+    animation: route-out 150ms ease both;
+  }
+
+  ::view-transition-new(root) {
+    animation: route-in var(--dur-route) ease both;
+  }
+
+  @keyframes route-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes route-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes skeleton-pulse {
+    50% {
+      opacity: 0.55;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-init {
+    opacity: 1;
+    transform: none;
+  }
+}

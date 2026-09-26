@@ -80,3 +80,39 @@ export async function screenshot(
     await sharp(png).toFile(path);
   }
 }
+
+export type Theme = 'light' | 'dark';
+
+/**
+ * Opens `/{locale}{path}` at a viewport with reduced motion (deterministic screenshots) and an
+ * optional theme cookie (SSR renders `data-theme` from it). Waits for hydration to settle.
+ */
+export async function openAt(
+  page: Page,
+  path: string,
+  viewport: Viewport,
+  locale: Locale,
+  theme: Theme | null = null,
+): Promise<void> {
+  await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme ?? 'light' });
+  if (theme) {
+    await page.context().addCookies([{ name: 'theme', value: theme, url: page.url().startsWith('http') ? page.url() : 'http://localhost:4100' }]);
+  }
+  await page.goto(`/${locale}${path === '/' ? '' : path}`);
+  await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+  await page.waitForLoadState('networkidle');
+}
+
+/** The standard per-screen check: no horizontal scroll + axe (serious/critical fail) + screenshot. */
+export async function checkScreen(
+  page: Page,
+  testInfo: TestInfo,
+  name: string,
+  viewport: Viewport,
+  locale: Locale,
+): Promise<void> {
+  await expectNoHorizontalScroll(page);
+  await expectNoSeriousA11yViolations(page);
+  await screenshot(page, testInfo, name, viewport, locale);
+}

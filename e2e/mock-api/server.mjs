@@ -1,22 +1,18 @@
 /**
- * Zero-dependency mock of safeer_api for e2e and CI. Serves the shared fixtures in mocks/fixtures
- * (the same files the in-app mock interceptor uses, review F6) and a few test-only routes:
- *   ANY /api/v1/__echo   → echoes method, url, headers and cookies; sets a test cookie
- *   GET /__log           → recent requests (headers) seen by the mock, for SSR-path assertions
+ * Zero-dependency HTTP wrapper around the shared mock backend (mocks/backend.mjs), used by e2e and
+ * CI. Test-only routes:
+ *   ANY /api/v1/__echo   → echoes method, url, headers; sets a test cookie
+ *   GET /__log           → recent requests seen by the mock (SSR-path assertions)
  *   DELETE /__log        → clears the log
+ *   POST /__reset        → resets mock state
  */
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { collapseBilingual, resolveLang } from '../../mocks/collapse.mjs';
+import { createMockBackend } from '../../mocks/backend.mjs';
+import { fixtures } from '../../mocks/fixtures.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const fixturesDir = join(here, '../../mocks/fixtures');
 const port = Number(process.env.MOCK_API_PORT ?? 3100);
 const log = [];
-
-const fixture = (name) => JSON.parse(readFileSync(join(fixturesDir, `${name}.json`), 'utf8'));
+let backend = createMockBackend(fixtures);
 
 // 1×1 transparent PNG for /files/* requests.
 const PNG = Buffer.from(
@@ -24,79 +20,66 @@ const PNG = Buffer.from(
   'base64',
 );
 
+async function readBody(req, url) {
+  if (req.method === 'GET' || req.method === 'HEAD') return undefined;
+  const type = req.headers['content-type'] ?? '';
+  if (type.startsWith('multipart/form-data')) {
+    const form = await new Request(url, { method: req.method, headers: req.headers, body: req, duplex: 'half' }).formData();
+    const file = form.get('file');
+    return {
+      docType: form.get('docType'),
+      file: file && typeof file === 'object' ? { name: file.name, size: file.size, type: file.type } : undefined,
+    };
+  }
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  const raw = Buffer.concat(chunks);
+  if (!raw.length) return undefined;
+  try {
+    return JSON.parse(raw.toString('utf8'));
+  } catch {
+    return { __bytes: raw.length };
+  }
+}
+
 function send(res, status, body, headers = {}) {
-  const isJson = typeof body !== 'string' && !Buffer.isBuffer(body);
-  res.writeHead(status, {
-    'Content-Type': isJson ? 'application/json; charset=utf-8' : 'text/plain',
-    ...headers,
-  });
-  res.end(isJson ? JSON.stringify(body) : body);
+  const isBuffer = Buffer.isBuffer(body);
+  const isText = typeof body === 'string';
+  res.writeHead(status, { ...(isBuffer || isText || body === null ? {} : { 'content-type': 'application/json; charset=utf-8' }), ...headers });
+  res.end(body === null ? undefined : isBuffer || isText ? body : JSON.stringify(body));
 }
 
-function problem(res, status, code, title) {
-  send(
-    res,
-    status,
-    {
-      type: `https://safeer-sa.org/errors/${code.toLowerCase().replace(/_/g, '-')}`,
-      title,
-      status,
-      code,
-    },
-    { 'Content-Type': 'application/problem+json' },
-  );
-}
-
-const server = createServer((req, res) => {
-  const url = new URL(req.url ?? '/', 'http://mock');
-  const lang = resolveLang(url.searchParams.get('lang'), req.headers['accept-language']);
-
+const server = createServer(async (req, res) => {
+  const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
   if (url.pathname === '/__log') {
     if (req.method === 'DELETE') log.length = 0;
     return send(res, 200, log);
   }
-
-  log.push({
-    method: req.method,
-    path: url.pathname,
-    search: url.search,
-    headers: req.headers,
-    at: Date.now(),
-  });
-  if (log.length > 200) log.shift();
-
-  if (url.pathname === '/api/v1/health') return send(res, 200, { status: 'ok' });
-  if (url.pathname === '/api/v1/__echo') {
-    const chunks = [];
-    req.on('data', (c) => chunks.push(c));
-    req.on('end', () =>
-      send(
-        res,
-        200,
-        {
-          method: req.method,
-          path: url.pathname,
-          search: url.search,
-          headers: req.headers,
-          bodyBytes: Buffer.concat(chunks).length,
-        },
-        { 'Set-Cookie': 'sf_echo=1; Path=/; HttpOnly; SameSite=Strict' },
-      ),
-    );
-    return;
+  if (url.pathname === '/__reset') {
+    backend = createMockBackend(fixtures);
+    return send(res, 200, { ok: true });
   }
-  if (req.method === 'GET' && url.pathname === '/api/v1/site') {
-    return send(res, 200, collapseBilingual(fixture('site'), lang));
+
+  log.push({ method: req.method, path: url.pathname, search: url.search, headers: req.headers, at: Date.now() });
+  if (log.length > 300) log.shift();
+
+  if (url.pathname === '/api/v1/__echo') {
+    const body = await readBody(req, url);
+    return send(res, 200, { method: req.method, path: url.pathname, search: url.search, headers: req.headers, bodyBytes: body ? JSON.stringify(body).length : 0 }, { 'set-cookie': 'sf_echo=1; Path=/; HttpOnly; SameSite=Strict' });
   }
   if (req.method === 'GET' && url.pathname.startsWith('/files/')) {
-    return send(res, 200, PNG, {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=86400',
-    });
+    return send(res, 200, PNG, { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' });
   }
-  return problem(res, 404, 'NOT_FOUND', 'Not found');
+  try {
+    const body = await readBody(req, url);
+    const out = backend.handle({ method: req.method ?? 'GET', url: url.pathname + url.search, headers: req.headers, body });
+    const headers = { ...out.headers };
+    return send(res, out.status, out.body === null && out.status !== 204 ? 'null' : out.body, headers);
+  } catch (err) {
+    console.error(err);
+    return send(res, 500, { status: 500, code: 'INTERNAL_ERROR', title: 'mock error' }, { 'content-type': 'application/problem+json' });
+  }
 });
 
 server.listen(port, '127.0.0.1', () => console.log(`mock API on http://127.0.0.1:${port}`));
-for (const signal of ['SIGTERM', 'SIGINT'])
-  process.once(signal, () => server.close(() => process.exit(0)));
+for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => server.close(() => process.exit(0)));
