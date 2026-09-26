@@ -267,6 +267,9 @@ These are needed by the frontend. B-numbers refer to `docs/safeer-backend-fix-pr
 | Work-area item visibility | B11 | 8 |
 | Board bio | B12 | 3 |
 | Sitemap | B15 (`GET /sitemap-index`) | 2 |
+| Role matrix at runtime | **B17** (`GET /admin/roles`, missing today) | 1 (mock), 7 |
+| About / scholarships content | **B18** (`GET /about-items?kind=` + page sections) | 3 |
+| Portal document shape without `storageKey` / `checksum` | **B19** | 6 |
 | Section button URLs as `/x` paths | B9 | 3 |
 | Response types | Optional: `@ApiOkResponse` schemas so response models can be generated too | — |
 
