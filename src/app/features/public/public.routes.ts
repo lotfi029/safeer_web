@@ -8,6 +8,7 @@ import { testimonialsResolver } from './testimonials/testimonials.resolver';
 import { partnersResolver } from './partners/partners.resolver';
 import { documentsResolver } from './documents/documents.resolver';
 import { contactResolver } from './contact/contact.resolver';
+import { articleResolver, newsListResolver } from './news/news.resolvers';
 
 /**
  * Public pages (SSR). Each page's critical data comes from a route resolver (`loadCritical`, F8)
@@ -60,5 +61,27 @@ export const PUBLIC_ROUTES: Routes = [
     path: 'contact',
     resolve: { data: contactResolver },
     loadComponent: () => import('./contact/contact').then((m) => m.ContactPage),
+  },
+  {
+    path: 'news',
+    resolve: { data: newsListResolver },
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+    loadComponent: () => import('./news/news-list').then((m) => m.NewsListPage),
+  },
+  {
+    path: 'news/:slug',
+    resolve: { data: articleResolver },
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+    loadComponent: () => import('./news/article').then((m) => m.ArticlePage),
+  },
+  {
+    path: 'newsletter/confirm',
+    data: { mode: 'confirm' },
+    loadComponent: () => import('./news/newsletter-token').then((m) => m.NewsletterTokenPage),
+  },
+  {
+    path: 'newsletter/unsubscribe',
+    data: { mode: 'unsubscribe' },
+    loadComponent: () => import('./news/newsletter-token').then((m) => m.NewsletterTokenPage),
   },
 ];
