@@ -1,4 +1,11 @@
 import type { Translation } from './translation';
+import { en as aboutPage } from './pages/about';
+import { en as workPage } from './pages/work';
+import { en as scholarshipsPage } from './pages/scholarships';
+import { en as testimonialsPage } from './pages/testimonials';
+import { en as partnersPage } from './pages/partners';
+import { en as documentsPage } from './pages/documents';
+import { en as contactPage } from './pages/contact';
 
 /** English UI strings. Must mirror `ar.ts` (type-checked). */
 export const en: Translation = {
@@ -135,6 +142,34 @@ export const en: Translation = {
     phone: 'Phone',
     email: 'Email',
     address: 'Address',
+  },
+  pages: {
+    breadcrumbHome: 'Home',
+    home: {
+      heroImage: 'Scholarship students at an association event',
+      aboutImage: 'Orientation session for incoming students',
+      partnerLogo: 'Partner logo',
+      allPartners: 'See all partners',
+    },
+    news: {
+      image: 'Article image',
+      readArticle: 'Read the article',
+    },
+    about: aboutPage,
+    work: workPage,
+    scholarships: scholarshipsPage,
+    testimonials: testimonialsPage,
+    partners: partnersPage,
+    documents: documentsPage,
+    contact: contactPage,
+    board: {
+      membersEyebrow: 'Members',
+      membersHeading: 'Board members',
+      executiveEyebrow: 'Operations',
+      executiveHeading: 'Executive management',
+      executiveLead: "The team that carries out the board's plans and runs the programmes day to day.",
+      photoOf: 'Photo of {{name}}',
+    },
   },
   errorPages: {
     notFound: {

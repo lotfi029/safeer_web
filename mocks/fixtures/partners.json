@@ -1,0 +1,74 @@
+[
+  {
+    "id": "1",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "government",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 1
+  },
+  {
+    "id": "2",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "government",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 2
+  },
+  {
+    "id": "3",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "university",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 3
+  },
+  {
+    "id": "4",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "university",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 4
+  },
+  {
+    "id": "5",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "association",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 5
+  },
+  {
+    "id": "6",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "association",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 6
+  },
+  {
+    "id": "7",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "supporter",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 7
+  },
+  {
+    "id": "8",
+    "nameAr": "[اسم الشريك]",
+    "nameEn": "[Partner name]",
+    "category": "supporter",
+    "url": null,
+    "logoAsset": null,
+    "sortOrder": 8
+  }
+]

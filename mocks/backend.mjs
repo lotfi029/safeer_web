@@ -282,7 +282,7 @@ export function createMockBackend(fixtures) {
       'GET',
       /^\/api\/v1\/news\/featured$/,
       ({ lang }) => {
-        const post = (db.fixtures.posts ?? []).find((p) => p.isFeatured);
+        const post = (db.fixtures.posts ?? []).find((p) => p.isFeatured && p.isPublished !== false);
         return json(200, post ? collapse(summary(post), lang) : null);
       },
     ],
@@ -303,7 +303,7 @@ export function createMockBackend(fixtures) {
                 .toLowerCase()
                 .includes(q),
           )
-          .sort((a, b) => String(b.publishedOn).localeCompare(String(a.publishedOn)));
+          .sort((a, b) => (b.publishedOn ?? '').localeCompare(a.publishedOn ?? '')); // DESC, NULLs last (MySQL)
         return json(200, {
           data: collapse(all.slice((page - 1) * limit, page * limit).map(summary), lang),
           total: all.length,

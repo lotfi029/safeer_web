@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import type { SiteResponse } from '../api/models';
 import { toApiProblem } from '../api/problem';
 import { PublicApi } from '../api/public-api';
+import { markStatus } from '../data/loaded';
 
 export type SiteFailure = 'unavailable' | 'error';
 
@@ -41,15 +42,7 @@ export class SiteStore {
 
 /** Sets the SSR status for a failed critical call (no-op in the browser). */
 export function markFailure(responseInit: ResponseInit | null, failure: SiteFailure): void {
-  if (!responseInit) {
-    return;
-  }
-  responseInit.status = failure === 'unavailable' ? 503 : 500;
-  if (failure === 'unavailable') {
-    const headers = new Headers(responseInit.headers);
-    headers.set('Retry-After', '30');
-    responseInit.headers = headers;
-  }
+  markStatus(responseInit, failure);
 }
 
 export const siteResolver: ResolveFn<boolean> = async (route) => {

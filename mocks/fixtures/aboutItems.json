@@ -1,0 +1,195 @@
+{
+  "_source": "B18 mock (docs/api/CONTRACT-NOTES.md; shape of PublicAboutItem in docs/api/src/home/public-home.ts), grouped by kind. Copy: docs/safeer-prototype.html pAbout (vision/mission cards), GOALS, PILLARS, pScholar (steps, reqs); spec §1. Goals/requirements are one-line items → body null. Icons mapped from the prototype (eye, msg→message-circle, target→badge-check, book→book-open, heart→heart-handshake, mosque→landmark, people→users); step/requirement icons are ours (the prototype shows numbers/checks). Bodies are plain text (valid sanitized HTML).",
+  "vision": [
+    {
+      "id": "vision-1",
+      "icon": "eye",
+      "titleAr": "الرؤية",
+      "titleEn": "Vision",
+      "bodyAr": "الريادة في الدعوة المتخصصة باستخدام التقنية الحديثة، ورعاية طلاب المنح في الجامعات السعودية.",
+      "bodyEn": "Leadership in specialised outreach using modern technology, and care for scholarship students at Saudi universities.",
+      "sortOrder": 1
+    }
+  ],
+  "mission": [
+    {
+      "id": "mission-1",
+      "icon": "message-circle",
+      "titleAr": "الرسالة",
+      "titleEn": "Mission",
+      "bodyAr": "تقديم خدمات دعوية وتعليمية وإرشادية نوعية تُعرّف بالإسلام، وتدعم الطالب الوافد أكاديمياً ونفسياً ومجتمعياً.",
+      "bodyEn": "Delivering quality outreach, education and guidance that introduce Islam and support incoming students academically, psychologically and socially.",
+      "sortOrder": 1
+    }
+  ],
+  "goal": [
+    {
+      "id": "goal-1",
+      "icon": "badge-check",
+      "titleAr": "استخدام التقنية الحديثة في الدعوة إلى الله ونشر العلم الشرعي",
+      "titleEn": "Using modern technology in outreach and in spreading religious knowledge",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "goal-2",
+      "icon": "badge-check",
+      "titleAr": "تصحيح المفاهيم المغلوطة عن الإسلام ورد الشبهات المثارة عليه",
+      "titleEn": "Correcting misconceptions about Islam and answering claims raised against it",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "goal-3",
+      "icon": "badge-check",
+      "titleAr": "تعليم المسلمين أصول دينهم وتعميق روابط الأخوة فيما بينهم",
+      "titleEn": "Teaching Muslims the fundamentals of their faith and deepening bonds between them",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "goal-4",
+      "icon": "badge-check",
+      "titleAr": "الدعوة المتخصصة للفئات الاجتماعية",
+      "titleEn": "Specialised outreach for specific social groups",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 4
+    },
+    {
+      "id": "goal-5",
+      "icon": "badge-check",
+      "titleAr": "الاهتمام الدعوي بالجاليات والتواصل معهم",
+      "titleEn": "Engaging with and supporting expatriate communities",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 5
+    }
+  ],
+  "care_pillar": [
+    {
+      "id": "care-1",
+      "icon": "book-open",
+      "titleAr": "الدعم الأكاديمي والتعليمي",
+      "titleEn": "Academic and educational support",
+      "bodyAr": "دورات تعليم اللغة العربية لغير الناطقين بها، ودروس تقوية في المواد الأكاديمية، ومرشدون أكاديميون للمناهج والبحوث والمشاريع.",
+      "bodyEn": "Arabic courses for non-native speakers, tutoring in academic subjects, and academic mentors for curricula, research and projects.",
+      "sortOrder": 1
+    },
+    {
+      "id": "care-2",
+      "icon": "heart-handshake",
+      "titleAr": "الدعم النفسي والإرشادي",
+      "titleEn": "Psychological and counselling support",
+      "bodyAr": "مستشارون متخصصون، وجلسات توعية وورش عمل حول مهارات التكيّف وإدارة الضغوط بعيداً عن الأهل والوطن.",
+      "bodyEn": "Specialist counsellors, awareness sessions and workshops on adapting and managing pressure far from home.",
+      "sortOrder": 2
+    },
+    {
+      "id": "care-3",
+      "icon": "landmark",
+      "titleAr": "الإرشاد الديني والدعوي",
+      "titleEn": "Religious guidance",
+      "bodyAr": "دروس في الفقه والشريعة، ولقاءات دعوية، وتيسير أداء الفرائض وتنظيم رحلات العمرة والزيارة.",
+      "bodyEn": "Classes in jurisprudence and Shari'ah, outreach gatherings, prayer facilities and organised Umrah trips.",
+      "sortOrder": 3
+    },
+    {
+      "id": "care-4",
+      "icon": "users",
+      "titleAr": "التمكين والمشاركة المجتمعية",
+      "titleEn": "Empowerment and community participation",
+      "bodyAr": "تشجيع الطلاب على الأنشطة التطوعية وخدمة المجتمع السعودي، بما يعزّز شعور الانتماء والاندماج.",
+      "bodyEn": "Encouraging students into volunteering and service to Saudi society, strengthening belonging and integration.",
+      "sortOrder": 4
+    }
+  ],
+  "scholarship_step": [
+    {
+      "id": "step-1",
+      "icon": "file-text",
+      "titleAr": "تعبئة الطلب",
+      "titleEn": "Fill the form",
+      "bodyAr": "بيانات شخصية وأكاديمية عبر نموذج من ثلاث خطوات.",
+      "bodyEn": "Personal and academic details in a three-step form.",
+      "sortOrder": 1
+    },
+    {
+      "id": "step-2",
+      "icon": "upload",
+      "titleAr": "رفع المستندات",
+      "titleEn": "Upload documents",
+      "bodyAr": "صورة الهوية والشهادات الدراسية بصيغة PDF أو صورة.",
+      "bodyEn": "ID copy and certificates as PDF or image.",
+      "sortOrder": 2
+    },
+    {
+      "id": "step-3",
+      "icon": "search",
+      "titleAr": "المراجعة الأولية",
+      "titleEn": "Initial review",
+      "bodyAr": "تدقيق اكتمال البيانات والمستندات من فريق الجمعية.",
+      "bodyEn": "The team checks the data and documents are complete.",
+      "sortOrder": 3
+    },
+    {
+      "id": "step-4",
+      "icon": "calendar-check",
+      "titleAr": "المقابلة",
+      "titleEn": "Interview",
+      "bodyAr": "موعد يُحجز من البوابة عند اجتياز المراجعة.",
+      "bodyEn": "Booked from the portal once review is passed.",
+      "sortOrder": 4
+    },
+    {
+      "id": "step-5",
+      "icon": "graduation-cap",
+      "titleAr": "القرار والرعاية",
+      "titleEn": "Decision and care",
+      "bodyAr": "إشعار بالقرار، ثم بدء برنامج الرعاية والمتابعة.",
+      "bodyEn": "Decision notice, then the care programme begins.",
+      "sortOrder": 5
+    }
+  ],
+  "requirement": [
+    {
+      "id": "req-1",
+      "icon": "check",
+      "titleAr": "صورة الهوية أو جواز السفر",
+      "titleEn": "ID or passport copy",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "req-2",
+      "icon": "check",
+      "titleAr": "الشهادات الدراسية",
+      "titleEn": "Academic certificates",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "req-3",
+      "icon": "check",
+      "titleAr": "اسم الجامعة والمرحلة الدراسية",
+      "titleEn": "University name and degree level",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "req-4",
+      "icon": "check",
+      "titleAr": "بريد إلكتروني ورقم هاتف فعّالان",
+      "titleEn": "A working email and phone number",
+      "bodyAr": null,
+      "bodyEn": null,
+      "sortOrder": 4
+    }
+  ]
+}

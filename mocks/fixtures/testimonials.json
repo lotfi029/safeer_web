@@ -1,0 +1,94 @@
+{
+  "_source": "Shape: docs/api/src/testimonials (PublicTestimonial, PublicTestimonialTheme). Themes: docs/safeer-prototype.html THEMES + spec §1 (flag → isImprovement). featured: the pTestimonials quote (initials \"ع. ج\", text truncated by the prototype itself with a [..] placeholder). list: the three placeholder cards of pTestimonials. authorName is not bilingual in the API, so placeholders keep the Arabic prototype string.",
+  "featured": [
+    {
+      "id": "1",
+      "quoteAr": "كنت في زيارة لأحد الأصدقاء وحضرت معهم محاضرة من محاضرات الجمعية — [يُستكمل النص الكامل للشهادة من لوحة التحكم].",
+      "quoteEn": "I was visiting a friend and attended one of the association's lectures with them — [full testimonial completed from the dashboard].",
+      "authorName": "ع. ج",
+      "authorDescAr": "مستفيد من برامج الجمعية",
+      "authorDescEn": "Programme beneficiary",
+      "isFeatured": true,
+      "sortOrder": 1
+    }
+  ],
+  "list": [
+    {
+      "id": "2",
+      "quoteAr": "[نص الشهادة — يُدار من قسم «قالوا عنا» في لوحة التحكم.]",
+      "quoteEn": "[Testimonial text — managed from the Testimonials section.]",
+      "authorName": "[الاسم أو الأحرف الأولى]",
+      "authorDescAr": null,
+      "authorDescEn": null,
+      "isFeatured": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "3",
+      "quoteAr": "[نص الشهادة — يُدار من قسم «قالوا عنا» في لوحة التحكم.]",
+      "quoteEn": "[Testimonial text — managed from the Testimonials section.]",
+      "authorName": "[الاسم أو الأحرف الأولى]",
+      "authorDescAr": null,
+      "authorDescEn": null,
+      "isFeatured": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "4",
+      "quoteAr": "[نص الشهادة — يُدار من قسم «قالوا عنا» في لوحة التحكم.]",
+      "quoteEn": "[Testimonial text — managed from the Testimonials section.]",
+      "authorName": "[الاسم أو الأحرف الأولى]",
+      "authorDescAr": null,
+      "authorDescEn": null,
+      "isFeatured": false,
+      "sortOrder": 3
+    }
+  ],
+  "themes": [
+    {
+      "id": "1",
+      "titleAr": "تجربة تعليمية ممتازة",
+      "titleEn": "An excellent learning experience",
+      "descriptionAr": "امتنان للدروس والمحاضرات التي تقدّمها الجمعية، وإشادة بأسلوب التعليم الشامل والميسّر.",
+      "descriptionEn": "Gratitude for the association's classes and lectures, and praise for its clear, accessible teaching.",
+      "isImprovement": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "2",
+      "titleAr": "دعم شخصي",
+      "titleEn": "Personal support",
+      "descriptionAr": "دعم فردي في فهم الإسلام أو في تبنّيه كدين جديد.",
+      "descriptionEn": "One-to-one support in understanding Islam or in embracing it as a new faith.",
+      "isImprovement": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "3",
+      "titleAr": "بيئة مرحبة",
+      "titleEn": "A welcoming environment",
+      "descriptionAr": "بيئة دافئة تُشعر المستفيد بالراحة والانتماء.",
+      "descriptionEn": "A warm environment where people feel comfortable and that they belong.",
+      "isImprovement": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "4",
+      "titleAr": "تنظيم الفعاليات",
+      "titleEn": "Event organisation",
+      "descriptionAr": "تقدير للأنشطة مع اقتراحات بتحسين التنظيم والتواصل.",
+      "descriptionEn": "Appreciation for the activities, with suggestions to improve organisation and communication.",
+      "isImprovement": true,
+      "sortOrder": 4
+    },
+    {
+      "id": "5",
+      "titleAr": "موارد إضافية",
+      "titleEn": "More resources",
+      "descriptionAr": "اقتراحات بزيادة الموارد التعليمية من كتب ومقالات.",
+      "descriptionEn": "Suggestions to expand educational resources such as books and articles.",
+      "isImprovement": true,
+      "sortOrder": 5
+    }
+  ]
+}

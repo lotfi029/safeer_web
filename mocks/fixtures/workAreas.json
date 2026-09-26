@@ -1,0 +1,104 @@
+[
+  {
+    "id": "1",
+    "icon": "megaphone",
+    "titleAr": "الدعوة العامة",
+    "titleEn": "General outreach",
+    "sortOrder": 1,
+    "items": [
+      {
+        "id": "1-1",
+        "textAr": "الدعوة الشبابية والنسائية والجاليات",
+        "textEn": "Youth, women and expatriate community outreach",
+        "sortOrder": 1
+      },
+      {
+        "id": "1-2",
+        "textAr": "معرض الوسائل الدعوية",
+        "textEn": "Outreach media exhibition",
+        "sortOrder": 2
+      },
+      {
+        "id": "1-3",
+        "textAr": "المشاركات المجتمعية والمصليات المتنقلة",
+        "textEn": "Community participation and mobile prayer spaces",
+        "sortOrder": 3
+      },
+      {
+        "id": "1-4",
+        "textAr": "الحج والعمرة",
+        "textEn": "Hajj and Umrah",
+        "sortOrder": 4
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "icon": "globe",
+    "titleAr": "الدعوة الإلكترونية",
+    "titleEn": "Digital outreach",
+    "sortOrder": 2,
+    "items": [
+      {
+        "id": "2-1",
+        "textAr": "دعوة غير المسلمين",
+        "textEn": "Outreach to non-Muslims",
+        "sortOrder": 1
+      },
+      {
+        "id": "2-2",
+        "textAr": "استخدام الوسائل الحديثة في الدعوة",
+        "textEn": "Using modern channels for outreach",
+        "sortOrder": 2
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "icon": "graduation-cap",
+    "titleAr": "التدريب والتأهيل",
+    "titleEn": "Training and qualification",
+    "sortOrder": 3,
+    "items": [
+      {
+        "id": "3-1",
+        "textAr": "تأهيل الكوادر الإدارية",
+        "textEn": "Qualifying administrative staff",
+        "sortOrder": 1
+      },
+      {
+        "id": "3-2",
+        "textAr": "تأهيل الدعاة — علمياً ومهارياً",
+        "textEn": "Qualifying outreach workers — academically and practically",
+        "sortOrder": 2
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "icon": "search",
+    "titleAr": "الأبحاث والدراسات الدعوية",
+    "titleEn": "Research and studies",
+    "sortOrder": 4,
+    "items": [
+      {
+        "id": "4-1",
+        "textAr": "إعداد البحوث الشرعية",
+        "textEn": "Producing religious research",
+        "sortOrder": 1
+      },
+      {
+        "id": "4-2",
+        "textAr": "المسابقات العامة",
+        "textEn": "Public competitions",
+        "sortOrder": 2
+      },
+      {
+        "id": "4-3",
+        "textAr": "تطوير وصناعة المحتوى الدعوي",
+        "textEn": "Developing outreach content",
+        "sortOrder": 3
+      }
+    ]
+  }
+]

@@ -1,3 +1,11 @@
+import { ar as aboutPage } from './pages/about';
+import { ar as workPage } from './pages/work';
+import { ar as scholarshipsPage } from './pages/scholarships';
+import { ar as testimonialsPage } from './pages/testimonials';
+import { ar as partnersPage } from './pages/partners';
+import { ar as documentsPage } from './pages/documents';
+import { ar as contactPage } from './pages/contact';
+
 /**
  * Arabic UI strings (default locale). Content (pages, news, …) comes from the API, never from here.
  * Keys: `area.screen.key`. `en.ts` must mirror this shape (enforced by the `Translation` type).
@@ -136,6 +144,34 @@ export const ar = {
     phone: 'الهاتف',
     email: 'البريد الإلكتروني',
     address: 'العنوان',
+  },
+  pages: {
+    breadcrumbHome: 'الرئيسية',
+    home: {
+      heroImage: 'طلاب المنح في فعالية الجمعية',
+      aboutImage: 'لقاء توجيهي للطلاب الوافدين',
+      partnerLogo: 'شعار شريك',
+      allPartners: 'مشاهدة كل الشركاء',
+    },
+    news: {
+      image: 'صورة الخبر',
+      readArticle: 'اقرأ الخبر',
+    },
+    about: aboutPage,
+    work: workPage,
+    scholarships: scholarshipsPage,
+    testimonials: testimonialsPage,
+    partners: partnersPage,
+    documents: documentsPage,
+    contact: contactPage,
+    board: {
+      membersEyebrow: 'الأعضاء',
+      membersHeading: 'أعضاء المجلس',
+      executiveEyebrow: 'التشغيل',
+      executiveHeading: 'الإدارة التنفيذية',
+      executiveLead: 'الفريق المسؤول عن تنفيذ خطط المجلس وإدارة البرامج اليومية.',
+      photoOf: 'صورة {{name}}',
+    },
   },
   errorPages: {
     notFound: {

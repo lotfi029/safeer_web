@@ -1,7 +1,7 @@
 {
   "_source": "Shape: docs/api/src/site/site.controller.ts + public-site-settings.ts (raw bilingual form; the mock collapses per ?lang). Values: docs/safeer-design-spec.md §1 and the prototype copy (ORG, TAG, BLURB, ADDR, RIGHTS, NAV); social URLs unknown → null.",
   "settings": {
-    "id": 1,
+    "id": "1",
     "orgNameAr": "جمعية سفير الدعوية",
     "orgNameEn": "Safeer Da'wah Association",
     "taglineAr": "لطلاب المنح",

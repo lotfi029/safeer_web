@@ -487,3 +487,63 @@
     text-decoration: underline;
   }
 }
+
+/* Long-form HTML from the API (article body, section bodies). */
+@layer components {
+  .rich-text {
+    line-height: 1.95;
+  }
+
+  .rich-text > * + * {
+    margin-block-start: 1em;
+  }
+
+  .rich-text :where(h2, h3, h4) {
+    margin-block-start: 1.6em;
+  }
+
+  .rich-text h2 {
+    font-size: 28px;
+  }
+
+  .rich-text h3 {
+    font-size: 22px;
+  }
+
+  .rich-text :where(ul, ol) {
+    padding-inline-start: 1.4em;
+  }
+
+  .rich-text ul {
+    list-style: disc;
+  }
+
+  .rich-text ol {
+    list-style: decimal;
+  }
+
+  .rich-text blockquote {
+    border-inline-start: 4px solid var(--secondary);
+    padding-inline-start: 20px;
+    color: var(--heading);
+    font-weight: 500;
+  }
+
+  .rich-text img {
+    border-radius: var(--radius-card);
+    block-size: auto;
+  }
+
+  .rich-text table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .rich-text :where(th, td) {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: start;
+  }
+}

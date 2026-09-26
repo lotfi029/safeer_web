@@ -16,6 +16,7 @@ import {
   provideRouter,
   withComponentInputBinding,
   withInMemoryScrolling,
+  withRouterConfig,
   withViewTransitions,
 } from '@angular/router';
 import { routes } from './app.routes';
@@ -39,6 +40,8 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withComponentInputBinding(),
+      // Child routes see `:lang` (and re-run resolvers when it changes).
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
       // Route transition (spec §2): opacity + 8px ~300ms, styles in motion.css; off under reduced motion.
       withViewTransitions({ skipInitialTransition: true }),
