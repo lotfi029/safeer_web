@@ -63,7 +63,7 @@ SSR render ──► API_INTERNAL_URL directly (server-side HttpClient base URL)
 
 - Base URL: the server uses `API_INTERNAL_URL` and the browser uses the relative `/api/v1`. An `ApiBaseUrlInterceptor` rewrites the URL based on `isPlatformServer`.
 - **The transfer cache applies only to public GETs.** Anything carrying cookies, and anything under `/admin` or `/portal`, is never cached or transferred.
-- The SSR server sets security headers: CSP with nonces (Angular `ngCspNonce`), HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`. It also sets `Cache-Control: public, s-maxage=60, stale-while-revalidate=300` on public HTML and `no-store` on admin and portal.
+- The SSR server sets security headers: CSP with nonces (Angular `ngCspNonce`), HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`. It also sets `Cache-Control: no-cache` on public HTML (a per-request CSP nonce must not sit behind a shared cache; see sessions plan R2) and `no-store` on admin and portal.
 
 ### 3.2 Folder structure
 
@@ -233,6 +233,8 @@ Legacy WP URLs (`/doctor*`, `/appointment`, `/cart`, `/category/neurology`, …)
 - **Analytics/consent:** none at launch. Leave a hook in place.
 
 ## 8. Phases, deliverables and estimates
+
+> **Delivered in two Claude Code sessions** (see `docs/safeer-frontend-sessions-plan.md`). Session 1 covers Phases 0–6 and ends with `docs/frontend/HANDOFF.md`. Session 2 covers Phases 7–10. Phase 0 is revised by R1–R11 in that file.
 
 | # | Phase | Deliverables | Est. |
 |---|---|---|---|

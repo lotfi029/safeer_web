@@ -1,5 +1,7 @@
 # Prompt — Build the Safeer frontend (Angular 22 · SSR · responsive)
 
+> **Entry points:** start work with `docs/safeer-frontend-session-1-prompt.md` (Phases 0–6), then `docs/safeer-frontend-session-2-prompt.md` (Phases 7–10). This file stays the shared brief both sessions read. Where it differs from `docs/safeer-frontend-sessions-plan.md`, the sessions plan wins.
+
 > Run Claude Code (cloud or local) on the `safeer_web` repo and paste everything below the line. All referenced files are committed in the repo under `docs/`. If you can, also add `safeer_api` to the same session as a second repo.
 
 ---
