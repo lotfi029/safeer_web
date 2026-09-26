@@ -7,6 +7,7 @@ import { en as partnersPage } from './pages/partners';
 import { en as documentsPage } from './pages/documents';
 import { en as contactPage } from './pages/contact';
 import { en as newsPage } from './pages/news';
+import { en as applyPage } from './pages/apply';
 
 /** English UI strings. Must mirror `ar.ts` (type-checked). */
 export const en: Translation = {
@@ -153,6 +154,7 @@ export const en: Translation = {
       allPartners: 'See all partners',
     },
     news: newsPage,
+    apply: applyPage,
     about: aboutPage,
     work: workPage,
     scholarships: scholarshipsPage,

@@ -17,6 +17,7 @@ import partners from './fixtures/partners.json' with { type: 'json' };
 import documents from './fixtures/documents.json' with { type: 'json' };
 import newsCategories from './fixtures/newsCategories.json' with { type: 'json' };
 import posts from './fixtures/posts.json' with { type: 'json' };
+import countries from './fixtures/countries.json' with { type: 'json' };
 
 export const fixtures = {
   site,
@@ -33,4 +34,5 @@ export const fixtures = {
   documents,
   newsCategories,
   posts,
+  countries,
 };

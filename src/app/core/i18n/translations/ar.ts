@@ -6,6 +6,7 @@ import { ar as partnersPage } from './pages/partners';
 import { ar as documentsPage } from './pages/documents';
 import { ar as contactPage } from './pages/contact';
 import { ar as newsPage } from './pages/news';
+import { ar as applyPage } from './pages/apply';
 
 /**
  * Arabic UI strings (default locale). Content (pages, news, …) comes from the API, never from here.
@@ -155,6 +156,7 @@ export const ar = {
       allPartners: 'مشاهدة كل الشركاء',
     },
     news: newsPage,
+    apply: applyPage,
     about: aboutPage,
     work: workPage,
     scholarships: scholarshipsPage,

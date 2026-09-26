@@ -442,6 +442,15 @@
     transition: inline-size 300ms ease;
   }
 
+  /* On the dark band the light track would read as a full bar. */
+  .band .progress {
+    background: color-mix(in srgb, var(--band-text) 18%, transparent);
+  }
+
+  .band .progress > span {
+    background: var(--band-soft);
+  }
+
   .skeleton {
     display: block;
     border-radius: 8px;
