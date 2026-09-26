@@ -27,13 +27,18 @@ describe('toApiProblem', () => {
 
   it('keeps extra members such as DOCUMENTS_INCOMPLETE.missing', () => {
     const p = toApiProblem(
-      new HttpErrorResponse({ status: 409, error: { code: 'DOCUMENTS_INCOMPLETE', title: 'x', status: 409, missing: ['id_copy'] } }),
+      new HttpErrorResponse({
+        status: 409,
+        error: { code: 'DOCUMENTS_INCOMPLETE', title: 'x', status: 409, missing: ['id_copy'] },
+      }),
     );
     expect(p.extra['missing']).toEqual(['id_copy']);
   });
 
   it('falls back to a code from the status, and recognises network errors', () => {
-    expect(toApiProblem(new HttpErrorResponse({ status: 429, error: 'text' })).code).toBe('RATE_LIMITED');
+    expect(toApiProblem(new HttpErrorResponse({ status: 429, error: 'text' })).code).toBe(
+      'RATE_LIMITED',
+    );
     expect(toApiProblem(new HttpErrorResponse({ status: 0 })).code).toBe('NETWORK');
   });
 

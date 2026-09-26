@@ -9,7 +9,9 @@ import { DrawerFrame, DrawerService } from './drawer';
   selector: 'app-test-drawer',
   imports: [DrawerFrame],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<app-drawer-frame heading="Menu" headingId="test-drawer-title"><a href="/x">Link</a></app-drawer-frame>`,
+  template: `<app-drawer-frame heading="Menu" headingId="test-drawer-title"
+    ><a href="/x">Link</a></app-drawer-frame
+  >`,
 })
 class TestDrawer {}
 
@@ -29,7 +31,9 @@ describe('DrawerService + DrawerFrame', () => {
 
   it('opens at the inline-end edge (left in RTL) as a full-height panel', () => {
     TestBed.inject(Directionality).valueSignal.set('rtl');
-    const ref = TestBed.inject(DrawerService).open(TestDrawer, { ariaLabelledBy: 'test-drawer-title' });
+    const ref = TestBed.inject(DrawerService).open(TestDrawer, {
+      ariaLabelledBy: 'test-drawer-title',
+    });
     TestBed.tick();
     const pane = document.querySelector('.cdk-overlay-pane') as HTMLElement;
     expect(pane.classList).toContain('app-drawer-panel');
@@ -49,7 +53,9 @@ describe('DrawerService + DrawerFrame', () => {
     TestBed.tick();
     const pane = document.querySelector('.cdk-overlay-pane') as HTMLElement;
     expect(pane.classList).toContain('app-sheet-panel');
-    expect(document.querySelector('.cdk-dialog-container')?.getAttribute('aria-label')).toBe('Filters');
+    expect(document.querySelector('.cdk-dialog-container')?.getAttribute('aria-label')).toBe(
+      'Filters',
+    );
     expect(document.querySelector('app-drawer-frame > div')?.className).toContain('rounded-t-');
   });
 

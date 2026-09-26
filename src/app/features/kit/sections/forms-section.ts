@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { email, form, FormField, required } from '@angular/forms/signals';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { APPLICATION_STATUSES, ApplicationStatus, TimelineKey, TimelineState } from '../../../core/api/models';
+import {
+  APPLICATION_STATUSES,
+  ApplicationStatus,
+  TimelineKey,
+  TimelineState,
+} from '../../../core/api/models';
 import { Button } from '../../../shared/ui/button/button';
 import { ChoiceGroup } from '../../../shared/ui/choice/choice';
 import { EmptyState } from '../../../shared/ui/empty-state/empty-state';
@@ -12,7 +17,12 @@ import { Note } from '../../../shared/ui/note/note';
 import { OtpInput } from '../../../shared/ui/otp-input/otp-input';
 import { Progress } from '../../../shared/ui/progress/progress';
 import { Skeleton } from '../../../shared/ui/skeleton/skeleton';
-import { DocStatusPill, DocumentStatus, Pill, StatusPill } from '../../../shared/ui/status-pill/status-pill';
+import {
+  DocStatusPill,
+  DocumentStatus,
+  Pill,
+  StatusPill,
+} from '../../../shared/ui/status-pill/status-pill';
 import { Stepper } from '../../../shared/ui/stepper/stepper';
 import { Timeline, TimelineItem } from '../../../shared/ui/timeline/timeline';
 
@@ -20,7 +30,10 @@ const TIMELINE_KEYS: TimelineKey[] = ['received', 'documents', 'review', 'interv
 
 /** Kit copy of the backend's status → timeline derivation (docs/api/src/portal/portal-timeline.ts). */
 function demoTimeline(status: ApplicationStatus): TimelineItem[] {
-  const done = (...keys: TimelineKey[]) => (k: TimelineKey) => keys.includes(k);
+  const done =
+    (...keys: TimelineKey[]) =>
+    (k: TimelineKey) =>
+      keys.includes(k);
   const table: Record<ApplicationStatus, [(k: TimelineKey) => boolean, TimelineKey | null]> = {
     draft: [done(), null],
     new: [done('received', 'documents'), 'review'],
@@ -83,7 +96,11 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">uploading 40%</p>
-          <app-file-drop status="uploading" [progress]="40" [label]="'docType.certificate' | transloco" />
+          <app-file-drop
+            status="uploading"
+            [progress]="40"
+            [label]="'docType.certificate' | transloco"
+          />
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">done</p>
@@ -115,9 +132,14 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
           <app-timeline [items]="timelines[s]" />
         </div>
       }
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="card"><app-timeline orientation="vertical" [items]="timelines.under_review" /></div>
-        <div class="card"><app-timeline orientation="horizontal" [items]="timelines.interview" /></div>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="card min-w-0">
+          <app-timeline orientation="vertical" [items]="timelines.under_review" />
+        </div>
+        <!-- Forced horizontal only makes sense with room: shown from md up. -->
+        <div class="card hidden min-w-0 md:col-span-2 md:block">
+          <app-timeline orientation="horizontal" [items]="timelines.interview" />
+        </div>
       </div>
     </section>
 
@@ -127,7 +149,9 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
         <div class="flex flex-col gap-2">
           <p class="t-caption">empty</p>
           <app-otp-input (completed)="otpDone.set($event)" />
-          <p class="t-caption" aria-live="polite">completed: <bdi dir="ltr">{{ otpDone() }}</bdi></p>
+          <p class="t-caption" aria-live="polite">
+            completed: <bdi dir="ltr">{{ otpDone() }}</bdi>
+          </p>
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">filled</p>
@@ -215,10 +239,18 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
           hint="[...]"
           required
           [columns]="2"
-          [error]="(submitted() || f.track().touched()) && f.track().invalid() ? ('validation.required' | transloco) : null"
+          [error]="
+            (submitted() || f.track().touched()) && f.track().invalid()
+              ? ('validation.required' | transloco)
+              : null
+          "
         >
-          <label class="choice"><input type="radio" value="a" [formField]="f.track" /> [...] A</label>
-          <label class="choice"><input type="radio" value="b" [formField]="f.track" /> [...] B</label>
+          <label class="choice"
+            ><input type="radio" value="a" [formField]="f.track" /> [...] A</label
+          >
+          <label class="choice"
+            ><input type="radio" value="b" [formField]="f.track" /> [...] B</label
+          >
         </app-choice-group>
         <div class="flex flex-col gap-2 md:col-span-2">
           <p id="kit-otp-label" class="field-label">{{ 'ui.otp.label' | transloco }}</p>
@@ -240,7 +272,12 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
 })
 export class KitFormsSection {
   protected readonly statuses = APPLICATION_STATUSES;
-  protected readonly docStatuses: DocumentStatus[] = ['under_review', 'accepted', 'rejected', 'missing'];
+  protected readonly docStatuses: DocumentStatus[] = [
+    'under_review',
+    'accepted',
+    'rejected',
+    'missing',
+  ];
   protected readonly steps = [{ label: '[...] 1' }, { label: '[...] 2' }, { label: '[...] 3' }];
   protected readonly timelines = Object.fromEntries(
     APPLICATION_STATUSES.map((s) => [s, demoTimeline(s)]),

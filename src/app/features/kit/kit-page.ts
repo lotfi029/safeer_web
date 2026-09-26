@@ -6,7 +6,6 @@ import { SeoService } from '../../core/seo/seo.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { Button } from '../../shared/ui/button/button';
 import { Icon } from '../../shared/ui/icon/icon';
-import { ToastOutlet } from '../../shared/ui/toast/toast-outlet';
 import { KitBasicsSection } from './sections/basics-section';
 import { KitContentSection } from './sections/content-section';
 import { KitFormsSection } from './sections/forms-section';
@@ -19,7 +18,16 @@ import { KitOverlaysSection } from './sections/overlays-section';
  */
 @Component({
   selector: 'app-kit-page',
-  imports: [RouterLink, TranslocoPipe, Button, Icon, ToastOutlet, KitBasicsSection, KitContentSection, KitFormsSection, KitOverlaysSection],
+  imports: [
+    RouterLink,
+    TranslocoPipe,
+    Button,
+    Icon,
+    KitBasicsSection,
+    KitContentSection,
+    KitFormsSection,
+    KitOverlaysSection,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a class="sr-only focus:not-sr-only" href="#main">{{ 'common.skipToContent' | transloco }}</a>
@@ -27,13 +35,25 @@ import { KitOverlaysSection } from './sections/overlays-section';
       <div class="wrap flex min-h-16 flex-wrap items-center justify-between gap-3 py-2">
         <p class="t-h4">{{ 'kit.title' | transloco }}</p>
         <div class="flex items-center gap-2">
-          <a appButton variant="line" size="sm" [routerLink]="['/', locale.otherLang(), '_kit']" [attr.lang]="locale.otherLang()">
-            {{ (locale.lang() === 'ar' ? 'common.switchToEnglish' : 'common.switchToArabic') | transloco }}
+          <a
+            appButton
+            variant="line"
+            size="sm"
+            [routerLink]="['/', locale.otherLang(), '_kit']"
+            [attr.lang]="locale.otherLang()"
+          >
+            {{
+              (locale.lang() === 'ar' ? 'common.switchToEnglish' : 'common.switchToArabic')
+                | transloco
+            }}
           </a>
           <button
             type="button"
             class="icon-btn"
-            [attr.aria-label]="(theme.effective() === 'dark' ? 'common.theme.toLight' : 'common.theme.toDark') | transloco"
+            [attr.aria-label]="
+              (theme.effective() === 'dark' ? 'common.theme.toLight' : 'common.theme.toDark')
+                | transloco
+            "
             (click)="theme.toggle()"
           >
             <app-icon [name]="theme.effective() === 'dark' ? 'sun' : 'moon'" />
@@ -48,7 +68,6 @@ import { KitOverlaysSection } from './sections/overlays-section';
       <app-kit-forms-section />
       <app-kit-overlays-section />
     </main>
-    <app-toast-outlet />
   `,
 })
 export class KitPage {
@@ -56,6 +75,11 @@ export class KitPage {
   protected readonly theme = inject(ThemeService);
 
   constructor() {
-    inject(SeoService).set({ title: 'Kit', path: '/_kit', lang: this.locale.lang(), noindex: true });
+    inject(SeoService).set({
+      title: 'Kit',
+      path: '/_kit',
+      lang: this.locale.lang(),
+      noindex: true,
+    });
   }
 }

@@ -47,7 +47,9 @@ test.describe('same-origin API proxy + client IP (R3)', () => {
     expect(siteCall, 'SSR must call GET /api/v1/site').toBeTruthy();
     expect(siteCall!.search).toBe('?lang=en');
     expect(siteCall!.headers['x-forwarded-for']).toBe('203.0.113.9');
-    expect(siteCall!.headers['accept-language']).toBe('en-GB,en;q=0.8');
+    // Public calls carry the page's content language (locale interceptor); the visitor's raw
+    // Accept-Language is forwarded only when a call sets none (server-forward interceptor).
+    expect(siteCall!.headers['accept-language']).toBe('en');
   });
 
   test('/files/* is proxied', async ({ request }) => {

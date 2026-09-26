@@ -19,7 +19,8 @@ export const localeInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
   const lang = inject(LocaleService).lang();
-  const params: HttpParams = req.params.has('lang') ? req.params : req.params.set('lang', lang);
+  const hasLang = req.params.has('lang') || /[?&]lang=/.test(req.url);
+  const params: HttpParams = hasLang ? req.params : req.params.set('lang', lang);
   return next(req.clone({ params, setHeaders: { 'Accept-Language': lang } }));
 };
 
@@ -57,7 +58,11 @@ export const problemDetailsInterceptor: HttpInterceptorFn = (req, next) => {
       const problem = toApiProblem(error);
       const area = apiArea(req.url);
       const path = apiPath(req.url) ?? '';
-      if (problem.status === 401 && (area === 'admin' || area === 'portal') && !AUTH_PROBES.some((p) => path.startsWith(p))) {
+      if (
+        problem.status === 401 &&
+        (area === 'admin' || area === 'portal') &&
+        !AUTH_PROBES.some((p) => path.startsWith(p))
+      ) {
         injector.get(SessionExpiry).expired(area);
       }
       return throwError(() => new ApiError(problem));

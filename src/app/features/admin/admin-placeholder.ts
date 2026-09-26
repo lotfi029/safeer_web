@@ -12,12 +12,17 @@ import { Button } from '../../shared/ui/button/button';
   imports: [TranslocoPipe, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main id="main" class="mx-auto flex min-h-dvh max-w-[1280px] flex-col items-center justify-center gap-4 px-5">
+    <main
+      id="main"
+      class="mx-auto flex min-h-dvh max-w-[1280px] flex-col items-center justify-center gap-4 px-5"
+    >
       <h1 class="t-h2">{{ 'admin.home' | transloco }}</h1>
       <p class="t-muted">[...]</p>
       @if (store.me(); as me) {
         <p class="t-small" dir="ltr">{{ me.email }} · {{ me.role }}</p>
-        <button appButton variant="line" size="sm" type="button" (click)="logout()">{{ 'admin.logout' | transloco }}</button>
+        <button appButton variant="line" size="sm" type="button" (click)="logout()">
+          {{ 'admin.logout' | transloco }}
+        </button>
       }
     </main>
   `,

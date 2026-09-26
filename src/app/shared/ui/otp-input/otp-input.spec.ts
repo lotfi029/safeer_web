@@ -50,7 +50,11 @@ describe('OtpInput', () => {
     expect(inputs[0].getAttribute('autocomplete')).toBe('one-time-code');
     expect(inputs[1].getAttribute('autocomplete')).toBe('off');
     expect(inputs[1].getAttribute('maxlength')).toBe('1');
-    expect(inputs.every((i) => i.getAttribute('inputmode') === 'numeric' && i.getAttribute('pattern') === '[0-9]*')).toBe(true);
+    expect(
+      inputs.every(
+        (i) => i.getAttribute('inputmode') === 'numeric' && i.getAttribute('pattern') === '[0-9]*',
+      ),
+    ).toBe(true);
     expect(inputs[2].getAttribute('aria-label')).toBe('ui.otp.digit');
   });
 

@@ -14,7 +14,9 @@ export const staffGuard: CanActivateFn = async (_route, state) => {
   if (await store.ensureLoaded()) {
     return true;
   }
-  return router.createUrlTree([locale.link('/admin/login')], { queryParams: { returnUrl: state.url } });
+  return router.createUrlTree([locale.link('/admin/login')], {
+    queryParams: { returnUrl: state.url },
+  });
 };
 
 /**
@@ -49,5 +51,7 @@ export const applicantGuard: CanActivateFn = async (_route, state) => {
   if (await store.ensureLoaded()) {
     return true;
   }
-  return router.createUrlTree([locale.link('/portal/login')], { queryParams: { returnUrl: state.url } });
+  return router.createUrlTree([locale.link('/portal/login')], {
+    queryParams: { returnUrl: state.url },
+  });
 };

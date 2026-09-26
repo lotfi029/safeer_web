@@ -37,8 +37,12 @@ const ROWS: Row[] = [
       [(selection)]="selection"
       [(sort)]="sort"
     >
-      <ng-template appDataTableCell="status" let-row><span class="pill">{{ row.status }}</span></ng-template>
-      <ng-template appDataTableActions let-row><a class="view" href="/x">{{ row.ref }}</a></ng-template>
+      <ng-template appDataTableCell="status" let-row
+        ><span class="pill">{{ row.status }}</span></ng-template
+      >
+      <ng-template appDataTableActions let-row
+        ><a class="view" href="/x">{{ row.ref }}</a></ng-template
+      >
       <ng-template appDataTableEmpty><p class="custom-empty">Nothing</p></ng-template>
     </app-data-table>
   `,
@@ -86,7 +90,9 @@ describe('DataTable', () => {
     expect(cards.length).toBe(2);
     expect(cards[0].querySelector('p')?.textContent).toContain('SA-2026-00001');
     // Title column + hideOnMobile column are not repeated in the <dl>.
-    expect(Array.from(cards[0].querySelectorAll('dt')).map((d) => d.textContent)).toEqual(['Status']);
+    expect(Array.from(cards[0].querySelectorAll('dt')).map((d) => d.textContent)).toEqual([
+      'Status',
+    ]);
     expect(cards[0].querySelector('a.view')).not.toBeNull();
   });
 

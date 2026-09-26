@@ -36,7 +36,10 @@ export class PortalApi {
   }
 
   submit(body: ApplicationPatch): Observable<SubmitApplicationResponse> {
-    return this.http.post<SubmitApplicationResponse>(`${API_PREFIX}/portal/application/submit`, body);
+    return this.http.post<SubmitApplicationResponse>(
+      `${API_PREFIX}/portal/application/submit`,
+      body,
+    );
   }
 
   documents(): Observable<PortalDocumentsResponse> {
@@ -88,7 +91,10 @@ export class PortalApi {
   }
 
   verifyOtp(identifier: string, code: string): Observable<{ csrfToken: string }> {
-    return this.http.post<{ csrfToken: string }>(`${API_PREFIX}/portal/auth/verify-otp`, { identifier, code });
+    return this.http.post<{ csrfToken: string }>(`${API_PREFIX}/portal/auth/verify-otp`, {
+      identifier,
+      code,
+    });
   }
 
   logout(): Observable<OkResponse> {

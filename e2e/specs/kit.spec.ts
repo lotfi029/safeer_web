@@ -15,7 +15,9 @@ test.describe('/_kit component kit', () => {
   }
 
   test('SSR renders the theme from the cookie (no flash)', async ({ request }) => {
-    const html = await (await request.get('/en/_kit', { headers: { cookie: 'theme=dark' } })).text();
+    const html = await (
+      await request.get('/en/_kit', { headers: { cookie: 'theme=dark' } })
+    ).text();
     expect(html).toMatch(/<html[^>]*data-theme="dark"/);
     const plain = await (await request.get('/en/_kit')).text();
     expect(plain).not.toMatch(/<html[^>]*data-theme=/);

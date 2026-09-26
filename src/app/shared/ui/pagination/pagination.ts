@@ -71,14 +71,21 @@ export function pageWindow(current: number, count: number, siblings = 1): PageIt
             }
           </li>
 
-          <li class="px-2 t-small sm:hidden">
-            {{ 'ui.pagination.summary' | transloco: { page: (current() | digits), total: (pageCount() | digits) } }}
+          <li class="t-small px-2 sm:hidden">
+            {{
+              'ui.pagination.summary'
+                | transloco: { page: (current() | digits), total: (pageCount() | digits) }
+            }}
           </li>
 
           @for (item of items(); track $index) {
             <li class="hidden sm:block">
               @if (item === 'gap') {
-                <span class="inline-flex h-11 min-w-8 items-center justify-center text-text-muted" aria-hidden="true">…</span>
+                <span
+                  class="inline-flex h-11 min-w-8 items-center justify-center text-text-muted"
+                  aria-hidden="true"
+                  >…</span
+                >
               } @else if (item === current()) {
                 <a
                   class="inline-flex h-11 min-w-11 items-center justify-center rounded-[var(--radius-btn)] bg-primary px-3 font-semibold text-on-primary"
@@ -87,7 +94,8 @@ export function pageWindow(current: number, count: number, siblings = 1): PageIt
                   queryParamsHandling="merge"
                   aria-current="page"
                   [attr.aria-label]="'ui.pagination.page' | transloco: { page: (item | digits) }"
-                >{{ item | digits }}</a>
+                  >{{ item | digits }}</a
+                >
               } @else {
                 <a
                   class="inline-flex h-11 min-w-11 items-center justify-center rounded-[var(--radius-btn)] border border-border bg-card px-3 text-text no-underline hover:bg-raise"
@@ -95,7 +103,8 @@ export function pageWindow(current: number, count: number, siblings = 1): PageIt
                   [queryParams]="params(item)"
                   queryParamsHandling="merge"
                   [attr.aria-label]="'ui.pagination.page' | transloco: { page: (item | digits) }"
-                >{{ item | digits }}</a>
+                  >{{ item | digits }}</a
+                >
               }
             </li>
           }
@@ -136,8 +145,12 @@ export class Pagination {
   /** Pages shown on each side of the current one (sm+). */
   readonly siblings = input(1);
 
-  readonly pageCount = computed(() => Math.max(0, Math.ceil(this.total() / Math.max(1, this.pageSize()))));
-  readonly current = computed(() => Math.min(Math.max(1, this.page()), Math.max(1, this.pageCount())));
+  readonly pageCount = computed(() =>
+    Math.max(0, Math.ceil(this.total() / Math.max(1, this.pageSize()))),
+  );
+  readonly current = computed(() =>
+    Math.min(Math.max(1, this.page()), Math.max(1, this.pageCount())),
+  );
   readonly items = computed(() => pageWindow(this.current(), this.pageCount(), this.siblings()));
 
   protected params(page: number): Record<string, number | null> {

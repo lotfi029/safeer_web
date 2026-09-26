@@ -90,7 +90,9 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
             (click)="toggleSelectionMode()"
           >
             <app-icon [name]="selectionMode() ? 'x' : 'square-check'" />
-            {{ (selectionMode() ? 'ui.table.exitSelection' : 'ui.table.selectionMode') | transloco }}
+            {{
+              (selectionMode() ? 'ui.table.exitSelection' : 'ui.table.selectionMode') | transloco
+            }}
           </button>
         }
       </div>
@@ -134,7 +136,11 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
       <!-- md+: semantic table -->
       <div class="card card-flush hidden overflow-x-auto md:block">
         <table class="w-full border-collapse text-start">
-          <caption class="sr-only">{{ caption() }}</caption>
+          <caption class="sr-only">
+            {{
+              caption()
+            }}
+          </caption>
           <thead class="bg-surface">
             <tr>
               @if (selectable()) {
@@ -154,7 +160,7 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
               @for (col of columns(); track col.key) {
                 <th
                   scope="col"
-                  class="px-4 py-3 t-small font-semibold whitespace-nowrap text-text-muted"
+                  class="t-small px-4 py-3 font-semibold whitespace-nowrap text-text-muted"
                   [class]="alignClass(col)"
                   [attr.aria-sort]="col.sortable ? ariaSort(col) : null"
                 >
@@ -181,10 +187,7 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
           </thead>
           <tbody>
             @for (row of rows(); track trackBy()(row)) {
-              <tr
-                class="border-t border-border"
-                [class.bg-secondary-light]="isSelected(row)"
-              >
+              <tr class="border-t border-border" [class.bg-secondary-light]="isSelected(row)">
                 @if (selectable()) {
                   <td class="px-2">
                     <label class="inline-flex size-11 cursor-pointer items-center justify-center">
@@ -194,7 +197,9 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
                         [checked]="isSelected(row)"
                         (change)="toggleRow(row)"
                       />
-                      <span class="sr-only">{{ 'ui.table.selectRow' | transloco }} {{ rowName(row) }}</span>
+                      <span class="sr-only"
+                        >{{ 'ui.table.selectRow' | transloco }} {{ rowName(row) }}</span
+                      >
                     </label>
                   </td>
                 }
@@ -206,7 +211,9 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
                 @if (actionsTpl(); as actions) {
                   <td class="px-4 py-2 text-end">
                     <div class="inline-flex items-center justify-end gap-2">
-                      <ng-container *ngTemplateOutlet="actions.template; context: { $implicit: row }" />
+                      <ng-container
+                        *ngTemplateOutlet="actions.template; context: { $implicit: row }"
+                      />
                     </div>
                   </td>
                 }
@@ -226,14 +233,18 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
           >
             <div class="flex items-start gap-2">
               @if (selectable() && selectionMode()) {
-                <label class="-ms-2 -mt-2 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center">
+                <label
+                  class="-ms-2 -mt-2 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center"
+                >
                   <input
                     type="checkbox"
                     class="size-5 accent-primary"
                     [checked]="isSelected(row)"
                     (change)="toggleRow(row)"
                   />
-                  <span class="sr-only">{{ 'ui.table.selectRow' | transloco }} {{ rowName(row) }}</span>
+                  <span class="sr-only"
+                    >{{ 'ui.table.selectRow' | transloco }} {{ rowName(row) }}</span
+                  >
                 </label>
               }
               @if (titleColumn(); as title) {
@@ -248,7 +259,9 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
                   <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <dt class="t-small text-text-muted">{{ col.header }}</dt>
                     <dd class="text-end">
-                      <ng-container *ngTemplateOutlet="cell; context: { $implicit: row, col: col }" />
+                      <ng-container
+                        *ngTemplateOutlet="cell; context: { $implicit: row, col: col }"
+                      />
                     </dd>
                   </div>
                 }

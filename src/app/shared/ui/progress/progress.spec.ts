@@ -13,7 +13,9 @@ describe('Progress', () => {
           translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' },
         }),
       ],
-      providers: [{ provide: LocaleService, useValue: { lang: signal('en'), intlLocale: signal('en-GB') } }],
+      providers: [
+        { provide: LocaleService, useValue: { lang: signal('en'), intlLocale: signal('en-GB') } },
+      ],
     });
   });
 

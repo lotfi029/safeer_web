@@ -7,7 +7,12 @@ import { firstValueFrom } from 'rxjs';
 import { ApiError } from '../api/problem';
 import { CsrfTokens } from '../auth/csrf-tokens';
 import { LocaleService } from '../i18n/locale.service';
-import { credentialsInterceptor, csrfInterceptor, localeInterceptor, problemDetailsInterceptor } from './interceptors';
+import {
+  credentialsInterceptor,
+  csrfInterceptor,
+  localeInterceptor,
+  problemDetailsInterceptor,
+} from './interceptors';
 
 describe('API interceptor pipeline', () => {
   let http: HttpClient;
@@ -16,10 +21,22 @@ describe('API interceptor pipeline', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [TranslocoTestingModule.forRoot({ langs: { ar: {}, en: {} }, translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' } })],
+      imports: [
+        TranslocoTestingModule.forRoot({
+          langs: { ar: {}, en: {} },
+          translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' },
+        }),
+      ],
       providers: [
         provideRouter([]),
-        provideHttpClient(withInterceptors([localeInterceptor, credentialsInterceptor, csrfInterceptor, problemDetailsInterceptor])),
+        provideHttpClient(
+          withInterceptors([
+            localeInterceptor,
+            credentialsInterceptor,
+            csrfInterceptor,
+            problemDetailsInterceptor,
+          ]),
+        ),
         provideHttpClientTesting(),
       ],
     });
@@ -58,13 +75,21 @@ describe('API interceptor pipeline', () => {
     tokens.applicant.set('app-token');
 
     http.post('/api/v1/admin/auth/logout', {}).subscribe();
-    expect(ctrl.expectOne('/api/v1/admin/auth/logout').request.headers.get('X-CSRF-Token')).toBe('staff-token');
+    expect(ctrl.expectOne('/api/v1/admin/auth/logout').request.headers.get('X-CSRF-Token')).toBe(
+      'staff-token',
+    );
 
     http.patch('/api/v1/portal/application', {}).subscribe();
-    expect(ctrl.expectOne((r) => r.url === '/api/v1/portal/application').request.headers.get('X-CSRF-Token')).toBe('app-token');
+    expect(
+      ctrl
+        .expectOne((r) => r.url === '/api/v1/portal/application')
+        .request.headers.get('X-CSRF-Token'),
+    ).toBe('app-token');
 
     http.get('/api/v1/portal/me').subscribe();
-    expect(ctrl.expectOne((r) => r.url === '/api/v1/portal/me').request.headers.has('X-CSRF-Token')).toBe(false);
+    expect(
+      ctrl.expectOne((r) => r.url === '/api/v1/portal/me').request.headers.has('X-CSRF-Token'),
+    ).toBe(false);
 
     http.post('/api/v1/contact', {}).subscribe();
     const contact = ctrl.expectOne((r) => r.url === '/api/v1/contact');
@@ -74,15 +99,19 @@ describe('API interceptor pipeline', () => {
 
   it('sends credentials on POST /applications (starts the applicant session)', () => {
     http.post('/api/v1/applications', {}).subscribe();
-    expect(ctrl.expectOne((r) => r.url === '/api/v1/applications').request.withCredentials).toBe(true);
+    expect(ctrl.expectOne((r) => r.url === '/api/v1/applications').request.withCredentials).toBe(
+      true,
+    );
   });
 
   it('turns failures into ApiError', async () => {
     const promise = firstValueFrom(http.get('/api/v1/news'));
-    ctrl.expectOne((r) => r.url === '/api/v1/news').flush(
-      { code: 'RATE_LIMITED', title: 'x', status: 429 },
-      { status: 429, statusText: 'Too Many Requests' },
-    );
+    ctrl
+      .expectOne((r) => r.url === '/api/v1/news')
+      .flush(
+        { code: 'RATE_LIMITED', title: 'x', status: 429 },
+        { status: 429, statusText: 'Too Many Requests' },
+      );
     await expect(promise).rejects.toBeInstanceOf(ApiError);
   });
 
@@ -91,17 +120,24 @@ describe('API interceptor pipeline', () => {
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     tokens.applicant.set('app-token');
     const promise = firstValueFrom(http.get('/api/v1/portal/documents'));
-    ctrl.expectOne((r) => r.url === '/api/v1/portal/documents').flush({ code: 'UNAUTHENTICATED' }, { status: 401, statusText: 'x' });
+    ctrl
+      .expectOne((r) => r.url === '/api/v1/portal/documents')
+      .flush({ code: 'UNAUTHENTICATED' }, { status: 401, statusText: 'x' });
     await expect(promise).rejects.toBeInstanceOf(ApiError);
     expect(tokens.applicant()).toBeNull();
-    expect(navigate).toHaveBeenCalledWith(['/en/portal/login'], expect.objectContaining({ queryParams: expect.any(Object) }));
+    expect(navigate).toHaveBeenCalledWith(
+      ['/en/portal/login'],
+      expect.objectContaining({ queryParams: expect.any(Object) }),
+    );
   });
 
   it('a 401 from /portal/me is an answer, not an expiry', async () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate');
     const promise = firstValueFrom(http.get('/api/v1/portal/me'));
-    ctrl.expectOne((r) => r.url === '/api/v1/portal/me').flush({}, { status: 401, statusText: 'x' });
+    ctrl
+      .expectOne((r) => r.url === '/api/v1/portal/me')
+      .flush({}, { status: 401, statusText: 'x' });
     await expect(promise).rejects.toBeInstanceOf(ApiError);
     expect(navigate).not.toHaveBeenCalled();
   });

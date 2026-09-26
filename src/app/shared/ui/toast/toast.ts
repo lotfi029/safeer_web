@@ -114,16 +114,16 @@ const ICONS: Record<ToastKind, IconName> = {
       class="pointer-events-none fixed start-4 end-4 bottom-4 z-[1100] flex flex-col gap-3 sm:start-auto sm:w-96"
       [attr.aria-label]="'ui.toast.region' | transloco"
     >
-    <div class="flex flex-col gap-3" role="status" aria-live="polite" aria-atomic="false">
-      @for (toast of polite(); track toast.id) {
-        <ng-container *ngTemplateOutlet="item; context: { $implicit: toast }" />
-      }
-    </div>
-    <div class="flex flex-col gap-3" role="alert" aria-live="assertive" aria-atomic="false">
-      @for (toast of assertive(); track toast.id) {
-        <ng-container *ngTemplateOutlet="item; context: { $implicit: toast }" />
-      }
-    </div>
+      <div class="flex flex-col gap-3" role="status" aria-live="polite" aria-atomic="false">
+        @for (toast of polite(); track toast.id) {
+          <ng-container *ngTemplateOutlet="item; context: { $implicit: toast }" />
+        }
+      </div>
+      <div class="flex flex-col gap-3" role="alert" aria-live="assertive" aria-atomic="false">
+        @for (toast of assertive(); track toast.id) {
+          <ng-container *ngTemplateOutlet="item; context: { $implicit: toast }" />
+        }
+      </div>
     </section>
 
     <ng-template #item let-toast>
@@ -152,7 +152,9 @@ export class ToastOutlet {
   protected iconFor(kind: ToastKind): IconName {
     return ICONS[kind];
   }
-  protected readonly polite = computed(() => this.toasts.toasts().filter((t) => t.kind !== 'error'));
+  protected readonly polite = computed(() =>
+    this.toasts.toasts().filter((t) => t.kind !== 'error'),
+  );
   protected readonly assertive = computed(() =>
     this.toasts.toasts().filter((t) => t.kind === 'error'),
   );

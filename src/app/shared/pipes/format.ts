@@ -59,9 +59,7 @@ export function formatDate(value: string | Date, style: DateStyle, intlLocale: s
     return '';
   }
   const options: Intl.DateTimeFormatOptions =
-    style === 'datetime'
-      ? { dateStyle: 'medium', timeStyle: 'short' }
-      : { dateStyle: style };
+    style === 'datetime' ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: style };
   // Dates from the API are calendar dates (YYYY-MM-DD) or UTC instants; show them in Riyadh time.
   return new Intl.DateTimeFormat(intlLocale, { ...options, timeZone: 'Asia/Riyadh' }).format(date);
 }

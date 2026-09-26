@@ -19,6 +19,8 @@ describe('files image loader (F12)', () => {
   it('maps files/ sources to variant URLs and leaves others alone', () => {
     expect(filesImageLoader({ src: 'files/abc', width: 600 })).toBe('/files/abc/card');
     expect(filesImageLoader({ src: 'files/a b' })).toBe('/files/a%20b/card');
-    expect(filesImageLoader({ src: '/brand/safeer-logo.png', width: 400 })).toBe('/brand/safeer-logo.png');
+    expect(filesImageLoader({ src: '/brand/safeer-logo.png', width: 400 })).toBe(
+      '/brand/safeer-logo.png',
+    );
   });
 });

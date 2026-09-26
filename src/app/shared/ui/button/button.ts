@@ -1,14 +1,7 @@
 import { Directive, input } from '@angular/core';
 
 export type ButtonVariant =
-  | 'primary'
-  | 'ghost'
-  | 'soft'
-  | 'line'
-  | 'danger'
-  | 'onband'
-  | 'onband-ghost'
-  | 'link';
+  'primary' | 'ghost' | 'soft' | 'line' | 'danger' | 'onband' | 'onband-ghost' | 'link';
 
 /**
  * Styles a real `<button>` or `<a>` as a spec button (52–54px, radius 10, hover lift 1px / 200ms).

@@ -17,13 +17,23 @@ describe('guards', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [TranslocoTestingModule.forRoot({ langs: { ar: {}, en: {} }, translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' } })],
+      imports: [
+        TranslocoTestingModule.forRoot({
+          langs: { ar: {}, en: {} },
+          translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' },
+        }),
+      ],
       providers: [
         { provide: StaffSessionStore, useValue: staff },
         { provide: ApplicantSessionStore, useValue: applicant },
         provideRouter([
           { path: 'ar/admin', canActivate: [staffGuard], component: Page },
-          { path: 'ar/admin/news', canActivate: [staffGuard, roleGuard], data: { area: 'news' }, component: Page },
+          {
+            path: 'ar/admin/news',
+            canActivate: [staffGuard, roleGuard],
+            data: { area: 'news' },
+            component: Page,
+          },
           { path: 'ar/admin/login', component: Page },
           { path: 'ar/admin/forbidden', component: Page },
           { path: 'ar/portal', canActivate: [applicantGuard], component: Page },

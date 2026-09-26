@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { langCanMatch } from './core/i18n/lang';
-import { langResolver } from './core/i18n/lang.resolver';
+import { langGuard } from './core/i18n/lang.guard';
 import { KIT_ROUTES } from './features/kit/kit.routes';
 
 export const routes: Routes = [
@@ -9,7 +9,7 @@ export const routes: Routes = [
   {
     path: ':lang',
     canMatch: [langCanMatch],
-    resolve: { resolvedLang: langResolver },
+    canActivate: [langGuard],
     runGuardsAndResolvers: 'paramsChange',
     loadComponent: () => import('./layout/lang-shell').then((m) => m.LangShell),
     children: [

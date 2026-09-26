@@ -11,7 +11,9 @@ import { Tab, TabContent, Tabs } from './tabs';
     <app-tabs [(selectedIndex)]="index" label="Sections">
       <app-tab label="One">first</app-tab>
       <app-tab label="Two" [disabled]="true">second</app-tab>
-      <app-tab label="Three"><ng-template appTabContent><span class="lazy">third</span></ng-template></app-tab>
+      <app-tab label="Three"
+        ><ng-template appTabContent><span class="lazy">third</span></ng-template></app-tab
+      >
     </app-tabs>
   `,
 })
@@ -29,7 +31,9 @@ function setup(dir: 'ltr' | 'rtl') {
   const tabs = () => Array.from(el.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
   const panels = () => Array.from(el.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
   const key = (key: string) => {
-    tabs()[fixture.componentInstance.index()].dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    tabs()[fixture.componentInstance.index()].dispatchEvent(
+      new KeyboardEvent('keydown', { key, bubbles: true }),
+    );
     fixture.detectChanges();
   };
   return { fixture, el, tabs, panels, key };

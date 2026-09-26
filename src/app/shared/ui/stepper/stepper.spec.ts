@@ -9,11 +9,19 @@ describe('Stepper', () => {
     TestBed.configureTestingModule({
       imports: [
         TranslocoTestingModule.forRoot({
-          langs: { ar: { ui: { stepper: { compact: 'الخطوة {{current}} من {{total}}', done: 'مكتملة' } } }, en: {} },
+          langs: {
+            ar: { ui: { stepper: { compact: 'الخطوة {{current}} من {{total}}', done: 'مكتملة' } } },
+            en: {},
+          },
           translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' },
         }),
       ],
-      providers: [{ provide: LocaleService, useValue: { lang: signal('ar'), intlLocale: signal('ar-SA-u-nu-arab') } }],
+      providers: [
+        {
+          provide: LocaleService,
+          useValue: { lang: signal('ar'), intlLocale: signal('ar-SA-u-nu-arab') },
+        },
+      ],
     });
   });
 

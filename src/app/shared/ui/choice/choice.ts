@@ -24,7 +24,11 @@ let nextId = 0;
           <span class="field-required" aria-hidden="true">*</span>
         }
       </legend>
-      <div class="grid gap-3" [class.sm:grid-cols-2]="columns() === 2" [class.sm:grid-cols-3]="columns() === 3">
+      <div
+        class="grid gap-3"
+        [class.sm:grid-cols-2]="columns() === 2"
+        [class.sm:grid-cols-3]="columns() === 3"
+      >
         <ng-content />
       </div>
       @if (hint()) {
@@ -49,6 +53,10 @@ export class ChoiceGroup {
   protected readonly errorId = `${this.id}-error`;
 
   protected describedBy(): string | null {
-    return [this.hint() ? this.hintId : null, this.error() ? this.errorId : null].filter(Boolean).join(' ') || null;
+    return (
+      [this.hint() ? this.hintId : null, this.error() ? this.errorId : null]
+        .filter(Boolean)
+        .join(' ') || null
+    );
   }
 }

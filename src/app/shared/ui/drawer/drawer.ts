@@ -88,18 +88,27 @@ let nextId = 0;
       "
     >
       @if (side === 'bottom') {
-        <span class="mx-auto mt-3 block h-1.5 w-12 rounded-full bg-border" aria-hidden="true"></span>
+        <span
+          class="mx-auto mt-3 block h-1.5 w-12 rounded-full bg-border"
+          aria-hidden="true"
+        ></span>
       }
       <div class="flex items-center justify-between gap-3 px-5 py-4">
         <h2 class="t-h4 min-w-0 flex-1" [id]="headingId()">{{ heading() }}</h2>
-        <button type="button" [appIconButton]="closeLabel() || ('ui.drawer.close' | transloco)" (click)="close()">
+        <button
+          type="button"
+          [appIconButton]="closeLabel() || ('ui.drawer.close' | transloco)"
+          (click)="close()"
+        >
           <app-icon name="x" />
         </button>
       </div>
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5">
         <ng-content />
       </div>
-      <div class="flex flex-wrap gap-3 border-t border-border px-5 py-4 empty:hidden"><ng-content select="[drawerActions]" /></div>
+      <div class="flex flex-wrap gap-3 border-t border-border px-5 py-4 empty:hidden">
+        <ng-content select="[drawerActions]" />
+      </div>
     </div>
   `,
 })

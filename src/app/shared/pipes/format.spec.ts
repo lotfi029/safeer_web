@@ -8,12 +8,12 @@ describe('format helpers', () => {
   it('formats file sizes per locale', () => {
     expect(formatFileSize(512, 'en-GB')).toBe('512 byte');
     expect(formatFileSize(2.4 * 1024 * 1024, 'en-GB')).toBe('2.4 MB');
-    expect(formatFileSize(5 * 1024 * 1024, 'ar-SA-u-nu-arab')).toContain('٥');
+    expect(formatFileSize(5 * 1024 * 1024, 'ar-SA-u-ca-gregory-nu-arab')).toContain('٥');
   });
 
   it('formats dates in Riyadh time', () => {
     expect(formatDate('2020-07-30', 'long', 'en-GB')).toBe('30 July 2020');
-    expect(formatDate('2020-07-30', 'long', 'ar-SA-u-nu-arab')).toContain('٢٠٢٠');
+    expect(formatDate('2020-07-30', 'long', 'ar-SA-u-ca-gregory-nu-arab')).toContain('٢٠٢٠');
     expect(formatDate('nonsense', 'long', 'en-GB')).toBe('');
   });
 

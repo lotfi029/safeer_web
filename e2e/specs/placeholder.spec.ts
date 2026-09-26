@@ -17,7 +17,8 @@ test.describe('Phase 0 placeholder shell', () => {
 
   test('admin and portal render client-side with noindex', async ({ page }) => {
     await page.goto('/ar/admin');
-    await expect(page.locator('h1')).toHaveText('لوحة التحكم');
+    await expect(page).toHaveURL(/\/ar\/admin\/login/);
+    await expect(page.locator('h1')).toHaveText('تسجيل دخول الموظفين');
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
       'content',
       'noindex, nofollow',

@@ -75,7 +75,9 @@ describe('FilterBar', () => {
     const input = el.querySelector('input[type="search"]') as HTMLInputElement;
     expect(input.classList).toContain('control');
     expect(input.id).toMatch(/^app-filter-search-/);
-    expect(input.closest('label')?.querySelector('.sr-only')?.textContent).toContain('ui.filterBar.searchLabel');
+    expect(input.closest('label')?.querySelector('.sr-only')?.textContent).toContain(
+      'ui.filterBar.searchLabel',
+    );
     input.value = 'a';
     input.dispatchEvent(new Event('input'));
     input.value = 'ab';
@@ -110,7 +112,9 @@ describe('FilterBar', () => {
     await fixture.whenStable();
     TestBed.tick();
     expect(document.querySelector('.cdk-overlay-pane')?.classList).toContain('app-sheet-panel');
-    const sheetChips = document.querySelectorAll<HTMLButtonElement>('.cdk-overlay-pane button.chip');
+    const sheetChips = document.querySelectorAll<HTMLButtonElement>(
+      '.cdk-overlay-pane button.chip',
+    );
     expect(sheetChips.length).toBe(3);
     sheetChips[2].click();
     expect(fixture.componentInstance.selected()).toBe('accepted');

@@ -20,7 +20,9 @@ export function variantFor(width: number): ImageVariant {
  * yields `400w, 600w` because the card and full variants are both 600px wide.
  */
 export function srcsetWidths(originalWidth: number | null): number[] {
-  const widths = IMAGE_VARIANTS.map((v) => (originalWidth ? Math.min(v.width, originalWidth) : v.width));
+  const widths = IMAGE_VARIANTS.map((v) =>
+    originalWidth ? Math.min(v.width, originalWidth) : v.width,
+  );
   return [...new Set(widths)];
 }
 

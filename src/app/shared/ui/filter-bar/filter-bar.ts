@@ -97,7 +97,8 @@ let nextId = 0;
             queryParamsHandling="merge"
             [attr.aria-current]="isSelected(chip) ? 'page' : null"
             (click)="pick(chip, inSheet)"
-          >{{ chip.label }}</a>
+            >{{ chip.label }}</a
+          >
         } @else {
           <button
             type="button"
@@ -112,7 +113,10 @@ let nextId = 0;
     </ng-template>
 
     <ng-template #sheet>
-      <app-drawer-frame [heading]="label() || ('common.filters' | transloco)" [headingId]="sheetHeadingId">
+      <app-drawer-frame
+        [heading]="label() || ('common.filters' | transloco)"
+        [headingId]="sheetHeadingId"
+      >
         <div class="flex flex-wrap gap-2" role="group" [attr.aria-labelledby]="sheetHeadingId">
           <ng-container *ngTemplateOutlet="chipList; context: { sheet: true }" />
         </div>

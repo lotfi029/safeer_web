@@ -24,11 +24,19 @@ async function readBody(req, url) {
   if (req.method === 'GET' || req.method === 'HEAD') return undefined;
   const type = req.headers['content-type'] ?? '';
   if (type.startsWith('multipart/form-data')) {
-    const form = await new Request(url, { method: req.method, headers: req.headers, body: req, duplex: 'half' }).formData();
+    const form = await new Request(url, {
+      method: req.method,
+      headers: req.headers,
+      body: req,
+      duplex: 'half',
+    }).formData();
     const file = form.get('file');
     return {
       docType: form.get('docType'),
-      file: file && typeof file === 'object' ? { name: file.name, size: file.size, type: file.type } : undefined,
+      file:
+        file && typeof file === 'object'
+          ? { name: file.name, size: file.size, type: file.type }
+          : undefined,
     };
   }
   const chunks = [];
@@ -45,7 +53,12 @@ async function readBody(req, url) {
 function send(res, status, body, headers = {}) {
   const isBuffer = Buffer.isBuffer(body);
   const isText = typeof body === 'string';
-  res.writeHead(status, { ...(isBuffer || isText || body === null ? {} : { 'content-type': 'application/json; charset=utf-8' }), ...headers });
+  res.writeHead(status, {
+    ...(isBuffer || isText || body === null
+      ? {}
+      : { 'content-type': 'application/json; charset=utf-8' }),
+    ...headers,
+  });
   res.end(body === null ? undefined : isBuffer || isText ? body : JSON.stringify(body));
 }
 
@@ -60,26 +73,62 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { ok: true });
   }
 
-  log.push({ method: req.method, path: url.pathname, search: url.search, headers: req.headers, at: Date.now() });
+  log.push({
+    method: req.method,
+    path: url.pathname,
+    search: url.search,
+    headers: req.headers,
+    at: Date.now(),
+  });
   if (log.length > 300) log.shift();
 
   if (url.pathname === '/api/v1/__echo') {
     const body = await readBody(req, url);
-    return send(res, 200, { method: req.method, path: url.pathname, search: url.search, headers: req.headers, bodyBytes: body ? JSON.stringify(body).length : 0 }, { 'set-cookie': 'sf_echo=1; Path=/; HttpOnly; SameSite=Strict' });
+    return send(
+      res,
+      200,
+      {
+        method: req.method,
+        path: url.pathname,
+        search: url.search,
+        headers: req.headers,
+        bodyBytes: body ? JSON.stringify(body).length : 0,
+      },
+      { 'set-cookie': 'sf_echo=1; Path=/; HttpOnly; SameSite=Strict' },
+    );
   }
   if (req.method === 'GET' && url.pathname.startsWith('/files/')) {
-    return send(res, 200, PNG, { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' });
+    return send(res, 200, PNG, {
+      'content-type': 'image/png',
+      'cache-control': 'public, max-age=86400',
+    });
   }
   try {
     const body = await readBody(req, url);
-    const out = backend.handle({ method: req.method ?? 'GET', url: url.pathname + url.search, headers: req.headers, body });
+    const out = backend.handle({
+      method: req.method ?? 'GET',
+      url: url.pathname + url.search,
+      headers: req.headers,
+      body,
+    });
     const headers = { ...out.headers };
-    return send(res, out.status, out.body === null && out.status !== 204 ? 'null' : out.body, headers);
+    return send(
+      res,
+      out.status,
+      out.body === null && out.status !== 204 ? 'null' : out.body,
+      headers,
+    );
   } catch (err) {
     console.error(err);
-    return send(res, 500, { status: 500, code: 'INTERNAL_ERROR', title: 'mock error' }, { 'content-type': 'application/problem+json' });
+    return send(
+      res,
+      500,
+      { status: 500, code: 'INTERNAL_ERROR', title: 'mock error' },
+      { 'content-type': 'application/problem+json' },
+    );
   }
 });
 
 server.listen(port, '127.0.0.1', () => console.log(`mock API on http://127.0.0.1:${port}`));
-for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => server.close(() => process.exit(0)));
+for (const signal of ['SIGTERM', 'SIGINT'])
+  process.once(signal, () => server.close(() => process.exit(0)));

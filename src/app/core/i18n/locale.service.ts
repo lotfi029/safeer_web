@@ -22,7 +22,10 @@ export class LocaleService {
   readonly dir = computed(() => dirFor(this.current()));
   readonly otherLang = computed<Lang>(() => (this.current() === 'ar' ? 'en' : 'ar'));
   /** BCP 47 tag for Intl APIs. Arabic uses Arabic-Indic digits (spec §2). */
-  readonly intlLocale = computed(() => (this.current() === 'ar' ? 'ar-SA-u-nu-arab' : 'en-GB'));
+  /** Gregorian calendar explicitly: ar-SA defaults to Umm al-Qura in browsers. */
+  readonly intlLocale = computed(() =>
+    this.current() === 'ar' ? 'ar-SA-u-ca-gregory-nu-arab' : 'en-GB',
+  );
 
   async use(lang: Lang): Promise<void> {
     await firstValueFrom(this.transloco.load(lang));

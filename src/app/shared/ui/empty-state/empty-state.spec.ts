@@ -5,7 +5,9 @@ import { EmptyState } from './empty-state';
 
 @Component({
   imports: [EmptyState],
-  template: `<app-empty-state icon="search" body="Body"><button type="button">Act</button></app-empty-state>`,
+  template: `<app-empty-state icon="search" body="Body"
+    ><button type="button">Act</button></app-empty-state
+  >`,
 })
 class Host {}
 

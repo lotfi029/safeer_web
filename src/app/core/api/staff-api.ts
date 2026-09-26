@@ -14,7 +14,10 @@ export class StaffApi {
   }
 
   login(email: string, password: string): Observable<{ user: StaffUser; csrfToken: string }> {
-    return this.http.post<{ user: StaffUser; csrfToken: string }>(`${API_PREFIX}/admin/auth/login`, { email, password });
+    return this.http.post<{ user: StaffUser; csrfToken: string }>(
+      `${API_PREFIX}/admin/auth/login`,
+      { email, password },
+    );
   }
 
   logout(): Observable<OkResponse> {

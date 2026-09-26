@@ -13,7 +13,12 @@ describe('Timeline', () => {
     TestBed.configureTestingModule({
       imports: [
         TranslocoTestingModule.forRoot({
-          langs: { ar: { ui: { timeline: { label: 'مسار', done: 'مكتملة', now: 'الآن', pending: 'لم تبدأ' } } }, en: {} },
+          langs: {
+            ar: {
+              ui: { timeline: { label: 'مسار', done: 'مكتملة', now: 'الآن', pending: 'لم تبدأ' } },
+            },
+            en: {},
+          },
           translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' },
         }),
       ],
@@ -36,7 +41,9 @@ describe('Timeline', () => {
     expect(li[2].textContent).toContain('لم تبدأ');
     expect(li[2].getAttribute('aria-current')).toBeNull();
     // connecting lines between items only
-    expect(el.querySelectorAll('.bg-primary.rounded-full.grow, .bg-border.rounded-full.grow').length).toBe(2);
+    expect(
+      el.querySelectorAll('.bg-primary.rounded-full.grow, .bg-border.rounded-full.grow').length,
+    ).toBe(2);
   });
 
   it('switches layout classes per orientation', async () => {

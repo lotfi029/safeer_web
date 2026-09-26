@@ -11,7 +11,12 @@ import { StaffSessionStore } from './staff-session.store';
 
 function setup() {
   TestBed.configureTestingModule({
-    imports: [TranslocoTestingModule.forRoot({ langs: { ar: {}, en: {} }, translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' } })],
+    imports: [
+      TranslocoTestingModule.forRoot({
+        langs: { ar: {}, en: {} },
+        translocoConfig: { availableLangs: ['ar', 'en'], defaultLang: 'ar' },
+      }),
+    ],
     providers: [
       provideRouter([]),
       provideHttpClient(withInterceptors([csrfInterceptor, problemDetailsInterceptor])),
@@ -28,9 +33,20 @@ describe('StaffSessionStore', () => {
     const { ctrl, tokens } = setup();
     const store = TestBed.inject(StaffSessionStore);
     const loaded = store.ensureLoaded();
-    ctrl.expectOne('/api/v1/admin/me').flush({ id: '1', name: 'x', email: 'a@b.c', role: 'editor', isLocked: false, lastLoginAt: null, csrfToken: 't1' });
+    ctrl.expectOne('/api/v1/admin/me').flush({
+      id: '1',
+      name: 'x',
+      email: 'a@b.c',
+      role: 'editor',
+      isLocked: false,
+      lastLoginAt: null,
+      csrfToken: 't1',
+    });
     await tick();
-    ctrl.expectOne('/api/v1/admin/roles').flush({ roles: ['admin', 'editor'], matrix: { news: ['admin', 'editor'], users: ['admin'] } });
+    ctrl.expectOne('/api/v1/admin/roles').flush({
+      roles: ['admin', 'editor'],
+      matrix: { news: ['admin', 'editor'], users: ['admin'] },
+    });
     expect(await loaded).toBe(true);
     expect(tokens.staff()).toBe('t1');
     expect(store.can('news')).toBe(true);
@@ -42,7 +58,15 @@ describe('StaffSessionStore', () => {
     const { ctrl } = setup();
     const store = TestBed.inject(StaffSessionStore);
     const loaded = store.ensureLoaded();
-    ctrl.expectOne('/api/v1/admin/me').flush({ id: '1', name: 'x', email: 'a@b.c', role: 'reviewer', isLocked: false, lastLoginAt: null, csrfToken: 't' });
+    ctrl.expectOne('/api/v1/admin/me').flush({
+      id: '1',
+      name: 'x',
+      email: 'a@b.c',
+      role: 'reviewer',
+      isLocked: false,
+      lastLoginAt: null,
+      csrfToken: 't',
+    });
     await tick();
     ctrl.expectOne('/api/v1/admin/roles').flush({}, { status: 404, statusText: 'Not Found' });
     await loaded;
@@ -68,7 +92,9 @@ describe('ApplicantSessionStore', () => {
     const { ctrl, tokens } = setup();
     const store = TestBed.inject(ApplicantSessionStore);
     const loaded = store.ensureLoaded();
-    ctrl.expectOne('/api/v1/portal/me').flush({ reference: 'SA-2026-00001', status: 'draft', csrfToken: 'fresh' });
+    ctrl
+      .expectOne('/api/v1/portal/me')
+      .flush({ reference: 'SA-2026-00001', status: 'draft', csrfToken: 'fresh' });
     expect(await loaded).toBe(true);
     expect(tokens.applicant()).toBe('fresh');
     expect(store.canWrite()).toBe(true);

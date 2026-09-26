@@ -27,7 +27,9 @@ const DIRECTIONAL: ReadonlySet<IconName> = new Set<IconName>([
     '[attr.role]': 'label() ? "img" : null',
     '[attr.aria-label]': 'label()',
   },
-  template: `<svg [attr.width]="size()" [attr.height]="size()" focusable="false"><use [attr.href]="href()" /></svg>`,
+  template: `<svg [attr.width]="size()" [attr.height]="size()" focusable="false">
+    <use [attr.href]="href()" />
+  </svg>`,
 })
 export class Icon {
   readonly name = input.required<IconName>();

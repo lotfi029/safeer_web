@@ -1,10 +1,23 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DigitsPipe, FileSizePipe } from '../../pipes/format';
 import { Button } from '../button/button';
 import { Icon } from '../icon/icon';
 import { Progress } from '../progress/progress';
-import { DOCUMENT_ACCEPT, DOCUMENT_MAX_BYTES, FileRejection, validateFiles } from './validate-files';
+import {
+  DOCUMENT_ACCEPT,
+  DOCUMENT_MAX_BYTES,
+  FileRejection,
+  validateFiles,
+} from './validate-files';
 
 export type FileDropStatus = 'idle' | 'uploading' | 'done' | 'error';
 
@@ -32,7 +45,9 @@ let nextId = 0;
       [class.border-secondary]="!hasError()"
       [class.border-alert]="hasError()"
       [class.bg-secondary-light]="isDragging()"
-      [class.opacity-60]="disabled()"
+      [class.border-border]="disabled()"
+      [class.bg-surface]="disabled()"
+      [attr.aria-disabled]="disabled() ? 'true' : null"
       [attr.data-dragging]="isDragging() ? 'true' : null"
       (dragenter)="onDragEnter($event)"
       (dragover)="onDragOver($event)"
@@ -42,7 +57,9 @@ let nextId = 0;
       <span class="icon-tile">
         <app-icon [name]="status() === 'done' ? 'file-check' : 'cloud-upload'" [size]="26" />
       </span>
-      <label class="font-bold" [for]="inputId">{{ label() ?? ('ui.fileDrop.title' | transloco) }}</label>
+      <label class="font-bold" [for]="inputId">{{
+        label() ?? ('ui.fileDrop.title' | transloco)
+      }}</label>
       <p class="field-hint m-0" [id]="hintId">
         {{ hint() ?? ('ui.fileDrop.hint' | transloco: { size: (maxBytes() | fileSize) }) }}
       </p>
@@ -75,8 +92,13 @@ let nextId = 0;
 
       @if (showProgress()) {
         <div class="flex w-full max-w-sm flex-col gap-2">
-          <app-progress [value]="progress()" [label]="'ui.fileDrop.uploading' | transloco: { percent: (percentText() | digits) }" />
-          <p class="t-caption m-0" aria-hidden="true">{{ 'ui.fileDrop.uploading' | transloco: { percent: (percentText() | digits) } }}</p>
+          <app-progress
+            [value]="progress()"
+            [label]="'ui.fileDrop.uploading' | transloco: { percent: (percentText() | digits) }"
+          />
+          <p class="t-caption m-0" aria-hidden="true">
+            {{ 'ui.fileDrop.uploading' | transloco: { percent: (percentText() | digits) } }}
+          </p>
         </div>
       }
       <p class="m-0 flex items-center gap-2 font-semibold text-success" role="status">
@@ -91,7 +113,8 @@ let nextId = 0;
         }
         @for (r of rejections(); track $index) {
           <p class="m-0">
-            <bdi>{{ r.file.name }}</bdi>: {{ 'ui.fileDrop.errors.' + r.reason | transloco: { size: (maxBytes() | fileSize) } }}
+            <bdi>{{ r.file.name }}</bdi
+            >: {{ 'ui.fileDrop.errors.' + r.reason | transloco: { size: (maxBytes() | fileSize) } }}
           </p>
         }
       </div>
@@ -133,9 +156,13 @@ export class FileDrop {
   protected readonly showProgress = computed(
     () => this.status() === 'uploading' || (this.progress() !== null && this.status() !== 'done'),
   );
-  protected readonly percentText = computed(() => Math.round(Math.min(100, Math.max(0, this.progress() ?? 0))));
+  protected readonly percentText = computed(() =>
+    Math.round(Math.min(100, Math.max(0, this.progress() ?? 0))),
+  );
   protected readonly describedBy = computed(() =>
-    [this.hintId, this.error() || this.rejections().length ? this.errorId : null].filter(Boolean).join(' '),
+    [this.hintId, this.error() || this.rejections().length ? this.errorId : null]
+      .filter(Boolean)
+      .join(' '),
   );
 
   /** Validates and emits; also the entry point for programmatic use and tests. */

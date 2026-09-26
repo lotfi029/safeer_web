@@ -25,7 +25,7 @@ cp .env.example .env   # only needed to run the built server
 
 | Command | What it does |
 |---|---|
-| `npm start` | Dev server (`ng serve`, SSR + in-app mocks) on http://localhost:4200 |
+| `npm start` | Dev server (`ng serve`, SSR + in-app mocks) on http://localhost:4200 — component kit at `/ar/_kit` |
 | `npm run mock-api` | Node mock of `safeer_api` on :3100 (shared fixtures in `mocks/fixtures/`) |
 | `npm run build` | Production build → `dist/safeer_web/` |
 | `npm run build:ci` | Production build + gzip budget (< 150 KB) + prod-artifact check + `e2e` build |
@@ -53,3 +53,11 @@ Set `E2E_SCREENS_DIR=docs/frontend/screens/phase-N` to write the committed 390/1
 `.github/workflows/ci.yml`: lint → unit (app + server) → build + budgets → e2e (mock API, or the real API when the
 `E2E_API_URL` repository variable is set). The full 6 × 2 matrix runs in `nightly.yml`, on demand, and on PRs
 labelled `full-matrix`.
+
+## Mocks
+
+Backend features that are not live yet are implemented to the agreed contract in `mocks/backend.mjs`
+(fixtures in `mocks/fixtures/`). The same code backs the in-app mock interceptor (`ng serve`,
+`environment.useMocks`) and the Node mock API used by e2e/CI, so they cannot drift. Mock logins:
+staff `admin@mock.invalid` / `mock-password` (also `reviewer@`, `editor@`, `support@`), applicant OTP `123456`.
+Production builds contain no mock code and no `/_kit` (checked by `scripts/check-prod-artifact.mjs`).

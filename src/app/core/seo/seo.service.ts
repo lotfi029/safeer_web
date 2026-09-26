@@ -79,7 +79,9 @@ export class SeoService {
 
   private link(rel: 'canonical' | 'alternate', href: string, hreflang?: string): void {
     const head = this.document.head;
-    const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]:not([hreflang])`;
+    const selector = hreflang
+      ? `link[rel="${rel}"][hreflang="${hreflang}"]`
+      : `link[rel="${rel}"]:not([hreflang])`;
     let el = head.querySelector<HTMLLinkElement>(selector);
     if (!el) {
       el = this.document.createElement('link');
@@ -102,7 +104,10 @@ export class SeoService {
     script.id = JSON_LD_ID;
     script.type = 'application/ld+json';
     // `<` is escaped so API content can never close the script element.
-    script.textContent = JSON.stringify(items.length === 1 ? items[0] : items).replace(/</g, '\\u003c');
+    script.textContent = JSON.stringify(items.length === 1 ? items[0] : items).replace(
+      /</g,
+      '\\u003c',
+    );
     head.appendChild(script);
   }
 }

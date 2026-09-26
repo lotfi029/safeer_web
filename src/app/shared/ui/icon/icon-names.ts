@@ -81,6 +81,6 @@ export const ICON_NAMES = [
   'image',
   'ellipsis',
   'grip-vertical',
-  'square-check'
+  'square-check',
 ] as const;
 export type IconName = (typeof ICON_NAMES)[number];

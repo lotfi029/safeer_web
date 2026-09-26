@@ -1,4 +1,9 @@
-import { DOCUMENT_ACCEPT, DOCUMENT_MAX_BYTES, isAcceptedType, validateFiles } from './validate-files';
+import {
+  DOCUMENT_ACCEPT,
+  DOCUMENT_MAX_BYTES,
+  isAcceptedType,
+  validateFiles,
+} from './validate-files';
 
 function file(name: string, type: string, size = 10): File {
   return new File([new Uint8Array(size)], name, { type });
@@ -12,7 +17,12 @@ describe('validateFiles', () => {
     expect(isAcceptedType(file('a.jpg', 'image/jpeg'), DOCUMENT_ACCEPT)).toBe(true);
     expect(isAcceptedType(file('a.png', 'image/png'), DOCUMENT_ACCEPT)).toBe(true);
     expect(isAcceptedType(file('a.gif', 'image/gif'), DOCUMENT_ACCEPT)).toBe(false);
-    expect(isAcceptedType(file('a.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'), DOCUMENT_ACCEPT)).toBe(false);
+    expect(
+      isAcceptedType(
+        file('a.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        DOCUMENT_ACCEPT,
+      ),
+    ).toBe(false);
   });
 
   it('falls back to the extension when MIME is empty', () => {
@@ -37,13 +47,18 @@ describe('validateFiles', () => {
     const big = file('b.pdf', 'application/pdf', 101);
     const result = validateFiles([ok], { ...OPTS, maxBytes: 100 });
     expect(result.accepted).toEqual([ok]);
-    expect(validateFiles([big], { ...OPTS, maxBytes: 100 }).rejected).toEqual([{ file: big, reason: 'size' }]);
+    expect(validateFiles([big], { ...OPTS, maxBytes: 100 }).rejected).toEqual([
+      { file: big, reason: 'size' },
+    ]);
   });
 
   it('rejects extra files when multiple is false', () => {
     const a = file('a.pdf', 'application/pdf');
     const b = file('b.pdf', 'application/pdf');
-    expect(validateFiles([a, b], OPTS)).toEqual({ accepted: [a], rejected: [{ file: b, reason: 'count' }] });
+    expect(validateFiles([a, b], OPTS)).toEqual({
+      accepted: [a],
+      rejected: [{ file: b, reason: 'count' }],
+    });
     expect(validateFiles([a, b], { ...OPTS, multiple: true }).accepted).toEqual([a, b]);
   });
 

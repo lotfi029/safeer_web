@@ -56,7 +56,9 @@ export interface FieldStateLike {
     @if (showErrors()) {
       <p class="field-error" [id]="errorId" role="alert">
         @for (error of visibleErrors(); track $index) {
-          <span class="block">{{ error.message || ('validation.' + error.kind | transloco: $any(error)) }}</span>
+          <span class="block">{{
+            error.message || ('validation.' + error.kind | transloco: $any(error))
+          }}</span>
         }
       </p>
     }
@@ -79,11 +81,15 @@ export class Field {
 
   readonly visibleErrors = computed(() => [...(this.state()?.errors() ?? []), ...this.errors()]);
   readonly showErrors = computed(
-    () => this.visibleErrors().length > 0 && (this.forceErrors() || (this.state()?.touched() ?? true)),
+    () =>
+      this.visibleErrors().length > 0 && (this.forceErrors() || (this.state()?.touched() ?? true)),
   );
   readonly isRequired = computed(() => this.required() || (this.state()?.required?.() ?? false));
   readonly describedBy = computed(
-    () => [this.hint() ? this.hintId : null, this.showErrors() ? this.errorId : null].filter(Boolean).join(' ') || null,
+    () =>
+      [this.hint() ? this.hintId : null, this.showErrors() ? this.errorId : null]
+        .filter(Boolean)
+        .join(' ') || null,
   );
 }
 
@@ -92,7 +98,7 @@ export class Field {
   selector: 'input[appControl], select[appControl], textarea[appControl]',
   host: {
     class: 'control',
-    '[id]': 'field?.controlId ?? null',
+    '[attr.id]': 'field?.controlId ?? null',
     '[attr.aria-describedby]': 'field?.describedBy() ?? null',
     '[attr.aria-invalid]': 'field?.showErrors() ? "true" : null',
     '[attr.aria-required]': 'field?.isRequired() ? "true" : null',

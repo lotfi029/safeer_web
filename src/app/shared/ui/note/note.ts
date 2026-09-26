@@ -1,4 +1,10 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { Icon } from '../icon/icon';
 import type { IconName } from '../icon/icon-names';
 

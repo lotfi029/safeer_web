@@ -27,7 +27,10 @@ function bodyFor(body: unknown): unknown {
     const file = body.get('file');
     return {
       docType: body.get('docType'),
-      file: file instanceof Blob ? { name: (file as File).name ?? 'file', size: file.size, type: file.type } : undefined,
+      file:
+        file instanceof Blob
+          ? { name: (file as File).name ?? 'file', size: file.size, type: file.type }
+          : undefined,
     };
   }
   return body ?? undefined;
@@ -59,14 +62,27 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next) => {
   }
   if (out.status >= 400) {
     return throwError(
-      () => new HttpErrorResponse({ status: out.status, error: out.body, url: req.urlWithParams, headers: new HttpHeaders(out.headers) }),
+      () =>
+        new HttpErrorResponse({
+          status: out.status,
+          error: out.body,
+          url: req.urlWithParams,
+          headers: new HttpHeaders(out.headers),
+        }),
     ).pipe(delay(LATENCY_MS));
   }
-  const response = new HttpResponse({ status: out.status, body: out.body, url: req.urlWithParams, headers: new HttpHeaders(out.headers) });
+  const response = new HttpResponse({
+    status: out.status,
+    body: out.body,
+    url: req.urlWithParams,
+    headers: new HttpHeaders(out.headers),
+  });
   if (req.reportProgress && req.body instanceof FormData) {
     const total = (bodyFor(req.body) as { file?: { size: number } }).file?.size ?? 1;
     const progress = (loaded: number): Observable<HttpEvent<unknown>> =>
-      of({ type: HttpEventType.UploadProgress, loaded, total } as HttpEvent<unknown>).pipe(delay(LATENCY_MS * 2));
+      of({ type: HttpEventType.UploadProgress, loaded, total } as HttpEvent<unknown>).pipe(
+        delay(LATENCY_MS * 2),
+      );
     return concat(progress(total * 0.3), progress(total * 0.7), progress(total), of(response));
   }
   return of(response).pipe(delay(LATENCY_MS));

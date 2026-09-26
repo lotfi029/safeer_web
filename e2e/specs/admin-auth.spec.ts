@@ -25,7 +25,9 @@ test.describe('staff auth plumbing', () => {
     await expect(page.getByRole('alert')).toContainText('Incorrect email or password.');
   });
 
-  test('roleGuard: a reviewer cannot open an admin-only area (matrix from GET /admin/roles)', async ({ page }) => {
+  test('roleGuard: a reviewer cannot open an admin-only area (matrix from GET /admin/roles)', async ({
+    page,
+  }) => {
     await page.goto('/ar/admin/login?returnUrl=%2Far%2Fadmin%2Fsystem%2Fusers');
     await page.locator('input[type=email]').fill('reviewer@mock.invalid');
     await page.locator('input[type=password]').fill('mock-password');

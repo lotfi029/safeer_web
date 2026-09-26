@@ -36,7 +36,8 @@ export class TabContent {
   imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary',
+    class:
+      'block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-secondary',
     role: 'tabpanel',
     tabindex: '0',
     '[id]': 'panelId()',
@@ -91,7 +92,6 @@ export class Tab {
       class="flex gap-1 overflow-x-auto border-b border-border"
       role="tablist"
       [attr.aria-label]="label() || null"
-      (keydown)="onKeydown($event)"
     >
       @for (tab of tabs(); track tab; let i = $index) {
         <button
@@ -110,6 +110,7 @@ export class Tab {
           [attr.tabindex]="i === selected() ? 0 : -1"
           [disabled]="tab.disabled()"
           (click)="select(i)"
+          (keydown)="onKeydown($event)"
         >
           {{ tab.label() }}
         </button>

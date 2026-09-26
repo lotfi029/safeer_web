@@ -61,18 +61,24 @@ describe('Pagination', () => {
     const prev = nav.querySelector('a[rel="prev"]') as HTMLAnchorElement;
     expect(prev.getAttribute('href')).toBe('/list?status=new&page=4');
     expect(prev.getAttribute('aria-label')).toBe('ui.pagination.previous');
-    expect(nav.querySelector('a[rel="next"]')?.getAttribute('href')).toBe('/list?status=new&page=6');
+    expect(nav.querySelector('a[rel="next"]')?.getAttribute('href')).toBe(
+      '/list?status=new&page=6',
+    );
     expect(nav.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
   });
 
   it('renders disabled prev on the first page and disabled next on the last', async () => {
     let el = await setup(1);
     expect(el.querySelector('a[rel="prev"]')).toBeNull();
-    expect(el.querySelector('span[aria-disabled="true"]')?.textContent).toContain('ui.pagination.previous');
+    expect(el.querySelector('span[aria-disabled="true"]')?.textContent).toContain(
+      'ui.pagination.previous',
+    );
     TestBed.resetTestingModule();
     el = await setup(10);
     expect(el.querySelector('a[rel="next"]')).toBeNull();
-    expect(el.querySelector('span[aria-disabled="true"]')?.textContent).toContain('ui.pagination.next');
+    expect(el.querySelector('span[aria-disabled="true"]')?.textContent).toContain(
+      'ui.pagination.next',
+    );
   });
 
   it('renders nothing for a single page', async () => {

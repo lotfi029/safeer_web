@@ -1,4 +1,10 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DigitsPipe } from '../../pipes/format';
 

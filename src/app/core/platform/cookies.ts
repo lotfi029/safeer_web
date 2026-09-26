@@ -9,7 +9,9 @@ export class Cookies {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   get(name: string): string | undefined {
-    const header = this.isBrowser ? this.document.cookie : (this.request?.headers.get('cookie') ?? '');
+    const header = this.isBrowser
+      ? this.document.cookie
+      : (this.request?.headers.get('cookie') ?? '');
     for (const part of header.split(';')) {
       const eq = part.indexOf('=');
       if (eq > 0 && part.slice(0, eq).trim() === name) {

@@ -50,7 +50,7 @@ export class PlaceholderHome {
   readonly lang = input.required<string>();
   protected readonly otherLang = computed(() => (this.lang() === 'en' ? 'ar' : 'en'));
 
-  private readonly site = httpResource<SiteSummary>(() => `${API_PREFIX}/site?lang=${this.lang()}`);
+  private readonly site = httpResource<SiteSummary>(() => `${API_PREFIX}/site`);
 
   protected readonly orgName = computed(() =>
     this.site.hasValue() ? (this.site.value().settings?.orgName ?? '[...]') : '[...]',

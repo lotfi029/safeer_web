@@ -61,7 +61,10 @@ export function isAcceptedType(file: File, accept: string): boolean {
  * empty), size ≤ maxBytes, and one file unless `multiple`. Extra files beyond the first are
  * rejected with `count` when `multiple` is false.
  */
-export function validateFiles(files: readonly File[], options: FileValidationOptions): FileValidationResult {
+export function validateFiles(
+  files: readonly File[],
+  options: FileValidationOptions,
+): FileValidationResult {
   const accepted: File[] = [];
   const rejected: FileRejection[] = [];
   files.forEach((file, index) => {

@@ -51,7 +51,9 @@ describe('DialogService + DialogFrame', () => {
   });
 
   it('closes from the frame close button', () => {
-    const ref = TestBed.inject(DialogService).open(TestDialog, { ariaLabelledBy: 'test-dialog-title' });
+    const ref = TestBed.inject(DialogService).open(TestDialog, {
+      ariaLabelledBy: 'test-dialog-title',
+    });
     let closed = false;
     ref.closed.subscribe(() => (closed = true));
     TestBed.tick();
@@ -70,5 +72,8 @@ describe('DialogService + DialogFrame', () => {
     (fixture.nativeElement as HTMLElement).querySelector('button')?.click();
     expect(spy).toHaveBeenCalled();
     expect(TestBed.inject(DialogRef, null)).toBeNull();
+    // No projected actions → the actions row is :empty (hidden).
+    const actions = (fixture.nativeElement as HTMLElement).querySelector('.justify-end');
+    expect(actions?.childNodes.length).toBe(0);
   });
 });

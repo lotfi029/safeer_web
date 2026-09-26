@@ -121,12 +121,7 @@ export interface AboutItem {
 }
 
 export type AboutItemKind =
-  | 'vision'
-  | 'mission'
-  | 'goal'
-  | 'care_pillar'
-  | 'scholarship_step'
-  | 'requirement';
+  'vision' | 'mission' | 'goal' | 'care_pillar' | 'scholarship_step' | 'requirement';
 
 /** B18 (mocked): `GET /about-items?kind=a,b` → grouped by kind. */
 export type AboutItemsResponse = Partial<Record<AboutItemKind, AboutItem[]>>;
@@ -289,13 +284,7 @@ export interface Country {
 // ---------- applications / portal ----------
 
 export type ApplicationStatus =
-  | 'draft'
-  | 'new'
-  | 'under_review'
-  | 'docs_missing'
-  | 'interview'
-  | 'accepted'
-  | 'rejected';
+  'draft' | 'new' | 'under_review' | 'docs_missing' | 'interview' | 'accepted' | 'rejected';
 
 export const APPLICATION_STATUSES: readonly ApplicationStatus[] = [
   'draft',
@@ -310,7 +299,11 @@ export const APPLICATION_STATUSES: readonly ApplicationStatus[] = [
 export type Gender = 'male' | 'female';
 export type DegreeLevel = 'bachelor' | 'master' | 'phd';
 export type DocType = 'id_copy' | 'certificate' | 'admission_letter' | 'other';
-export const REQUIRED_DOC_TYPES: readonly DocType[] = ['id_copy', 'certificate', 'admission_letter'];
+export const REQUIRED_DOC_TYPES: readonly DocType[] = [
+  'id_copy',
+  'certificate',
+  'admission_letter',
+];
 
 export interface ApplicationPersonal {
   firstName: string | null;

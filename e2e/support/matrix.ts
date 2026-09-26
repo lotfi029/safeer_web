@@ -41,7 +41,18 @@ export async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
   const blocking = results.violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
   );
-  expect(blocking.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
+  expect(
+    blocking.map(
+      (v) =>
+        `${v.id}: ${v.help} (${v.nodes.length}) → ${v.nodes
+          .slice(0, 3)
+          .map(
+            (n) =>
+              `${n.target.join(' ')} [${(n.failureSummary ?? '').replace(/\s+/g, ' ').slice(0, 160)}]`,
+          )
+          .join(' | ')}`,
+    ),
+  ).toEqual([]);
 }
 
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
@@ -97,7 +108,13 @@ export async function openAt(
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme ?? 'light' });
   if (theme) {
-    await page.context().addCookies([{ name: 'theme', value: theme, url: page.url().startsWith('http') ? page.url() : 'http://localhost:4100' }]);
+    await page.context().addCookies([
+      {
+        name: 'theme',
+        value: theme,
+        url: page.url().startsWith('http') ? page.url() : 'http://localhost:4100',
+      },
+    ]);
   }
   await page.goto(`/${locale}${path === '/' ? '' : path}`);
   await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');

@@ -1,4 +1,10 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 
 /**
  * Loading placeholder (spec `.skeleton`, pulse stops under reduced motion). Always aria-hidden:
