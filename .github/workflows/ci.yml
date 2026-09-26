@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded runs of the same branch/PR (sessions plan R10).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: lint → unit → build → e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Full 6×2 matrix on the `full-matrix` label; 390/1440 × ar/en otherwise (review F10).
+      E2E_FULL_MATRIX: ${{ contains(github.event.pull_request.labels.*.name, 'full-matrix') && '1' || '' }}
+      # Set the repository variable E2E_API_URL to run e2e against a real API instead of the mock.
+      E2E_API_URL: ${{ vars.E2E_API_URL }}
+    # playwright.config.ts starts the SSR server with NODE_ENV=production, so e2e tests the enforcing CSP (R10).
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint (ng lint + lint-styles + prettier)
+        run: npm run lint
+
+      - name: Unit tests (Angular, Vitest)
+        run: npm run test:ci
+
+      - name: Server + script tests (Vitest, node)
+        run: npm run test:server
+
+      - name: Build (production) + gzip budget + prod artifact check, then e2e build
+        run: npm run build:ci
+
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: e2e (mock API unless E2E_API_URL is set)
+        run: npx playwright test
+
+      - name: Upload Playwright report + screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14

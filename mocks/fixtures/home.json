@@ -1,0 +1,468 @@
+{
+  "_source": "Shape: docs/api/src/home (public-home.ts, home.service.ts) + CONTRACT-NOTES \"GET /home\". Copy: docs/safeer-prototype.html pHome (sections in seed order, 'partners' omitted because it is seeded unpublished; <br> → \\n; button URLs are B9 paths), stats (only \"2 years\" is real, spec §1), GOALS/PILLARS/AREAS, NEWS1 + the two placeholder cards, the two home testimonial cards (theme text as quote, as in the prototype). settings = site.json settings (id as string).",
+  "settings": {
+    "id": "1",
+    "orgNameAr": "جمعية سفير الدعوية",
+    "orgNameEn": "Safeer Da'wah Association",
+    "taglineAr": "لطلاب المنح",
+    "taglineEn": "For scholarship students",
+    "footerBlurbAr": "جمعية أهلية غير ربحية متخصصة في رعاية طلاب وطالبات المنح الدوليين الدارسين في الجامعات السعودية.",
+    "footerBlurbEn": "A Saudi non-profit association dedicated to supporting international scholarship students at Saudi universities.",
+    "rightsLineAr": "جميع الحقوق محفوظة لجمعية سفير بالمملكة العربية السعودية",
+    "rightsLineEn": "All rights reserved — Safeer Association, Saudi Arabia",
+    "phone": "+966 53 464 6648",
+    "email": "info@safeer-sa.org",
+    "addressAr": "الرياض — حي السويدي، شارع سدير، المملكة العربية السعودية",
+    "addressEn": "Riyadh — Al Suwaidi, Sudair St., Kingdom of Saudi Arabia",
+    "facebookUrl": null,
+    "instagramUrl": null,
+    "xUrl": null,
+    "enEnabled": true,
+    "seoTitleAr": null,
+    "seoTitleEn": null,
+    "seoDescriptionAr": null,
+    "seoDescriptionEn": null
+  },
+  "sections": [
+    {
+      "id": "1",
+      "sectionKey": "hero",
+      "labelAr": "جمعية أهلية غير ربحية · المملكة العربية السعودية",
+      "labelEn": "Saudi non-profit association",
+      "headingAr": "نرعى طلاب المنح\nونبني جسور المعرفة",
+      "headingEn": "We care for scholarship\nstudents and build bridges",
+      "bodyAr": "دعم أكاديمي ونفسي وإرشاد ديني وتمكين مجتمعي لطلاب وطالبات المنح الدوليين الدارسين في الجامعات السعودية.",
+      "bodyEn": "Academic and psychological support, religious guidance and community empowerment for international scholarship students at Saudi universities.",
+      "primaryButtonLabelAr": "قدّم طلب منحة",
+      "primaryButtonLabelEn": "Apply for a scholarship",
+      "primaryButtonUrl": "/apply",
+      "secondaryButtonLabelAr": "تعرّف على الجمعية",
+      "secondaryButtonLabelEn": "About the association",
+      "secondaryButtonUrl": "/about",
+      "imageAsset": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "2",
+      "sectionKey": "about",
+      "labelAr": "من نحن",
+      "labelEn": "About us",
+      "headingAr": "الرؤية والرسالة والأهداف",
+      "headingEn": "Vision, mission and goals",
+      "bodyAr": null,
+      "bodyEn": null,
+      "primaryButtonLabelAr": "اقرأ المزيد عن الجمعية",
+      "primaryButtonLabelEn": "Read more about us",
+      "primaryButtonUrl": "/about",
+      "secondaryButtonLabelAr": null,
+      "secondaryButtonLabelEn": null,
+      "secondaryButtonUrl": null,
+      "imageAsset": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "3",
+      "sectionKey": "impact",
+      "labelAr": "أثرنا",
+      "labelEn": "Our impact",
+      "headingAr": "بالأرقام",
+      "headingEn": "In numbers",
+      "bodyAr": "تُحرَّر هذه الأرقام من لوحة التحكم — ولا تُنشر إلا بأرقام موثقة.",
+      "bodyEn": "Edited from the dashboard — published only once verified.",
+      "primaryButtonLabelAr": null,
+      "primaryButtonLabelEn": null,
+      "primaryButtonUrl": null,
+      "secondaryButtonLabelAr": null,
+      "secondaryButtonLabelEn": null,
+      "secondaryButtonUrl": null,
+      "imageAsset": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "4",
+      "sectionKey": "work_areas",
+      "labelAr": "مجالات عملنا",
+      "labelEn": "Our work",
+      "headingAr": "أربعة مجالات، هدف واحد",
+      "headingEn": "Four areas, one purpose",
+      "bodyAr": null,
+      "bodyEn": null,
+      "primaryButtonLabelAr": "كل المجالات",
+      "primaryButtonLabelEn": "All areas",
+      "primaryButtonUrl": "/work-areas",
+      "secondaryButtonLabelAr": null,
+      "secondaryButtonLabelEn": null,
+      "secondaryButtonUrl": null,
+      "imageAsset": null,
+      "sortOrder": 4
+    },
+    {
+      "id": "5",
+      "sectionKey": "student_care",
+      "labelAr": "منح الوافدين",
+      "labelEn": "Scholarships",
+      "headingAr": "رعاية متكاملة لطالب المنحة",
+      "headingEn": "Complete care for a scholarship student",
+      "bodyAr": "من لحظة الوصول إلى التخرج: دعم يسهّل التكيّف مع البيئة الجديدة ويعزّز التجربة الأكاديمية والثقافية.",
+      "bodyEn": "From arrival to graduation: support that eases adaptation and strengthens the academic and cultural experience.",
+      "primaryButtonLabelAr": "تفاصيل برنامج المنح",
+      "primaryButtonLabelEn": "Scholarship programme details",
+      "primaryButtonUrl": "/scholarships",
+      "secondaryButtonLabelAr": null,
+      "secondaryButtonLabelEn": null,
+      "secondaryButtonUrl": null,
+      "imageAsset": null,
+      "sortOrder": 5
+    },
+    {
+      "id": "6",
+      "sectionKey": "news",
+      "labelAr": "أخبارنا",
+      "labelEn": "News",
+      "headingAr": "آخر الأنشطة",
+      "headingEn": "Latest activity",
+      "bodyAr": null,
+      "bodyEn": null,
+      "primaryButtonLabelAr": "كل الأخبار",
+      "primaryButtonLabelEn": "All news",
+      "primaryButtonUrl": "/news",
+      "secondaryButtonLabelAr": null,
+      "secondaryButtonLabelEn": null,
+      "secondaryButtonUrl": null,
+      "imageAsset": null,
+      "sortOrder": 6
+    },
+    {
+      "id": "7",
+      "sectionKey": "testimonials",
+      "labelAr": "قالوا عنا",
+      "labelEn": "Testimonials",
+      "headingAr": "ما يقوله المستفيدون",
+      "headingEn": "What beneficiaries say",
+      "bodyAr": null,
+      "bodyEn": null,
+      "primaryButtonLabelAr": null,
+      "primaryButtonLabelEn": null,
+      "primaryButtonUrl": null,
+      "secondaryButtonLabelAr": null,
+      "secondaryButtonLabelEn": null,
+      "secondaryButtonUrl": null,
+      "imageAsset": null,
+      "sortOrder": 7
+    },
+    {
+      "id": "9",
+      "sectionKey": "cta",
+      "labelAr": null,
+      "labelEn": null,
+      "headingAr": "للتسجيل في جمعية سفير الدعوية",
+      "headingEn": "Register with Safeer Association",
+      "bodyAr": "قدّم طلبك إلكترونياً وتابع حالته من بوابة الطالب دون مراجعة المقر.",
+      "bodyEn": "Apply online and follow your application in the student portal — no office visit needed.",
+      "primaryButtonLabelAr": "تسجيل طلب منحة",
+      "primaryButtonLabelEn": "Apply now",
+      "primaryButtonUrl": "/apply",
+      "secondaryButtonLabelAr": "تواصل معنا",
+      "secondaryButtonLabelEn": "Contact us",
+      "secondaryButtonUrl": "/contact",
+      "imageAsset": null,
+      "sortOrder": 9
+    }
+  ],
+  "aboutItems": {
+    "goals": [
+      {
+        "id": "goal-1",
+        "icon": "badge-check",
+        "titleAr": "استخدام التقنية الحديثة في الدعوة إلى الله ونشر العلم الشرعي",
+        "titleEn": "Using modern technology in outreach and in spreading religious knowledge",
+        "bodyAr": null,
+        "bodyEn": null,
+        "sortOrder": 1
+      },
+      {
+        "id": "goal-2",
+        "icon": "badge-check",
+        "titleAr": "تصحيح المفاهيم المغلوطة عن الإسلام ورد الشبهات المثارة عليه",
+        "titleEn": "Correcting misconceptions about Islam and answering claims raised against it",
+        "bodyAr": null,
+        "bodyEn": null,
+        "sortOrder": 2
+      },
+      {
+        "id": "goal-3",
+        "icon": "badge-check",
+        "titleAr": "تعليم المسلمين أصول دينهم وتعميق روابط الأخوة فيما بينهم",
+        "titleEn": "Teaching Muslims the fundamentals of their faith and deepening bonds between them",
+        "bodyAr": null,
+        "bodyEn": null,
+        "sortOrder": 3
+      },
+      {
+        "id": "goal-4",
+        "icon": "badge-check",
+        "titleAr": "الدعوة المتخصصة للفئات الاجتماعية",
+        "titleEn": "Specialised outreach for specific social groups",
+        "bodyAr": null,
+        "bodyEn": null,
+        "sortOrder": 4
+      },
+      {
+        "id": "goal-5",
+        "icon": "badge-check",
+        "titleAr": "الاهتمام الدعوي بالجاليات والتواصل معهم",
+        "titleEn": "Engaging with and supporting expatriate communities",
+        "bodyAr": null,
+        "bodyEn": null,
+        "sortOrder": 5
+      }
+    ],
+    "carePillars": [
+      {
+        "id": "care-1",
+        "icon": "book-open",
+        "titleAr": "الدعم الأكاديمي والتعليمي",
+        "titleEn": "Academic and educational support",
+        "bodyAr": "دورات تعليم اللغة العربية لغير الناطقين بها، ودروس تقوية في المواد الأكاديمية، ومرشدون أكاديميون للمناهج والبحوث والمشاريع.",
+        "bodyEn": "Arabic courses for non-native speakers, tutoring in academic subjects, and academic mentors for curricula, research and projects.",
+        "sortOrder": 1
+      },
+      {
+        "id": "care-2",
+        "icon": "heart-handshake",
+        "titleAr": "الدعم النفسي والإرشادي",
+        "titleEn": "Psychological and counselling support",
+        "bodyAr": "مستشارون متخصصون، وجلسات توعية وورش عمل حول مهارات التكيّف وإدارة الضغوط بعيداً عن الأهل والوطن.",
+        "bodyEn": "Specialist counsellors, awareness sessions and workshops on adapting and managing pressure far from home.",
+        "sortOrder": 2
+      },
+      {
+        "id": "care-3",
+        "icon": "landmark",
+        "titleAr": "الإرشاد الديني والدعوي",
+        "titleEn": "Religious guidance",
+        "bodyAr": "دروس في الفقه والشريعة، ولقاءات دعوية، وتيسير أداء الفرائض وتنظيم رحلات العمرة والزيارة.",
+        "bodyEn": "Classes in jurisprudence and Shari'ah, outreach gatherings, prayer facilities and organised Umrah trips.",
+        "sortOrder": 3
+      },
+      {
+        "id": "care-4",
+        "icon": "users",
+        "titleAr": "التمكين والمشاركة المجتمعية",
+        "titleEn": "Empowerment and community participation",
+        "bodyAr": "تشجيع الطلاب على الأنشطة التطوعية وخدمة المجتمع السعودي، بما يعزّز شعور الانتماء والاندماج.",
+        "bodyEn": "Encouraging students into volunteering and service to Saudi society, strengthening belonging and integration.",
+        "sortOrder": 4
+      }
+    ]
+  },
+  "stats": [
+    {
+      "id": "1",
+      "value": "2",
+      "labelAr": "أعوام من الخبرة",
+      "labelEn": "Years of experience",
+      "subAr": null,
+      "subEn": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "2",
+      "value": null,
+      "labelAr": "طالب وطالبة مستفيد",
+      "labelEn": "Students supported",
+      "subAr": null,
+      "subEn": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "3",
+      "value": null,
+      "labelAr": "برنامج وفعالية",
+      "labelEn": "Programmes and events",
+      "subAr": null,
+      "subEn": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "4",
+      "value": null,
+      "labelAr": "جهة شريكة",
+      "labelEn": "Partner organisations",
+      "subAr": null,
+      "subEn": null,
+      "sortOrder": 4
+    }
+  ],
+  "workAreas": [
+    {
+      "id": "1",
+      "icon": "megaphone",
+      "titleAr": "الدعوة العامة",
+      "titleEn": "General outreach",
+      "sortOrder": 1,
+      "items": [
+        {
+          "id": "1-1",
+          "textAr": "الدعوة الشبابية والنسائية والجاليات",
+          "textEn": "Youth, women and expatriate community outreach",
+          "sortOrder": 1
+        },
+        {
+          "id": "1-2",
+          "textAr": "معرض الوسائل الدعوية",
+          "textEn": "Outreach media exhibition",
+          "sortOrder": 2
+        },
+        {
+          "id": "1-3",
+          "textAr": "المشاركات المجتمعية والمصليات المتنقلة",
+          "textEn": "Community participation and mobile prayer spaces",
+          "sortOrder": 3
+        },
+        {
+          "id": "1-4",
+          "textAr": "الحج والعمرة",
+          "textEn": "Hajj and Umrah",
+          "sortOrder": 4
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "icon": "globe",
+      "titleAr": "الدعوة الإلكترونية",
+      "titleEn": "Digital outreach",
+      "sortOrder": 2,
+      "items": [
+        {
+          "id": "2-1",
+          "textAr": "دعوة غير المسلمين",
+          "textEn": "Outreach to non-Muslims",
+          "sortOrder": 1
+        },
+        {
+          "id": "2-2",
+          "textAr": "استخدام الوسائل الحديثة في الدعوة",
+          "textEn": "Using modern channels for outreach",
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "icon": "graduation-cap",
+      "titleAr": "التدريب والتأهيل",
+      "titleEn": "Training and qualification",
+      "sortOrder": 3,
+      "items": [
+        {
+          "id": "3-1",
+          "textAr": "تأهيل الكوادر الإدارية",
+          "textEn": "Qualifying administrative staff",
+          "sortOrder": 1
+        },
+        {
+          "id": "3-2",
+          "textAr": "تأهيل الدعاة — علمياً ومهارياً",
+          "textEn": "Qualifying outreach workers — academically and practically",
+          "sortOrder": 2
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "icon": "search",
+      "titleAr": "الأبحاث والدراسات الدعوية",
+      "titleEn": "Research and studies",
+      "sortOrder": 4,
+      "items": [
+        {
+          "id": "4-1",
+          "textAr": "إعداد البحوث الشرعية",
+          "textEn": "Producing religious research",
+          "sortOrder": 1
+        },
+        {
+          "id": "4-2",
+          "textAr": "المسابقات العامة",
+          "textEn": "Public competitions",
+          "sortOrder": 2
+        },
+        {
+          "id": "4-3",
+          "textAr": "تطوير وصناعة المحتوى الدعوي",
+          "textEn": "Developing outreach content",
+          "sortOrder": 3
+        }
+      ]
+    }
+  ],
+  "news": [
+    {
+      "id": "1",
+      "slug": "dates-distribution-2020",
+      "titleAr": "توزيع ٥٠٠ كرتونة تمور مقدمة من جمعية سفير",
+      "titleEn": "Distributing 500 boxes of dates donated by Safeer Association",
+      "excerptAr": "ضمن المشاركات المجتمعية للجمعية، وُزّعت الكراتين على المستفيدين بالتعاون مع الجهات الشريكة.",
+      "excerptEn": "As part of the association's community work, the boxes were distributed to beneficiaries with partner organisations.",
+      "publishedOn": "2020-07-30",
+      "isFeatured": true,
+      "coverAsset": null,
+      "category": {
+        "id": "1",
+        "slug": "community-activities",
+        "nameAr": "أنشطة مجتمعية",
+        "nameEn": "Community",
+        "sortOrder": 1
+      }
+    },
+    {
+      "id": "2",
+      "slug": "placeholder-1",
+      "titleAr": "[عنوان الخبر]",
+      "titleEn": "[Article title]",
+      "excerptAr": "[مقتطف قصير من الخبر]",
+      "excerptEn": "[Short excerpt]",
+      "publishedOn": null,
+      "isFeatured": false,
+      "coverAsset": null,
+      "category": null
+    },
+    {
+      "id": "3",
+      "slug": "placeholder-2",
+      "titleAr": "[عنوان الخبر]",
+      "titleEn": "[Article title]",
+      "excerptAr": "[مقتطف قصير من الخبر]",
+      "excerptEn": "[Short excerpt]",
+      "publishedOn": null,
+      "isFeatured": false,
+      "coverAsset": null,
+      "category": null
+    }
+  ],
+  "testimonials": [
+    {
+      "id": "1",
+      "quoteAr": "كنت في زيارة لأحد الأصدقاء وحضرت معهم محاضرة من محاضرات الجمعية — [يُستكمل النص الكامل للشهادة من لوحة التحكم].",
+      "quoteEn": "I was visiting a friend and attended one of the association's lectures with them — [full testimonial completed from the dashboard].",
+      "authorName": "ع. ج",
+      "authorDescAr": "مستفيد من برامج الجمعية",
+      "authorDescEn": "Programme beneficiary",
+      "isFeatured": true,
+      "sortOrder": 1
+    },
+    {
+      "id": "2",
+      "quoteAr": "[نص الشهادة — يُدار من قسم «قالوا عنا» في لوحة التحكم.]",
+      "quoteEn": "[Testimonial text — managed from the Testimonials section.]",
+      "authorName": "[الاسم أو الأحرف الأولى]",
+      "authorDescAr": null,
+      "authorDescEn": null,
+      "isFeatured": false,
+      "sortOrder": 1
+    }
+  ],
+  "partners": []
+}

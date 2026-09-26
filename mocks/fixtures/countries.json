@@ -1,0 +1,62 @@
+[
+  {
+    "code": "SA",
+    "nameAr": "المملكة العربية السعودية",
+    "nameEn": "Saudi Arabia"
+  },
+  {
+    "code": "EG",
+    "nameAr": "مصر",
+    "nameEn": "Egypt"
+  },
+  {
+    "code": "NG",
+    "nameAr": "نيجيريا",
+    "nameEn": "Nigeria"
+  },
+  {
+    "code": "ID",
+    "nameAr": "إندونيسيا",
+    "nameEn": "Indonesia"
+  },
+  {
+    "code": "IN",
+    "nameAr": "الهند",
+    "nameEn": "India"
+  },
+  {
+    "code": "PK",
+    "nameAr": "باكستان",
+    "nameEn": "Pakistan"
+  },
+  {
+    "code": "BD",
+    "nameAr": "بنغلاديش",
+    "nameEn": "Bangladesh"
+  },
+  {
+    "code": "SN",
+    "nameAr": "السنغال",
+    "nameEn": "Senegal"
+  },
+  {
+    "code": "TD",
+    "nameAr": "تشاد",
+    "nameEn": "Chad"
+  },
+  {
+    "code": "ML",
+    "nameAr": "مالي",
+    "nameEn": "Mali"
+  },
+  {
+    "code": "SO",
+    "nameAr": "الصومال",
+    "nameEn": "Somalia"
+  },
+  {
+    "code": "YE",
+    "nameAr": "اليمن",
+    "nameEn": "Yemen"
+  }
+]

@@ -1,0 +1,168 @@
+[
+  {
+    "category": {
+      "id": "1",
+      "slug": "licenses",
+      "nameAr": "التراخيص",
+      "nameEn": "Licences"
+    },
+    "documents": [
+      {
+        "id": "1",
+        "titleAr": "[ترخيص الجمعية]",
+        "titleEn": "[Association licence]",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-1",
+          "publicId": "doc-1",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 1
+      },
+      {
+        "id": "2",
+        "titleAr": "[شهادة التسجيل]",
+        "titleEn": "[Registration certificate]",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-2",
+          "publicId": "doc-2",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 2
+      }
+    ]
+  },
+  {
+    "category": {
+      "id": "2",
+      "slug": "policies",
+      "nameAr": "السياسات واللوائح",
+      "nameEn": "Policies & regulations"
+    },
+    "documents": [
+      {
+        "id": "3",
+        "titleAr": "[اللائحة الأساسية]",
+        "titleEn": "[Articles of association]",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-3",
+          "publicId": "doc-3",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 1
+      },
+      {
+        "id": "4",
+        "titleAr": "[سياسة الخصوصية وحماية البيانات]",
+        "titleEn": "[Privacy & data protection policy]",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-4",
+          "publicId": "doc-4",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 2
+      }
+    ]
+  },
+  {
+    "category": {
+      "id": "3",
+      "slug": "meeting-minutes",
+      "nameAr": "محاضر الاجتماعات",
+      "nameEn": "Meeting minutes"
+    },
+    "documents": [
+      {
+        "id": "5",
+        "titleAr": "[محضر اجتماع مجلس الإدارة رقم ١]",
+        "titleEn": "[Board meeting minutes no. 1]",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-5",
+          "publicId": "doc-5",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 1
+      },
+      {
+        "id": "6",
+        "titleAr": "[محضر اجتماع الجمعية العمومية]",
+        "titleEn": "[General assembly minutes]",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-6",
+          "publicId": "doc-6",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 2
+      }
+    ]
+  },
+  {
+    "category": {
+      "id": "4",
+      "slug": "annual-reports",
+      "nameAr": "التقارير السنوية",
+      "nameEn": "Annual reports"
+    },
+    "documents": [
+      {
+        "id": "7",
+        "titleAr": "تقارير الأنشطة",
+        "titleEn": "Activity reports",
+        "docDate": null,
+        "asset": {
+          "id": "asset-doc-7",
+          "publicId": "doc-7",
+          "kind": "document",
+          "mimeType": "application/pdf",
+          "sizeBytes": 0,
+          "widthPx": null,
+          "heightPx": null,
+          "altAr": null,
+          "altEn": null
+        },
+        "sortOrder": 1
+      }
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "slug": "community-activities",
+    "nameAr": "أنشطة مجتمعية",
+    "nameEn": "Community",
+    "sortOrder": 1
+  },
+  {
+    "id": "2",
+    "slug": "training-programs",
+    "nameAr": "برامج تدريبية",
+    "nameEn": "Training",
+    "sortOrder": 2
+  },
+  {
+    "id": "3",
+    "slug": "meetings",
+    "nameAr": "الاجتماعات",
+    "nameEn": "Meetings",
+    "sortOrder": 3
+  },
+  {
+    "id": "4",
+    "slug": "student-care",
+    "nameAr": "رعاية الطلاب",
+    "nameEn": "Student care",
+    "sortOrder": 4
+  }
+]

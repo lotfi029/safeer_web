@@ -1,0 +1,27 @@
+{
+  "_source": "B17 (mocked): GET /admin/roles. Matrix copied from docs/api/CONTRACT-NOTES.md 'Staff'.",
+  "roles": ["admin", "reviewer", "editor", "support"],
+  "matrix": {
+    "applications": ["admin", "reviewer"],
+    "interview-slots": ["admin", "reviewer"],
+    "pages": ["admin", "editor"],
+    "news": ["admin", "editor"],
+    "work-areas": ["admin", "editor"],
+    "board": ["admin", "editor"],
+    "stats": ["admin", "editor"],
+    "about-items": ["admin", "editor"],
+    "partners": ["admin", "editor"],
+    "documents": ["admin", "editor"],
+    "media": ["admin", "editor"],
+    "redirects": ["admin", "editor"],
+    "messages": ["admin", "support"],
+    "testimonials": ["admin", "support"],
+    "newsletter": ["admin", "support"],
+    "users": ["admin"],
+    "settings": ["admin"],
+    "mail": ["admin"],
+    "sms": ["admin"],
+    "audit": ["admin"],
+    "cache": ["admin"]
+  }
+}
