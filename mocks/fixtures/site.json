@@ -1,0 +1,33 @@
+{
+  "_source": "Shape: docs/api/src/site/site.controller.ts + public-site-settings.ts (bilingual raw form; collapsed per ?lang by the mocks). Values: docs/safeer-design-spec.md §1 only, otherwise null / [...].",
+  "settings": {
+    "id": 1,
+    "orgNameAr": "جمعية سفير الدعوية",
+    "orgNameEn": null,
+    "taglineAr": "[...]",
+    "taglineEn": null,
+    "footerBlurbAr": "[...]",
+    "footerBlurbEn": null,
+    "rightsLineAr": "[...]",
+    "rightsLineEn": null,
+    "phone": "+966 53 464 6648",
+    "email": "info@safeer-sa.org",
+    "addressAr": "الرياض — حي السويدي، شارع سدير",
+    "addressEn": null,
+    "facebookUrl": null,
+    "instagramUrl": null,
+    "xUrl": null,
+    "enEnabled": true,
+    "seoTitleAr": null,
+    "seoTitleEn": null,
+    "seoDescriptionAr": null,
+    "seoDescriptionEn": null
+  },
+  "nav": [],
+  "contact": {
+    "phone": "+966 53 464 6648",
+    "email": "info@safeer-sa.org",
+    "addressAr": "الرياض — حي السويدي، شارع سدير",
+    "addressEn": null
+  }
+}

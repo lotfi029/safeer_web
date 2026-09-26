@@ -1,0 +1,51 @@
+name: Nightly full matrix
+
+# Full viewport × locale matrix (6 × 2) with axe, nightly and on demand (review F10).
+on:
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  full-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      E2E_FULL_MATRIX: '1'
+      E2E_API_URL: ${{ vars.E2E_API_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build:e2e
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - run: npx playwright test
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-full-matrix
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14

@@ -1,0 +1,39 @@
+/*
+ * Design tokens — docs/safeer-design-spec.md §2, used literally.
+ * This is the ONLY file allowed to contain hex colours (scripts/lint-styles.mjs).
+ */
+:root {
+  --primary: #0b4343;
+  --primary-dark: #063333;
+  --secondary: #1c8184;
+  --secondary-light: #ddf2f1;
+  --surface: #f6faf9;
+  --bg: #ffffff;
+  --card: #ffffff;
+  --text: #183333;
+  --text-muted: #4f6b6b; /* adjusted from #668080 for WCAG AA (spec §2) */
+  --muted-decor: #668080; /* icons/decoration only, never text */
+  --border: #dce8e7;
+  --alert: #b4532a;
+  --success: #1e6b3c;
+  --on-primary: #ffffff;
+  color-scheme: light;
+}
+
+/* Dark mode: four-step elevation scale (spec §2), not an inversion. */
+:root[data-theme='dark'] {
+  --bg: #06191b;
+  --surface: #0c2326;
+  --card: #102a2d;
+  --raise: #16373a;
+  --border: #1f4649;
+  --sidebar: #041214;
+  --app-bg: #0a1f21;
+  --band: #0a2e31;
+  --primary: #3fb8b4;
+  --on-primary: #052021;
+  --secondary: #6ed3ce;
+  --text: #e9f4f3;
+  --text-muted: #9db7b6;
+  color-scheme: dark;
+}
