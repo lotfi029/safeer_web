@@ -86,3 +86,20 @@ These notes answer the "API snapshot gaps" from the Session 1 plan. They were re
   - content (pages, news, work-areas, board, stats, about-items, partners, documents, media, redirects): admin, editor. `redirects` and `media` are open to all staff today; B4/B5 restrict them to this.
   - messages / testimonials / newsletter: admin, support
   - users / settings / mail / sms / audit / cache: admin
+
+## Planned contract changes from the backend code review (`safeer_api/docs/safeer-backend-code-review.md`)
+
+Mock these as described until they land:
+- **C2:** email and SMS links target frontend routes: `/{locale}/admin/accept/{token}`, `/{locale}/admin/reset/{token}`, `/{locale}/portal/login`, `/{locale}/admin/messages/{id}`. The frontend must implement these routes exactly.
+- **C17:**
+  - `/portal/me` gains `interview: { startsAt, endsAt, location } | null`.
+  - `DELETE /portal/interview` cancels a booking.
+  - `GET /portal/interview-slots` returns only future slots, and is empty once a slot is booked.
+- **C26:** page-section `body` and about-item `body` become **sanitized HTML**, like the news body. Render them with the same sanitized `[innerHTML]` path.
+- **C35:** `GET /portal/notifications` → `[{ id, type, createdAt, data }]`, with no `actorId`.
+- **C19:** file downloads send an RFC 5987 `filename*` header, so Arabic file names survive.
+- **C27:**
+  - `POST /newsletter/unsubscribe { token }`, and a double opt-in confirm link `/{locale}/newsletter/confirm?token=`. The frontend needs both pages.
+  - Newsletter signups return `{ ok: true, pendingConfirmation: true }`.
+- **C3:** staff users gain `status: active | disabled | invited` (admin users screen).
+- **C13:** saving a news post can return `warnings: ['COVER_MISSING']` with a 200. Show it as a non-blocking notice.
