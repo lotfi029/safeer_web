@@ -1,0 +1,8 @@
+[
+  {
+    "_source": "Test data for the legacy redirect lookup (GET /redirects/resolve).",
+    "fromPath": "/about-us",
+    "toPath": "/ar/about",
+    "statusCode": 301
+  }
+]

@@ -12,7 +12,12 @@ import {
   withHttpTransferCacheOptions,
   withIncrementalHydration,
 } from '@angular/platform-browser';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+  withViewTransitions,
+} from '@angular/router';
 import { routes } from './app.routes';
 import { MOCK_INTERCEPTORS } from './core/api/mocks/mock-interceptors';
 import { apiBaseUrlInterceptor } from './core/http/api-base-url.interceptor';
@@ -35,6 +40,8 @@ export const appConfig: ApplicationConfig = {
       routes,
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
+      // Route transition (spec §2): opacity + 8px ~300ms, styles in motion.css; off under reduced motion.
+      withViewTransitions({ skipInitialTransition: true }),
     ),
     provideHttpClient(
       withFetch(),

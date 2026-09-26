@@ -59,7 +59,7 @@ export class Logo {
     <span class="flex min-w-0 flex-col">
       <span
         class="leading-snug font-bold whitespace-nowrap"
-        [class]="compact() ? 'text-base' : 'text-base md:text-[19px]'"
+        [class]="compact() ? 'text-base' : 'text-base xl:text-[19px]'"
         >{{ name() ?? ('common.orgName' | transloco) }}</span
       >
       @if (tagline() && !compact()) {

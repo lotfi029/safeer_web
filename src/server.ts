@@ -11,9 +11,12 @@ import type { SsrRequestContext } from './app/core/http/ssr-context';
 import { staticCacheControl } from './server/cache-headers';
 import { loadDotEnv, parseEnv } from './server/env';
 import { finalizeAngularResponse } from './server/html';
+import { serverErrorHandler } from './server/error-page';
+import { apiRedirectResolver, legacyRedirects } from './server/legacy';
 import { apiProxy } from './server/proxy';
 import { langRedirects } from './server/redirects';
 import { createNonce, securityHeaders } from './server/security-headers';
+import { apiSitemapIndex, buildRobots, sitemapHandler } from './server/sitemap';
 
 const isEntryPoint = isMainModule(import.meta.url) || Boolean(process.env['pm_id']);
 
@@ -42,6 +45,16 @@ app.get('/healthz', (_req, res) => {
 
 app.use(securityHeaders(env.isProduction));
 app.use(langRedirects());
+
+/** SEO files built from the API (B15) and the public origin. */
+app.get('/robots.txt', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('text/plain').send(buildRobots(env.publicSiteUrl));
+});
+app.get('/sitemap.xml', sitemapHandler(env.publicSiteUrl, apiSitemapIndex(env.apiInternalUrl)));
+
+/** Legacy WordPress paths: 410 for the clinic-template families, else a cached API redirect lookup. */
+app.use(legacyRedirects(apiRedirectResolver(env.apiInternalUrl)));
 
 /** Same-origin API + file proxy. No body parser is mounted anywhere in this app. */
 app.use(apiProxy(env.apiInternalUrl));
@@ -72,6 +85,9 @@ app.use((req, res, next) => {
     )
     .catch(next);
 });
+
+/** Anything that escaped Angular's handling: static 500 page (no scripts, CSP'd). */
+app.use(serverErrorHandler(env.isProduction));
 
 /** Start the server when run directly or under PM2; shut down gracefully on SIGTERM (R11). */
 if (isEntryPoint) {

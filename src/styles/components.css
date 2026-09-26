@@ -475,3 +475,15 @@
     max-block-size: 85dvh;
   }
 }
+
+@layer components {
+  .footer-link {
+    color: var(--footer-link);
+    text-decoration: none;
+  }
+
+  .footer-link:hover {
+    color: var(--footer-text);
+    text-decoration: underline;
+  }
+}

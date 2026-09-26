@@ -1,19 +1,19 @@
 {
-  "_source": "Shape: docs/api/src/site/site.controller.ts + public-site-settings.ts (bilingual raw form; the mock collapses per ?lang). Values: docs/safeer-design-spec.md §1 / prototype labels only; unknown values are null or [...]. English labels are the prototype's EN strings.",
+  "_source": "Shape: docs/api/src/site/site.controller.ts + public-site-settings.ts (raw bilingual form; the mock collapses per ?lang). Values: docs/safeer-design-spec.md §1 and the prototype copy (ORG, TAG, BLURB, ADDR, RIGHTS, NAV); social URLs unknown → null.",
   "settings": {
     "id": 1,
     "orgNameAr": "جمعية سفير الدعوية",
-    "orgNameEn": null,
-    "taglineAr": "[...]",
-    "taglineEn": null,
-    "footerBlurbAr": "[...]",
-    "footerBlurbEn": null,
-    "rightsLineAr": "[...]",
-    "rightsLineEn": null,
+    "orgNameEn": "Safeer Da'wah Association",
+    "taglineAr": "لطلاب المنح",
+    "taglineEn": "For scholarship students",
+    "footerBlurbAr": "جمعية أهلية غير ربحية متخصصة في رعاية طلاب وطالبات المنح الدوليين الدارسين في الجامعات السعودية.",
+    "footerBlurbEn": "A Saudi non-profit association dedicated to supporting international scholarship students at Saudi universities.",
+    "rightsLineAr": "جميع الحقوق محفوظة لجمعية سفير بالمملكة العربية السعودية",
+    "rightsLineEn": "All rights reserved — Safeer Association, Saudi Arabia",
     "phone": "+966 53 464 6648",
     "email": "info@safeer-sa.org",
-    "addressAr": "الرياض — حي السويدي، شارع سدير",
-    "addressEn": null,
+    "addressAr": "الرياض — حي السويدي، شارع سدير، المملكة العربية السعودية",
+    "addressEn": "Riyadh — Al Suwaidi, Sudair St., Kingdom of Saudi Arabia",
     "facebookUrl": null,
     "instagramUrl": null,
     "xUrl": null,
@@ -78,7 +78,7 @@
   "contact": {
     "phone": "+966 53 464 6648",
     "email": "info@safeer-sa.org",
-    "addressAr": "الرياض — حي السويدي، شارع سدير",
-    "addressEn": null
+    "addressAr": "الرياض — حي السويدي، شارع سدير، المملكة العربية السعودية",
+    "addressEn": "Riyadh — Al Suwaidi, Sudair St., Kingdom of Saudi Arabia"
   }
 }

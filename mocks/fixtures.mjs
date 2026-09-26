@@ -6,5 +6,6 @@
 import site from './fixtures/site.json' with { type: 'json' };
 import roles from './fixtures/roles.json' with { type: 'json' };
 import staff from './fixtures/staff.json' with { type: 'json' };
+import redirects from './fixtures/redirects.json' with { type: 'json' };
 
-export const fixtures = { site, roles, staff };
+export const fixtures = { site, roles, staff, redirects };
