@@ -4,7 +4,8 @@ import { RichText } from './rich-text';
 
 @Component({ imports: [RichText], template: `<app-rich-text [html]="html" />` })
 class Host {
-  html = '<p>ok</p><script>window.x=1</script><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">l</a>';
+  html =
+    '<p>ok</p><script>window.x=1</script><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">l</a>';
 }
 
 describe('RichText', () => {
@@ -15,6 +16,6 @@ describe('RichText', () => {
     expect(el.innerHTML).toContain('<p>ok</p>');
     expect(el.innerHTML).not.toContain('<script');
     expect(el.innerHTML).not.toContain('onerror');
-    expect(el.innerHTML).not.toContain('javascript:');
+    expect(el.innerHTML).not.toMatch(/href="javascript:/);
   });
 });

@@ -74,7 +74,7 @@ import { Image } from '../../../shared/ui/image/image';
         <button appButton type="button" [busy]="true" disabled>
           {{ 'common.loading' | transloco }}
         </button>
-        <a appButton href="#kit-buttons"> Anchor <app-icon name="arrow-left" [size]="18" /> </a>
+        <a appButton href="#kit-buttons"> Anchor <app-icon name="arrow-right" [size]="18" /> </a>
         <button type="button" [appIconButton]="'common.close' | transloco">
           <app-icon name="x" />
         </button>

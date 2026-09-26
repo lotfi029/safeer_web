@@ -16,5 +16,7 @@ import type { LoadFailure } from './loaded';
 export class PageState {
   readonly failure = input.required<LoadFailure>();
   readonly retryHref = input('');
-  protected readonly kind = computed<ErrorKind>(() => (this.failure() === 'error' ? 'serverError' : this.failure() as ErrorKind));
+  protected readonly kind = computed<ErrorKind>(() =>
+    this.failure() === 'error' ? 'serverError' : (this.failure() as ErrorKind),
+  );
 }

@@ -10,6 +10,8 @@
   --primary: #0b4343;
   --primary-dark: #063333;
   --secondary: #1c8184;
+  /* Small secondary-coloured text (eyebrows): #1c8184 is 4.41:1 on --surface, below AA. */
+  --secondary-text: #197679;
   --secondary-light: #ddf2f1;
   --surface: #f6faf9;
   --bg: #ffffff;
@@ -64,6 +66,7 @@
   --primary: #3fb8b4;
   --primary-dark: #57c9c5;
   --secondary: #6ed3ce;
+  --secondary-text: #6ed3ce;
   --secondary-light: #173538;
   --on-primary: #052021;
   --heading: #e9f4f3;
@@ -107,6 +110,7 @@
     --primary: #3fb8b4;
     --primary-dark: #57c9c5;
     --secondary: #6ed3ce;
+    --secondary-text: #6ed3ce;
     --secondary-light: #173538;
     --on-primary: #052021;
     --heading: #e9f4f3;

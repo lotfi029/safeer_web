@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
-import { ResolveFn, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { HomeResponse, PageSection } from '../../../core/api/models';
-import { PublicApi } from '../../../core/api/public-api';
-import { loadCritical, type Loaded } from '../../../core/data/loaded';
+import type { Loaded } from '../../../core/data/loaded';
 import { PageState } from '../../../core/data/page-state';
 import { SITE_ORIGIN } from '../../../core/config/site-origin';
 import { LocaleService } from '../../../core/i18n/locale.service';
@@ -20,8 +19,7 @@ import { SectionHeading } from '../../../shared/ui/section-heading/section-headi
 import { NewsCard } from '../news/news-card';
 import { SectionButton } from '../section-link';
 
-export const homeResolver: ResolveFn<Loaded<HomeResponse>> = () =>
-  loadCritical(inject(PublicApi).home());
+export { homeResolver } from './home.resolver';
 
 /** Section keys this page knows how to render (seed order in CONTRACT-NOTES). Others are skipped. */
 export const HOME_SECTION_KEYS = [

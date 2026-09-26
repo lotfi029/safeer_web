@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, SecurityContext } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  SecurityContext,
+} from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 /**
@@ -15,5 +22,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 export class RichText {
   readonly html = input<string | null | undefined>(null);
   private readonly sanitizer = inject(DomSanitizer);
-  protected readonly safe = computed(() => this.sanitizer.sanitize(SecurityContext.HTML, this.html() ?? '') ?? '');
+  protected readonly safe = computed(
+    () => this.sanitizer.sanitize(SecurityContext.HTML, this.html() ?? '') ?? '',
+  );
 }

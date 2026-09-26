@@ -167,7 +167,8 @@ export const en: Translation = {
       membersHeading: 'Board members',
       executiveEyebrow: 'Operations',
       executiveHeading: 'Executive management',
-      executiveLead: "The team that carries out the board's plans and runs the programmes day to day.",
+      executiveLead:
+        "The team that carries out the board's plans and runs the programmes day to day.",
       photoOf: 'Photo of {{name}}',
     },
   },

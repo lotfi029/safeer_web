@@ -28,8 +28,8 @@ import { srcsetWidths } from './files-image-loader';
       />
     } @else {
       <div
-        class="img-placeholder"
-        [class]="imgClass()"
+        class="img-placeholder min-w-0"
+        [class]="placeholderClass()"
         [style.aspect-ratio]="ratio()"
         role="img"
         [attr.aria-label]="'common.imagePlaceholder' | transloco: { label: placeholder() }"
@@ -51,6 +51,13 @@ export class Image {
   readonly aspect = input<[number, number]>([16, 9]);
   readonly imgClass = input('');
 
+  /** The placeholder is a flex box: display utilities meant for the `<img>` would break its centring. */
+  protected readonly placeholderClass = computed(() =>
+    this.imgClass()
+      .split(/\s+/)
+      .filter((c) => c && !/^(block|inline|inline-block)$/.test(c))
+      .join(' '),
+  );
   protected readonly width = computed(() => this.asset()?.widthPx ?? this.aspect()[0] * 100);
   protected readonly height = computed(() => this.asset()?.heightPx ?? this.aspect()[1] * 100);
   protected readonly ratio = computed(() => `${this.aspect()[0]} / ${this.aspect()[1]}`);

@@ -53,13 +53,13 @@ export class Logo {
   selector: 'app-brand',
   imports: [Logo, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'inline-flex items-center gap-3 text-heading' },
+  host: { class: 'inline-flex min-w-0 items-center gap-3 text-heading' },
   template: `
     <app-logo [height]="compact() ? 42 : 48" alt="" [priority]="priority()" />
     <span class="flex min-w-0 flex-col">
       <span
-        class="leading-snug font-bold whitespace-nowrap"
-        [class]="compact() ? 'text-base' : 'text-base xl:text-[19px]'"
+        class="truncate leading-snug font-bold"
+        [class]="compact() ? 'text-base' : 'text-[15px] sm:text-base xl:text-[19px]'"
         >{{ name() ?? ('common.orgName' | transloco) }}</span
       >
       @if (tagline() && !compact()) {

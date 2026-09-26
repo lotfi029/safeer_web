@@ -1,11 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
-import { ResolveFn } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { forkJoin } from 'rxjs';
-import type { BoardMember, Page } from '../../../core/api/models';
-import { PublicApi } from '../../../core/api/public-api';
-import { loadCritical, type Loaded } from '../../../core/data/loaded';
+import type { Loaded } from '../../../core/data/loaded';
 import { PageState } from '../../../core/data/page-state';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { Icon } from '../../../shared/ui/icon/icon';
@@ -14,17 +10,9 @@ import { PageHead } from '../../../shared/ui/page-head/page-head';
 import { Reveal } from '../../../shared/ui/reveal/reveal';
 import { SectionHeading } from '../../../shared/ui/section-heading/section-heading';
 import { pageSeo } from '../page-meta';
+import type { BoardPageData } from './board.resolver';
 
-export interface BoardPageData {
-  page: Page;
-  members: BoardMember[];
-}
-
-/** Critical data: page meta + members (both needed to render; failures → 404/503/500). */
-export const boardResolver: ResolveFn<Loaded<BoardPageData>> = () => {
-  const api = inject(PublicApi);
-  return loadCritical(forkJoin({ page: api.page('board'), members: api.board() }));
-};
+export { boardResolver, type BoardPageData } from './board.resolver';
 
 /**
  * Board of directors (prototype `#/board`): page head, board grid with the chair (`isLead`) as a wide

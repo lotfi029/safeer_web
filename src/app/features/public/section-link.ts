@@ -45,11 +45,11 @@ export function useSectionLink(): (url: string | null | undefined) => SectionTar
             [href]="t.href"
             target="_blank"
             rel="noopener noreferrer"
-            >{{ label() }} <app-icon name="arrow-left" [size]="18"
+            >{{ label() }} <app-icon name="arrow-right" [size]="18"
           /></a>
         } @else {
           <a class="inline-flex min-h-11 items-center gap-2 font-semibold" [routerLink]="t.href"
-            >{{ label() }} <app-icon name="arrow-left" [size]="18"
+            >{{ label() }} <app-icon name="arrow-right" [size]="18"
           /></a>
         }
       } @else {
@@ -66,7 +66,7 @@ export function useSectionLink(): (url: string | null | undefined) => SectionTar
           <a appButton [variant]="buttonVariant()" [routerLink]="t.href"
             >{{ label() }}
             @if (arrow()) {
-              <app-icon name="arrow-left" [size]="19" />
+              <app-icon name="arrow-right" [size]="19" />
             }
           </a>
         }

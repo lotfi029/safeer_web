@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
-import { boardResolver } from './board/board';
-import { homeResolver } from './home/home';
-import { aboutResolver } from './about/about';
-import { workAreasResolver } from './work-areas/work-areas';
-import { scholarshipsResolver } from './scholarships/scholarships';
-import { testimonialsResolver } from './testimonials/testimonials';
-import { partnersResolver } from './partners/partners';
-import { documentsResolver } from './documents/documents';
-import { contactResolver } from './contact/contact';
+import { boardResolver } from './board/board.resolver';
+import { homeResolver } from './home/home.resolver';
+import { aboutResolver } from './about/about.resolver';
+import { workAreasResolver } from './work-areas/work-areas.resolver';
+import { scholarshipsResolver } from './scholarships/scholarships.resolver';
+import { testimonialsResolver } from './testimonials/testimonials.resolver';
+import { partnersResolver } from './partners/partners.resolver';
+import { documentsResolver } from './documents/documents.resolver';
+import { contactResolver } from './contact/contact.resolver';
 
 /**
  * Public pages (SSR). Each page's critical data comes from a route resolver (`loadCritical`, F8)
