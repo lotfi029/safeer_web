@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
 const SSR_PORT = 4100;
 const SSR_DEAD_API_PORT = 4101;
 const MOCK_API_PORT = 3100;
-const apiUrl = process.env['E2E_API_URL'] ?? `http://127.0.0.1:${MOCK_API_PORT}`;
+const apiUrl = process.env['E2E_API_URL'] || `http://127.0.0.1:${MOCK_API_PORT}`;
 const serverEntry = 'dist/safeer_web-e2e/server/server.mjs';
 // Local sessions use the pre-installed Chromium; CI installs Playwright's own.
 const executablePath = process.env['PW_CHROMIUM_PATH'] || undefined;
