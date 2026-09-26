@@ -4,7 +4,7 @@
  *   ANY /api/v1/__echo   → echoes method, url, headers; sets a test cookie
  *   GET /__log           → recent requests seen by the mock (SSR-path assertions)
  *   DELETE /__log        → clears the log
- *   POST /__reset        → resets mock state
+ *   POST /__reset        → resets mock state (?reference=SA-… restores one seeded application)
  */
 import { createServer } from 'node:http';
 import { createMockBackend } from '../../mocks/backend.mjs';
@@ -69,6 +69,18 @@ const server = createServer(async (req, res) => {
     return send(res, 200, log);
   }
   if (url.pathname === '/__reset') {
+    // `?reference=SA-…` restores just that seeded application (and frees its interview slot) so
+    // specs running in parallel keep their sessions; no query resets the whole backend.
+    const reference = url.searchParams.get('reference');
+    if (reference) {
+      const seed = (fixtures.applications ?? []).find((a) => a.reference === reference);
+      if (!seed) return send(res, 404, { ok: false });
+      backend.db.applications.set(seed.id, structuredClone(seed));
+      for (const slot of backend.db.fixtures.interviewSlots ?? []) {
+        if (slot.applicationId === seed.id) slot.applicationId = null;
+      }
+      return send(res, 200, { ok: true });
+    }
     backend = createMockBackend(fixtures);
     return send(res, 200, { ok: true });
   }

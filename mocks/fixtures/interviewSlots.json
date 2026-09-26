@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "startsAt": "2030-01-10T07:00:00.000Z",
+    "endsAt": "2030-01-10T07:30:00.000Z",
+    "location": "[مقر الجمعية]",
+    "applicationId": null
+  },
+  {
+    "id": "2",
+    "startsAt": "2030-01-11T07:00:00.000Z",
+    "endsAt": "2030-01-11T07:30:00.000Z",
+    "location": "[مقر الجمعية]",
+    "applicationId": null
+  }
+]

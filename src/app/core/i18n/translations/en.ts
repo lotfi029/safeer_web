@@ -8,6 +8,7 @@ import { en as documentsPage } from './pages/documents';
 import { en as contactPage } from './pages/contact';
 import { en as newsPage } from './pages/news';
 import { en as applyPage } from './pages/apply';
+import { en as portal } from './portal';
 
 /** English UI strings. Must mirror `ar.ts` (type-checked). */
 export const en: Translation = {
@@ -246,6 +247,7 @@ export const en: Translation = {
       INTERNAL_ERROR: 'Something went wrong. Please try again.',
     },
   },
+  portal,
   admin: {
     login: {
       title: 'Staff sign in',

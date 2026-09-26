@@ -1,0 +1,439 @@
+[
+  {
+    "id": "101",
+    "reference": "SA-2026-00101",
+    "status": "under_review",
+    "currentStep": 3,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000101",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "under-review@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": "[اسم الجامعة]",
+    "major": "[التخصص]",
+    "degreeLevel": "bachelor",
+    "scholarshipNote": null,
+    "consent": true,
+    "submittedAt": "2026-09-01T09:00:00.000Z",
+    "decidedAt": null,
+    "documents": [
+      {
+        "id": "d11",
+        "docType": "id_copy",
+        "originalName": "id-card.jpg",
+        "mime": "image/jpeg",
+        "sizeBytes": 1200000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d12",
+        "docType": "certificate",
+        "originalName": "certificate.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 840000,
+        "status": "accepted",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d13",
+        "docType": "admission_letter",
+        "originalName": "admission.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 620000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      }
+    ],
+    "events": [
+      {
+        "id": "e11",
+        "type": "SUBMITTED",
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "data": null
+      },
+      {
+        "id": "e12",
+        "type": "STATUS_CHANGED",
+        "createdAt": "2026-09-03T09:00:00.000Z",
+        "data": {
+          "to": "under_review"
+        }
+      }
+    ],
+    "actionNeeded": null,
+    "interview": null
+  },
+  {
+    "id": "102",
+    "reference": "SA-2026-00102",
+    "status": "docs_missing",
+    "currentStep": 3,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000102",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "docs-missing@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": "[اسم الجامعة]",
+    "major": "[التخصص]",
+    "degreeLevel": "bachelor",
+    "scholarshipNote": null,
+    "consent": true,
+    "submittedAt": "2026-09-01T09:00:00.000Z",
+    "decidedAt": null,
+    "documents": [
+      {
+        "id": "d21",
+        "docType": "id_copy",
+        "originalName": "id-card.jpg",
+        "mime": "image/jpeg",
+        "sizeBytes": 1200000,
+        "status": "rejected",
+        "rejectionReason": "[سبب الرفض]",
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d22",
+        "docType": "certificate",
+        "originalName": "certificate.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 840000,
+        "status": "accepted",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d23",
+        "docType": "admission_letter",
+        "originalName": "admission.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 620000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      }
+    ],
+    "events": [
+      {
+        "id": "e21",
+        "type": "SUBMITTED",
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "data": null
+      },
+      {
+        "id": "e22",
+        "type": "DOCUMENT_REJECTED",
+        "createdAt": "2026-09-04T09:00:00.000Z",
+        "data": {
+          "docType": "id_copy"
+        }
+      }
+    ],
+    "actionNeeded": {
+      "type": "document_rejected",
+      "docType": "id_copy",
+      "reason": "[سبب الرفض]"
+    },
+    "interview": null
+  },
+  {
+    "id": "103",
+    "reference": "SA-2026-00103",
+    "status": "interview",
+    "currentStep": 3,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000103",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "interview@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": "[اسم الجامعة]",
+    "major": "[التخصص]",
+    "degreeLevel": "bachelor",
+    "scholarshipNote": null,
+    "consent": true,
+    "submittedAt": "2026-09-01T09:00:00.000Z",
+    "decidedAt": null,
+    "documents": [
+      {
+        "id": "d31",
+        "docType": "id_copy",
+        "originalName": "id-card.jpg",
+        "mime": "image/jpeg",
+        "sizeBytes": 1200000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d32",
+        "docType": "certificate",
+        "originalName": "certificate.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 840000,
+        "status": "accepted",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d33",
+        "docType": "admission_letter",
+        "originalName": "admission.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 620000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      }
+    ],
+    "events": [
+      {
+        "id": "e31",
+        "type": "SUBMITTED",
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "data": null
+      }
+    ],
+    "actionNeeded": null,
+    "interview": null
+  },
+  {
+    "id": "104",
+    "reference": "SA-2026-00104",
+    "status": "accepted",
+    "currentStep": 3,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000104",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "accepted@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": "[اسم الجامعة]",
+    "major": "[التخصص]",
+    "degreeLevel": "bachelor",
+    "scholarshipNote": null,
+    "consent": true,
+    "submittedAt": "2026-09-01T09:00:00.000Z",
+    "decidedAt": "2026-09-20T09:00:00.000Z",
+    "documents": [
+      {
+        "id": "d41",
+        "docType": "id_copy",
+        "originalName": "id-card.jpg",
+        "mime": "image/jpeg",
+        "sizeBytes": 1200000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d42",
+        "docType": "certificate",
+        "originalName": "certificate.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 840000,
+        "status": "accepted",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d43",
+        "docType": "admission_letter",
+        "originalName": "admission.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 620000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      }
+    ],
+    "events": [
+      {
+        "id": "e41",
+        "type": "SUBMITTED",
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "data": null
+      }
+    ],
+    "actionNeeded": null,
+    "interview": null
+  },
+  {
+    "id": "105",
+    "reference": "SA-2026-00105",
+    "status": "rejected",
+    "currentStep": 3,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000105",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "rejected@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": "[اسم الجامعة]",
+    "major": "[التخصص]",
+    "degreeLevel": "bachelor",
+    "scholarshipNote": null,
+    "consent": true,
+    "submittedAt": "2026-09-01T09:00:00.000Z",
+    "decidedAt": "2026-09-20T09:00:00.000Z",
+    "documents": [
+      {
+        "id": "d51",
+        "docType": "id_copy",
+        "originalName": "id-card.jpg",
+        "mime": "image/jpeg",
+        "sizeBytes": 1200000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d52",
+        "docType": "certificate",
+        "originalName": "certificate.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 840000,
+        "status": "accepted",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d53",
+        "docType": "admission_letter",
+        "originalName": "admission.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 620000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      }
+    ],
+    "events": [
+      {
+        "id": "e51",
+        "type": "SUBMITTED",
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "data": null
+      }
+    ],
+    "actionNeeded": null,
+    "interview": null
+  },
+  {
+    "id": "106",
+    "reference": "SA-2026-00106",
+    "status": "new",
+    "currentStep": 3,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000106",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "new@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": "[اسم الجامعة]",
+    "major": "[التخصص]",
+    "degreeLevel": "bachelor",
+    "scholarshipNote": null,
+    "consent": true,
+    "submittedAt": "2026-09-01T09:00:00.000Z",
+    "decidedAt": null,
+    "documents": [
+      {
+        "id": "d61",
+        "docType": "id_copy",
+        "originalName": "id-card.jpg",
+        "mime": "image/jpeg",
+        "sizeBytes": 1200000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d62",
+        "docType": "certificate",
+        "originalName": "certificate.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 840000,
+        "status": "accepted",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      },
+      {
+        "id": "d63",
+        "docType": "admission_letter",
+        "originalName": "admission.pdf",
+        "mime": "application/pdf",
+        "sizeBytes": 620000,
+        "status": "under_review",
+        "rejectionReason": null,
+        "createdAt": "2026-09-01T09:00:00.000Z"
+      }
+    ],
+    "events": [
+      {
+        "id": "e61",
+        "type": "SUBMITTED",
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "data": null
+      }
+    ],
+    "actionNeeded": null,
+    "interview": null
+  },
+  {
+    "id": "107",
+    "reference": "SA-2026-00107",
+    "status": "draft",
+    "currentStep": 1,
+    "firstName": "[الاسم]",
+    "middleName": null,
+    "lastName": "[العائلة]",
+    "birthDate": "2000-01-01",
+    "phone": "+966500000107",
+    "nationality": "SA",
+    "idNumber": null,
+    "email": "draft@mock.invalid",
+    "currentJob": null,
+    "gender": "male",
+    "university": null,
+    "major": null,
+    "degreeLevel": null,
+    "scholarshipNote": null,
+    "consent": false,
+    "submittedAt": null,
+    "decidedAt": null,
+    "documents": [],
+    "events": [],
+    "actionNeeded": null,
+    "interview": null
+  }
+]

@@ -55,3 +55,11 @@ export const applicantGuard: CanActivateFn = async (_route, state) => {
     queryParams: { returnUrl: state.url },
   });
 };
+
+/** Signed-in applicants skip the portal login page. */
+export const applicantLoginGuard: CanActivateFn = async () => {
+  const store = inject(ApplicantSessionStore);
+  const router = inject(Router);
+  const locale = inject(LocaleService);
+  return (await store.ensureLoaded()) ? router.createUrlTree([locale.link('/portal')]) : true;
+};

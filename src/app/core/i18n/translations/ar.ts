@@ -7,6 +7,7 @@ import { ar as documentsPage } from './pages/documents';
 import { ar as contactPage } from './pages/contact';
 import { ar as newsPage } from './pages/news';
 import { ar as applyPage } from './pages/apply';
+import { ar as portal } from './portal';
 
 /**
  * Arabic UI strings (default locale). Content (pages, news, …) comes from the API, never from here.
@@ -246,6 +247,7 @@ export const ar = {
       INTERNAL_ERROR: 'حدث خطأ غير متوقع. حاول مرة أخرى.',
     },
   },
+  portal,
   admin: {
     login: {
       title: 'تسجيل دخول الموظفين',
