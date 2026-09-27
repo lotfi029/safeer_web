@@ -38,18 +38,21 @@ test.describe(
     test('SSR path: server-side API calls carry the visitor IP and language', async ({
       request,
     }) => {
-      await request.delete(`${MOCK_API_URL}/__log`);
+      // The mock's log is shared by every parallel worker: find this request by its client IP (a
+      // TEST-NET-3 address no other spec uses) instead of clearing the log.
+      const ip = `203.0.113.${1 + Math.floor(Math.random() * 254)}`;
       const page = await request.get('/en', {
-        headers: { 'X-Forwarded-For': '203.0.113.9', 'Accept-Language': 'en-GB,en;q=0.8' },
+        headers: { 'X-Forwarded-For': ip, 'Accept-Language': 'en-GB,en;q=0.8' },
       });
       expect(page.status()).toBe(200);
       const log: { path: string; search: string; headers: Record<string, string> }[] = await (
         await request.get(`${MOCK_API_URL}/__log`)
       ).json();
-      const siteCall = log.find((e) => e.path === '/api/v1/site');
-      expect(siteCall, 'SSR must call GET /api/v1/site').toBeTruthy();
+      const siteCall = log.findLast(
+        (e) => e.path === '/api/v1/site' && e.headers['x-forwarded-for'] === ip,
+      );
+      expect(siteCall, 'SSR must call GET /api/v1/site with the visitor IP').toBeTruthy();
       expect(siteCall!.search).toBe('?lang=en');
-      expect(siteCall!.headers['x-forwarded-for']).toBe('203.0.113.9');
       // Public calls carry the page's content language (locale interceptor); the visitor's raw
       // Accept-Language is forwarded only when a call sets none (server-forward interceptor).
       expect(siteCall!.headers['accept-language']).toBe('en');

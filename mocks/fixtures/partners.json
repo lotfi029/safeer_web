@@ -1,74 +1,95 @@
 [
   {
     "id": "1",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
+    "nameAr": "وزارة الموارد البشرية والتنمية الاجتماعية",
+    "nameEn": "Ministry of Human Resources and Social Development",
+    "category": "government",
+    "url": null,
+    "logoAsset": {
+      "id": "6",
+      "publicId": "233a4592-140e-4a17-bd9e-e924b8eb6974",
+      "kind": "image",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 15014,
+      "widthPx": 1600,
+      "heightPx": 1200,
+      "altAr": "شعار شريك",
+      "altEn": "Partner logo"
+    },
+    "sortOrder": 0
+  },
+  {
+    "id": "2",
+    "nameAr": "الهيئة العامة للمنح الدراسية",
+    "nameEn": "General Authority for Scholarships",
     "category": "government",
     "url": null,
     "logoAsset": null,
     "sortOrder": 1
   },
   {
-    "id": "2",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
-    "category": "government",
+    "id": "3",
+    "nameAr": "جامعة الملك سعود",
+    "nameEn": "King Saud University",
+    "category": "university",
     "url": null,
-    "logoAsset": null,
+    "logoAsset": {
+      "id": "7",
+      "publicId": "75f92cfe-b43d-48b0-aa4a-8754382504e6",
+      "kind": "image",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 14700,
+      "widthPx": 1600,
+      "heightPx": 1200,
+      "altAr": "شعار شريك",
+      "altEn": "Partner logo"
+    },
     "sortOrder": 2
   },
   {
-    "id": "3",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
+    "id": "4",
+    "nameAr": "جامعة الإمام محمد بن سعود الإسلامية",
+    "nameEn": "Imam Muhammad ibn Saud Islamic University",
     "category": "university",
     "url": null,
     "logoAsset": null,
     "sortOrder": 3
   },
   {
-    "id": "4",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
-    "category": "university",
+    "id": "5",
+    "nameAr": "جمعية البر بالرياض",
+    "nameEn": "Al Birr Society in Riyadh",
+    "category": "association",
     "url": null,
     "logoAsset": null,
     "sortOrder": 4
   },
   {
-    "id": "5",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
-    "category": "association",
+    "id": "6",
+    "nameAr": "مؤسسة العطاء الخيرية",
+    "nameEn": "Al-Ataa Charitable Foundation",
+    "category": "supporter",
     "url": null,
-    "logoAsset": null,
+    "logoAsset": {
+      "id": "8",
+      "publicId": "95b52b01-7a1d-4f05-96e9-6624bf29b9b9",
+      "kind": "image",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 15515,
+      "widthPx": 1600,
+      "heightPx": 1200,
+      "altAr": "شعار شريك",
+      "altEn": "Partner logo"
+    },
     "sortOrder": 5
   },
   {
-    "id": "6",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
-    "category": "association",
+    "id": "7",
+    "nameAr": "شركة سدير القابضة",
+    "nameEn": "Sudair Holding Company",
+    "category": "supporter",
     "url": null,
     "logoAsset": null,
     "sortOrder": 6
-  },
-  {
-    "id": "7",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
-    "category": "supporter",
-    "url": null,
-    "logoAsset": null,
-    "sortOrder": 7
-  },
-  {
-    "id": "8",
-    "nameAr": "[اسم الشريك]",
-    "nameEn": "[Partner name]",
-    "category": "supporter",
-    "url": null,
-    "logoAsset": null,
-    "sortOrder": 8
   }
 ]

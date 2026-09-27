@@ -97,7 +97,7 @@ const server = createServer(async (req, res) => {
     headers: req.headers,
     at: Date.now(),
   });
-  if (log.length > 300) log.shift();
+  if (log.length > 2000) log.shift();
 
   if (url.pathname === '/api/v1/__echo') {
     const body = await readBody(req, url);

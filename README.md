@@ -90,3 +90,9 @@ Backend features that are not live yet are implemented to the agreed contract in
 `environment.useMocks`) and the Node mock API used by e2e/CI, so they cannot drift. Mock logins:
 staff `admin@mock.invalid` / `mock-password` (also `reviewer@`, `editor@`, `support@`), applicant OTP `123456`.
 Production builds contain no mock code and no `/_kit` (checked by `scripts/check-prod-artifact.mjs`).
+
+The public fixtures (`site`, `home`, `board`, `workAreas`, `partners`, `documents`, `newsCategories`, `aboutItems`)
+are recorded from a running API, so their shapes and copy can't drift from the real responses:
+`node scripts/record-fixtures.mjs [--only board,site]` (boot the API first as above; each endpoint is fetched in
+`ar` and `en` and merged into the `xAr`/`xEn` form the mock collapses). `posts`, `testimonials` and the staff/portal
+fixtures stay hand-written: they hold drafts, preview tokens, quotes and accounts the dev seed doesn't have.

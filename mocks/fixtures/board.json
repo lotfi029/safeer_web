@@ -1,80 +1,79 @@
-[
-  {
-    "id": "1",
-    "nameAr": "د. عبد الله بن دجين بن علي السهلي",
-    "nameEn": "Dr. Abdullah bin Dujain Al-Suhali",
-    "roleAr": "رئيس المجلس",
-    "roleEn": "Chairman",
-    "grp": "board",
-    "isLead": true,
-    "photoAsset": null,
-    "bioAr": null,
-    "bioEn": null,
-    "sortOrder": 1
-  },
-  {
-    "id": "2",
-    "nameAr": "د. فهد بن سعيد بن ناصر بن سعيد",
-    "nameEn": "Dr. Fahd bin Saeed bin Nasser",
-    "roleAr": "نائب الرئيس",
-    "roleEn": "Vice Chairman",
-    "grp": "board",
-    "isLead": false,
-    "photoAsset": null,
-    "bioAr": null,
-    "bioEn": null,
-    "sortOrder": 2
-  },
-  {
-    "id": "3",
-    "nameAr": "د. سالم بن عبد الله بن عامر العجمي",
-    "nameEn": "Dr. Salem bin Abdullah Al-Ajmi",
-    "roleAr": "مشرف مالي",
-    "roleEn": "Financial supervisor",
-    "grp": "board",
-    "isLead": false,
-    "photoAsset": null,
-    "bioAr": null,
-    "bioEn": null,
-    "sortOrder": 3
-  },
-  {
-    "id": "4",
-    "nameAr": "د. عبد الرحمن عبد الكريم البراهيم اليزيد",
-    "nameEn": "Dr. Abdulrahman Al-Ibrahim Al-Yazid",
-    "roleAr": "عضو",
-    "roleEn": "Member",
-    "grp": "board",
-    "isLead": false,
-    "photoAsset": null,
-    "bioAr": null,
-    "bioEn": null,
-    "sortOrder": 4
-  },
-  {
-    "id": "5",
-    "nameAr": "د. عثمان بن سليمان بن حمد العراجه",
-    "nameEn": "Dr. Othman bin Sulaiman Al-Arajah",
-    "roleAr": "عضو",
-    "roleEn": "Member",
-    "grp": "board",
-    "isLead": false,
-    "photoAsset": null,
-    "bioAr": null,
-    "bioEn": null,
-    "sortOrder": 5
-  },
-  {
-    "id": "6",
-    "nameAr": "أ. شعلان عبدالله الشمراني",
-    "nameEn": "Mr. Shalan Abdullah Al-Shamrani",
-    "roleAr": "المدير التنفيذي",
-    "roleEn": "Executive Director",
-    "grp": "executive",
-    "isLead": false,
-    "photoAsset": null,
-    "bioAr": null,
-    "bioEn": null,
-    "sortOrder": 1
-  }
-]
+{
+  "_source": "Recorded from GET /api/v1/board by scripts/record-fixtures.mjs",
+  "board": [
+    {
+      "id": "1",
+      "nameAr": "د. عبد الله بن دجين بن علي السهلي",
+      "nameEn": "Dr. Abdullah bin Dujain Al-Suhali",
+      "roleAr": "رئيس المجلس",
+      "roleEn": "Chairman",
+      "grp": "board",
+      "isLead": true,
+      "bio": null,
+      "photoAsset": null,
+      "sortOrder": 0
+    },
+    {
+      "id": "2",
+      "nameAr": "د. فهد بن سعيد بن ناصر بن سعيد",
+      "nameEn": "Dr. Fahd bin Saeed bin Nasser",
+      "roleAr": "نائب الرئيس",
+      "roleEn": "Vice Chairman",
+      "grp": "board",
+      "isLead": false,
+      "bio": null,
+      "photoAsset": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "3",
+      "nameAr": "د. سالم بن عبد الله بن عامر العجمي",
+      "nameEn": "Dr. Salem bin Abdullah Al-Ajmi",
+      "roleAr": "مشرف مالي",
+      "roleEn": "Financial supervisor",
+      "grp": "board",
+      "isLead": false,
+      "bio": null,
+      "photoAsset": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "4",
+      "nameAr": "د. عبد الرحمن عبد الكريم البراهيم اليزيد",
+      "nameEn": "Dr. Abdulrahman Al-Ibrahim Al-Yazid",
+      "roleAr": "عضو",
+      "roleEn": "Member",
+      "grp": "board",
+      "isLead": false,
+      "bio": null,
+      "photoAsset": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "5",
+      "nameAr": "د. عثمان بن سليمان بن حمد العراجه",
+      "nameEn": "Dr. Othman bin Sulaiman Al-Arajah",
+      "roleAr": "عضو",
+      "roleEn": "Member",
+      "grp": "board",
+      "isLead": false,
+      "bio": null,
+      "photoAsset": null,
+      "sortOrder": 4
+    }
+  ],
+  "executive": [
+    {
+      "id": "6",
+      "nameAr": "أ. شعلان عبدالله الشمراني",
+      "nameEn": "Mr. Shalan Abdullah Al-Shamrani",
+      "roleAr": "المدير التنفيذي",
+      "roleEn": "Executive Director",
+      "grp": "executive",
+      "isLead": false,
+      "bio": null,
+      "photoAsset": null,
+      "sortOrder": 0
+    }
+  ]
+}

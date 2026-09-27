@@ -2,92 +2,54 @@
   {
     "category": {
       "id": "1",
-      "slug": "licenses",
+      "slug": "licences",
       "nameAr": "التراخيص",
       "nameEn": "Licences"
     },
     "documents": [
       {
         "id": "1",
-        "titleAr": "[ترخيص الجمعية]",
-        "titleEn": "[Association licence]",
-        "docDate": null,
+        "titleAr": "ترخيص الجمعية",
+        "titleEn": "Association licence",
+        "docDate": "2019-03-10",
         "asset": {
-          "id": "asset-doc-1",
-          "publicId": "doc-1",
-          "kind": "document",
+          "id": "9",
+          "publicId": "6251f38c-de6b-4a0f-b92c-f6964fd0b3bd",
+          "kind": "pdf",
           "mimeType": "application/pdf",
-          "sizeBytes": 0,
+          "sizeBytes": 593,
           "widthPx": null,
           "heightPx": null,
-          "altAr": null,
-          "altEn": null
+          "alt": null
         },
-        "sortOrder": 1
-      },
-      {
-        "id": "2",
-        "titleAr": "[شهادة التسجيل]",
-        "titleEn": "[Registration certificate]",
-        "docDate": null,
-        "asset": {
-          "id": "asset-doc-2",
-          "publicId": "doc-2",
-          "kind": "document",
-          "mimeType": "application/pdf",
-          "sizeBytes": 0,
-          "widthPx": null,
-          "heightPx": null,
-          "altAr": null,
-          "altEn": null
-        },
-        "sortOrder": 2
+        "sortOrder": 0
       }
     ]
   },
   {
     "category": {
       "id": "2",
-      "slug": "policies",
+      "slug": "policies-regulations",
       "nameAr": "السياسات واللوائح",
       "nameEn": "Policies & regulations"
     },
     "documents": [
       {
-        "id": "3",
-        "titleAr": "[اللائحة الأساسية]",
-        "titleEn": "[Articles of association]",
-        "docDate": null,
+        "id": "2",
+        "titleAr": "اللائحة الأساسية للجمعية",
+        "titleEn": "Association bylaws",
+        "docDate": "2019-05-01",
         "asset": {
-          "id": "asset-doc-3",
-          "publicId": "doc-3",
-          "kind": "document",
+          "id": "10",
+          "publicId": "1dc2d4ba-82a2-4a74-bbc3-42ee75a58510",
+          "kind": "pdf",
           "mimeType": "application/pdf",
-          "sizeBytes": 0,
+          "sizeBytes": 592,
           "widthPx": null,
           "heightPx": null,
-          "altAr": null,
-          "altEn": null
+          "alt": null
         },
         "sortOrder": 1
-      },
-      {
-        "id": "4",
-        "titleAr": "[سياسة الخصوصية وحماية البيانات]",
-        "titleEn": "[Privacy & data protection policy]",
-        "docDate": null,
-        "asset": {
-          "id": "asset-doc-4",
-          "publicId": "doc-4",
-          "kind": "document",
-          "mimeType": "application/pdf",
-          "sizeBytes": 0,
-          "widthPx": null,
-          "heightPx": null,
-          "altAr": null,
-          "altEn": null
-        },
-        "sortOrder": 2
       }
     ]
   },
@@ -100,38 +62,19 @@
     },
     "documents": [
       {
-        "id": "5",
-        "titleAr": "[محضر اجتماع مجلس الإدارة رقم ١]",
-        "titleEn": "[Board meeting minutes no. 1]",
-        "docDate": null,
+        "id": "3",
+        "titleAr": "محضر اجتماع مجلس الإدارة رقم ١",
+        "titleEn": "Board meeting minutes no. 1",
+        "docDate": "2024-01-15",
         "asset": {
-          "id": "asset-doc-5",
-          "publicId": "doc-5",
-          "kind": "document",
+          "id": "11",
+          "publicId": "dafcbca1-f90a-4db9-b677-106a4975f2d3",
+          "kind": "pdf",
           "mimeType": "application/pdf",
-          "sizeBytes": 0,
+          "sizeBytes": 601,
           "widthPx": null,
           "heightPx": null,
-          "altAr": null,
-          "altEn": null
-        },
-        "sortOrder": 1
-      },
-      {
-        "id": "6",
-        "titleAr": "[محضر اجتماع الجمعية العمومية]",
-        "titleEn": "[General assembly minutes]",
-        "docDate": null,
-        "asset": {
-          "id": "asset-doc-6",
-          "publicId": "doc-6",
-          "kind": "document",
-          "mimeType": "application/pdf",
-          "sizeBytes": 0,
-          "widthPx": null,
-          "heightPx": null,
-          "altAr": null,
-          "altEn": null
+          "alt": null
         },
         "sortOrder": 2
       }
@@ -146,22 +89,21 @@
     },
     "documents": [
       {
-        "id": "7",
-        "titleAr": "تقارير الأنشطة",
-        "titleEn": "Activity reports",
-        "docDate": null,
+        "id": "4",
+        "titleAr": "تقرير الأنشطة السنوي 2024",
+        "titleEn": "Annual activity report 2024",
+        "docDate": "2024-05-01",
         "asset": {
-          "id": "asset-doc-7",
-          "publicId": "doc-7",
-          "kind": "document",
+          "id": "12",
+          "publicId": "f062c547-81cc-402c-bc3a-1392185ac084",
+          "kind": "pdf",
           "mimeType": "application/pdf",
-          "sizeBytes": 0,
+          "sizeBytes": 601,
           "widthPx": null,
           "heightPx": null,
-          "altAr": null,
-          "altEn": null
+          "alt": null
         },
-        "sortOrder": 1
+        "sortOrder": 3
       }
     ]
   }

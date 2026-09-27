@@ -15,9 +15,9 @@
     "coverAsset": null,
     "category": {
       "id": "1",
-      "slug": "community-activities",
+      "slug": "community",
       "nameAr": "أنشطة مجتمعية",
-      "nameEn": "Community",
+      "nameEn": "Community activities",
       "sortOrder": 1
     }
   },

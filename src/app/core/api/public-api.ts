@@ -5,7 +5,7 @@ import { API_PREFIX } from '../config/api-base-url';
 import type {
   AboutItemKind,
   AboutItemsResponse,
-  BoardMember,
+  BoardResponse,
   ContactRequest,
   Country,
   DocumentGroup,
@@ -60,8 +60,8 @@ export class PublicApi {
     });
   }
 
-  board(): Observable<BoardMember[]> {
-    return this.http.get<BoardMember[]>(`${API_PREFIX}/board`);
+  board(): Observable<BoardResponse> {
+    return this.http.get<BoardResponse>(`${API_PREFIX}/board`);
   }
 
   workAreas(): Observable<WorkArea[]> {

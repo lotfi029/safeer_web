@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { mockOnly } from '../support/env';
+import { randomInt } from 'node:crypto';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 const PDF = {
@@ -8,18 +8,32 @@ const PDF = {
   buffer: Buffer.from('%PDF-1.4\n%mock\n'),
 };
 
-async function fillStep1(page: Page, emailAddress: string): Promise<void> {
+interface Applicant {
+  email: string;
+  phone: string;
+}
+
+/**
+ * A fresh email and phone: the API refuses a second active application for either (409
+ * APPLICATION_EXISTS), so every run against the real API needs unused ones.
+ */
+function newApplicant(tag: string): Applicant {
+  const n = String(randomInt(0, 1e8)).padStart(8, '0');
+  return { email: `${tag}-${n}@example.invalid`, phone: `+9665${n}` };
+}
+
+async function fillStep1(page: Page, applicant: Applicant): Promise<void> {
   await page.getByRole('textbox', { name: 'First', exact: true }).fill('Sara');
   await page.getByRole('textbox', { name: 'Last', exact: true }).fill('Ali');
   await page.getByRole('textbox', { name: 'Date of birth' }).fill('2001-05-06');
-  await page.getByRole('textbox', { name: 'Phone' }).fill('+966500000001');
+  await page.getByRole('textbox', { name: 'Phone' }).fill(applicant.phone);
   const nationality = page.getByLabel('Nationality');
   if ((await nationality.evaluate((el) => el.tagName)) === 'SELECT') {
     await nationality.selectOption('SA');
   } else {
     await nationality.fill('SA');
   }
-  await page.getByRole('textbox', { name: 'Email' }).fill(emailAddress);
+  await page.getByRole('textbox', { name: 'Email' }).fill(applicant.email);
   await page.getByRole('radio', { name: 'Female' }).check();
 }
 
@@ -57,12 +71,11 @@ test.describe('apply flow', () => {
     );
   });
 
-  test.describe('against the mock API', mockOnly('creates applications'), () => {
+  test.describe('applying (creates applications; runs against the real API too)', () => {
     test('happy path: create → autosave → uploads → submit → reference', async ({ page }) => {
-      const email = `apply-${Date.now()}@mock.invalid`;
       await page.goto('/en/apply');
       await page.waitForLoadState('networkidle');
-      await fillStep1(page, email);
+      await fillStep1(page, newApplicant('apply'));
       const created = page.waitForResponse(
         (r) => /\/api\/v1\/applications(\?|$)/.test(r.url()) && r.request().method() === 'POST',
       );
@@ -100,10 +113,43 @@ test.describe('apply flow', () => {
       await expect(page.getByTestId('reference')).toHaveText(/^SA-\d{4}-\d{5}$/);
     });
 
+    test('a second upload of a type replaces the first, with no client-side delete (W4)', async ({
+      page,
+    }) => {
+      await page.goto('/en/apply');
+      await page.waitForLoadState('networkidle');
+      await fillStep1(page, newApplicant('replace'));
+      await page.getByRole('button', { name: 'Next — academic details' }).click();
+      await fillStep2(page);
+      await page.getByRole('button', { name: 'Next — documents and consent' }).click();
+      const deletes: string[] = [];
+      page.on('request', (r) => r.method() === 'DELETE' && deletes.push(r.url()));
+      const slot = page.locator('[data-doc-type="certificate"]');
+      await expect(slot.locator('input[type=file]')).not.toHaveAttribute('multiple');
+      for (const name of ['first.pdf', 'second.pdf']) {
+        const uploaded = page.waitForResponse(
+          (r) => /\/portal\/documents(\?|$)/.test(r.url()) && r.request().method() === 'POST',
+        );
+        await slot.locator('input[type=file]').setInputFiles({ ...PDF, name });
+        expect((await uploaded).status()).toBe(201);
+      }
+      await expect(slot.locator('li')).toHaveCount(1);
+      await expect(slot.locator('li')).toContainText('second.pdf');
+      // The server agrees: one current certificate, the latest (same session cookie as the page).
+      const res = await page.request.get('/api/v1/portal/documents');
+      const { documents } = (await res.json()) as {
+        documents: { docType: string; originalName: string }[];
+      };
+      expect(documents.filter((d) => d.docType === 'certificate')).toEqual([
+        expect.objectContaining({ originalName: 'second.pdf' }),
+      ]);
+      expect(deletes).toEqual([]);
+    });
+
     test('client rejects unsupported file types before uploading', async ({ page }) => {
       await page.goto('/en/apply');
       await page.waitForLoadState('networkidle');
-      await fillStep1(page, `type-${Date.now()}@mock.invalid`);
+      await fillStep1(page, newApplicant('type'));
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await fillStep2(page);
       await page.getByRole('button', { name: 'Next — documents and consent' }).click();
@@ -125,22 +171,22 @@ test.describe('apply flow', () => {
       page,
       request,
     }) => {
-      const email = `exists-${Date.now()}@mock.invalid`;
+      const applicant = newApplicant('exists');
       const first = await request.post('/api/v1/applications', {
         data: {
           firstName: 'Sara',
           lastName: 'Ali',
           birthDate: '2001-05-06',
-          phone: '+966500000001',
+          phone: applicant.phone,
           nationality: 'SA',
-          email,
+          email: applicant.email,
           gender: 'female',
         },
       });
       expect(first.status()).toBe(201);
       await page.goto('/en/apply');
       await page.waitForLoadState('networkidle');
-      await fillStep1(page, email);
+      await fillStep1(page, applicant);
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await expect(page.getByRole('main').getByRole('alert')).toContainText('already exists');
       await expect(page.getByRole('link', { name: 'Go to the student portal' })).toBeVisible();
@@ -151,7 +197,7 @@ test.describe('apply flow', () => {
     }) => {
       await page.goto('/en/apply');
       await page.waitForLoadState('networkidle');
-      await fillStep1(page, `offline-${Date.now()}@mock.invalid`);
+      await fillStep1(page, newApplicant('offline'));
       await page.getByRole('textbox', { name: 'ID / residency number' }).fill('1234567890');
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await expect(page.getByRole('heading', { name: /Step 2/ })).toBeVisible();
@@ -181,7 +227,7 @@ test.describe('apply flow', () => {
     }) => {
       await page.goto('/en/apply');
       await page.waitForLoadState('networkidle');
-      await fillStep1(page, `resume-${Date.now()}@mock.invalid`);
+      await fillStep1(page, newApplicant('resume'));
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await expect(page.getByRole('heading', { name: /Step 2/ })).toBeVisible();
       await page.reload();

@@ -26,11 +26,11 @@ test.describe('news', () => {
       request,
     }) => {
       const all = await (await request.get('/ar/news')).text();
-      expect(all).toContain('href="/ar/news?category=community-activities"');
+      expect(all).toContain('href="/ar/news?category=community"');
       expect(all).toMatch(/href="\/ar\/news\?page=2"/);
       expect(all).toMatch(/<link rel="canonical" href="[^"]*\/ar\/news"/);
 
-      const filtered = await (await request.get('/ar/news?category=community-activities')).text();
+      const filtered = await (await request.get('/ar/news?category=community')).text();
       expect(filtered).toContain('/ar/news/dates-distribution-2020');
       expect(filtered).not.toContain('/ar/news/placeholder-1');
       expect(filtered).toMatch(/aria-current="page"[^>]*>أنشطة مجتمعية|أنشطة مجتمعية<\/a>/);

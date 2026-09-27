@@ -155,9 +155,15 @@ export interface BoardMember {
   grp: 'board' | 'executive';
   isLead: boolean;
   photoAsset: Asset | null;
-  /** B12 (mocked until live). */
-  bio?: string | null;
+  /** B12. */
+  bio: string | null;
   sortOrder: number;
+}
+
+/** GET /board: members grouped (board.controller.ts), each group in sortOrder. W1. */
+export interface BoardResponse {
+  board: BoardMember[];
+  executive: BoardMember[];
 }
 
 export interface Testimonial {

@@ -242,7 +242,11 @@ export function createMockBackend(fixtures) {
         return json(200, collapse(out, lang));
       },
     ],
-    ['GET', /^\/api\/v1\/board$/, ({ lang }) => json(200, collapse(db.fixtures.board ?? [], lang))],
+    [
+      'GET',
+      /^\/api\/v1\/board$/,
+      ({ lang }) => json(200, collapse(db.fixtures.board ?? { board: [], executive: [] }, lang)),
+    ],
     [
       'GET',
       /^\/api\/v1\/work-areas$/,
@@ -454,9 +458,12 @@ export function createMockBackend(fixtures) {
           ],
         });
         if (issues.length) return problem(400, 'VALIDATION_FAILED', { issues });
+        // B2: a second active application for the same email OR phone (like the API).
+        const digits = (x) => String(x ?? '').replace(/[\s-]/g, '');
+        const samePhone = (x) => digits(x) === digits(body.phone);
         const active = [...db.applications.values()].find(
           (a) =>
-            a.email?.toLowerCase() === body.email.toLowerCase() &&
+            (a.email?.toLowerCase() === body.email.toLowerCase() || samePhone(a.phone)) &&
             !['accepted', 'rejected'].includes(a.status),
         );
         if (active) return problem(409, 'APPLICATION_EXISTS');

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { SSR_DEAD_API_URL, mockOnly, usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
+import { measureHeader } from '../support/header';
 
 test.describe('public shell', () => {
   for (const { viewport, locale } of matrix()) {
@@ -30,24 +31,46 @@ test.describe('public shell', () => {
     );
   });
 
-  test(
-    'desktop nav comes from GET /site in API order and marks the current page',
-    mockOnly('asserts the mock nav'),
-    async ({ page }) => {
-      await page.setViewportSize({ width: 1440, height: 900 });
-      await page.goto('/ar');
-      const nav = page.getByRole('navigation', { name: 'القائمة الرئيسية' });
-      const links = nav.getByRole('link');
-      // Header bar: the 7 primary pages (prototype NAV) in API order; the drawer lists all 10.
-      await expect(links).toHaveCount(7);
-      await expect(links.first()).toHaveText('الرئيسية');
-      await expect(links.first()).toHaveAttribute('aria-current', 'page');
-      await expect(nav.getByRole('link', { name: 'مجالات عملنا' })).toHaveAttribute(
-        'href',
-        '/ar/work-areas',
-      );
-    },
-  );
+  test('desktop nav comes from GET /site in API order and marks the current page', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/ar');
+    const nav = page.getByRole('navigation', { name: 'القائمة الرئيسية' });
+    const links = nav.getByRole('link');
+    // Header bar: the 7 primary pages (prototype NAV) in API order; the drawer lists all 10.
+    await expect(links).toHaveCount(7);
+    await expect(links.first()).toHaveText('الرئيسية');
+    await expect(links.first()).toHaveAttribute('aria-current', 'page');
+    await expect(nav.getByRole('link', { name: 'مجالات عملنا' })).toHaveAttribute(
+      'href',
+      '/ar/work-areas',
+    );
+  });
+
+  // W5: with real API titles the English header overflowed at 1440. Every width, both languages.
+  for (const lang of ['ar', 'en'] as const) {
+    test(`header never overflows, overlaps, clips or truncates (${lang}, 360–1920)`, async ({
+      page,
+    }) => {
+      const failures: string[] = [];
+      for (const width of [360, 390, 768, 1024, 1100, 1280, 1440, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`/${lang}`);
+        await page.waitForLoadState('networkidle');
+        const m = await measureHeader(page);
+        const problems = [
+          m.overflow > 0 && `overflow ${m.overflow}px`,
+          ...m.overlaps.map((o) => `overlap ${o}`),
+          ...m.clipped.map((c) => `clipped "${c}"`),
+          ...m.wrapped.map((w) => `wrapped "${w}"`),
+          m.nameTruncated && 'org name truncated',
+        ].filter(Boolean);
+        if (problems.length) failures.push(`@${width}: ${problems.join(', ')}`);
+      }
+      expect(failures).toEqual([]);
+    });
+  }
 
   test('below 1100px the nav is in a focus-trapped drawer that closes on Escape (F7)', async ({
     page,

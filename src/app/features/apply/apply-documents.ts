@@ -27,12 +27,12 @@ interface Slot {
 }
 
 export const APPLY_DOC_TYPES: readonly DocType[] = [...REQUIRED_DOC_TYPES, 'other'];
-/** One file per type for these; certificates and "other" may have several. */
-const SINGLE: ReadonlySet<DocType> = new Set<DocType>(['id_copy', 'admission_letter']);
 
 /**
  * Step 3 uploads: one file-drop per document type (`POST /portal/documents`, multipart, progress via
- * `reportProgress`), the uploaded files with a remove button (`DELETE`, draft only), and the
+ * `reportProgress`). The API keeps one current document per type (W4): a new upload supersedes the
+ * previous one server-side, so the list shows the latest only and the client never deletes the
+ * replaced row. The remove button (`DELETE`, draft only) is for the applicant's own removal. Plus the
  * `missing` highlight after a `DOCUMENTS_INCOMPLETE` submit. Client checks (type/size) live in
  * `<app-file-drop>`; the server re-checks by magic bytes.
  */
@@ -46,7 +46,6 @@ const SINGLE: ReadonlySet<DocType> = new Set<DocType>(['id_copy', 'admission_let
       <div class="flex flex-col gap-3" [attr.data-doc-type]="type">
         <app-file-drop
           [label]="labelFor(type)"
-          [multiple]="!single(type)"
           [status]="slot(type).status"
           [progress]="slot(type).progress"
           [error]="
@@ -105,10 +104,6 @@ export class ApplyDocuments {
     void this.reload();
   }
 
-  protected single(type: DocType): boolean {
-    return SINGLE.has(type);
-  }
-
   protected labelFor(type: DocType): string {
     const name = this.t.translate(`docType.${type}`);
     return type === 'other' ? `${name} (${this.t.translate('pages.apply.optionalDoc')})` : name;
@@ -142,11 +137,10 @@ export class ApplyDocuments {
   }
 
   protected upload(type: DocType, files: File[]): void {
-    const [first, ...rest] = files;
+    const [first] = files;
     if (!first) {
       return;
     }
-    const replaced = SINGLE.has(type) ? this.docsOf(type) : [];
     this.setSlot(type, { status: 'uploading', progress: 0, error: null });
     this.uploads.get(type)?.unsubscribe();
     this.uploads.set(
@@ -158,13 +152,9 @@ export class ApplyDocuments {
             this.setSlot(type, { status: 'uploading', progress: pct, error: null });
           } else if (event.type === HttpEventType.Response && event.body) {
             const doc = event.body;
-            this.setDocuments([...this.documents().filter((d) => d.id !== doc.id), doc]);
+            // The server superseded any earlier document of this type (W4).
+            this.setDocuments([...this.documents().filter((d) => d.docType !== type), doc]);
             this.setSlot(type, null);
-            // Single-file types: the new upload replaces the previous one.
-            replaced.forEach((old) => void this.remove(old, true));
-            if (rest.length) {
-              this.upload(type, rest);
-            }
           }
         },
         error: (error: unknown) => {
@@ -178,18 +168,16 @@ export class ApplyDocuments {
     );
   }
 
-  protected async remove(doc: ApplicantDocument, silent = false): Promise<void> {
+  protected async remove(doc: ApplicantDocument): Promise<void> {
     try {
       await firstValueFrom(this.api.deleteDocument(doc.id));
       this.setDocuments(this.documents().filter((d) => d.id !== doc.id));
     } catch (error) {
-      if (!silent) {
-        this.setSlot(doc.docType, {
-          status: 'error',
-          progress: null,
-          error: this.t.translate(problemMessageKey(toApiProblem(error))),
-        });
-      }
+      this.setSlot(doc.docType, {
+        status: 'error',
+        progress: null,
+        error: this.t.translate(problemMessageKey(toApiProblem(error))),
+      });
     }
   }
 
