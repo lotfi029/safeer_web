@@ -1,0 +1,17 @@
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
+import { slugSchema } from '../../common/validation/slug.js';
+
+export const createNewsCategorySchema = z
+  .object({
+    slug: slugSchema(), // C14
+    nameAr: z.string().min(1).max(191),
+    nameEn: z.string().trim().max(191).nullable().optional(),
+    sortOrder: z.number().int().optional(),
+  })
+  .strict();
+
+export const updateNewsCategorySchema = createNewsCategorySchema.partial();
+
+export class CreateNewsCategoryDto extends createZodDto(createNewsCategorySchema) {}
+export class UpdateNewsCategoryDto extends createZodDto(updateNewsCategorySchema) {}
