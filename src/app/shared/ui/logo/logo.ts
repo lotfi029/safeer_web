@@ -2,10 +2,11 @@ import { NgOptimizedImage } from '@angular/common';
 import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-// TODO(logo): replace with the official SVG (spec §6.1); never ship a traced SVG.
-/** A 2× copy of docs/safeer-logo.png for the largest in-app logo (56 px): 3 KB instead of 16 KB. */
+// The association's own PNG from safeer-sa.org (docs/brand/), trimmed. TODO(logo): swap in the
+// official SVG when the client sends it (spec §6.1); never ship a traced SVG.
+/** A 2× copy for the largest in-app logo (56 px), 4 KB; the full 253×387 file stays for the intro and JSON-LD. */
 const LOGO_SRC = '/brand/safeer-logo-sm.png';
-const LOGO_WIDTH = 74;
+const LOGO_WIDTH = 73;
 const LOGO_HEIGHT = 112;
 
 /**

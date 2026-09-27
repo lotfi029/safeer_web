@@ -480,7 +480,8 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
 
 ### Still needed from the client
-- **Logo:** the official SVG. `docs/safeer-logo.png` is a temporary stand-in and a launch blocker (spec §6.1).
+- **Logo:** the official SVG (spec §6.1). The app now uses the association's own PNG from safeer-sa.org, trimmed to 253×387, plus a 73×112 copy. See `docs/frontend/client-content.md` §1.
+- **Content collected from the current site:** figures, registration number and date, contact details, board. See `docs/frontend/client-content.md` for where each goes (admin screens) and what is still open.
 - **Content:** all real copy, figures and photos. Every `[…]` placeholder comes from fixtures or the translation files. That covers impact numbers, board bios and photos, partner logos, the governance documents, the office hours and reply time on the contact page, and the map embed.
 - **Hosting:** the Node versions offered by the Hostinger plan (see `deployment.md`).
 

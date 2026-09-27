@@ -65,8 +65,8 @@ const INTRO_COOKIE = 'intro';
           <img
             class="mark h-33 w-auto"
             src="/brand/safeer-logo.png"
-            width="150"
-            height="228"
+            width="253"
+            height="387"
             alt=""
           />
           <span class="rule block h-0.5 rounded-sm bg-secondary"></span>
