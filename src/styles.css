@@ -16,6 +16,8 @@
   --color-primary-dark: var(--primary-dark);
   --color-secondary: var(--secondary);
   --color-secondary-light: var(--secondary-light);
+  /* Secondary-coloured text on surface/app-bg (AA); plain --secondary is 4.41:1 there. */
+  --color-secondary-text: var(--secondary-text);
   --color-surface: var(--surface);
   --color-bg: var(--bg);
   --color-card: var(--card);
@@ -36,6 +38,14 @@
   --color-band-soft: var(--band-soft);
   --color-band-card: var(--band-card);
   --color-hero: var(--hero);
+  --color-app-bg: var(--app-bg);
+  --color-thead: var(--thead);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-text: var(--sidebar-active-text);
   --radius-card: var(--radius-card);
   --radius-btn: var(--radius-btn);
   --radius-tile: var(--radius-tile);

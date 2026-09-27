@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_PREFIX } from '../config/api-base-url';
 import type { OkResponse, RolesResponse, StaffMe, StaffUser } from './models';
 
-/** Staff auth endpoints used by StaffSessionStore. Session 2 adds the admin feature APIs. */
+/** Staff auth endpoints (StaffSessionStore, login/forgot/accept/reset). Feature APIs: core/api/admin. */
 @Injectable({ providedIn: 'root' })
 export class StaffApi {
   private readonly http = inject(HttpClient);
@@ -22,6 +22,11 @@ export class StaffApi {
 
   logout(): Observable<OkResponse> {
     return this.http.post<OkResponse>(`${API_PREFIX}/admin/auth/logout`, {});
+  }
+
+  /** Always `{ ok: true }`, whether or not the email has an account (no enumeration); 3/h per IP. */
+  forgot(email: string): Observable<OkResponse> {
+    return this.http.post<OkResponse>(`${API_PREFIX}/admin/auth/forgot`, { email });
   }
 
   /** W16: the invitation link (`/{lang}/admin/accept/{token}`); public, single-use token. */

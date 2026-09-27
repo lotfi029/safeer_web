@@ -11,8 +11,8 @@ import { Icon } from '../../../shared/ui/icon/icon';
 
 /**
  * Newsletter band (prototype news page footer band): email + honeypot + `formRenderedAt` (set in the
- * browser, F12) → POST /newsletter. Double opt-in (C27): `pendingConfirmation` asks the visitor to
- * open the confirmation email.
+ * browser, F12) → POST /newsletter. Double opt-in (C27): the visitor is asked to open the
+ * confirmation email (rc1 always answers `{ ok: true }`, never `pendingConfirmation`).
  */
 @Component({
   selector: 'app-newsletter-form',
@@ -115,7 +115,9 @@ export class NewsletterForm {
             formRenderedAt: this.formRenderedAt ?? Date.now(),
           }),
         );
-        this.result.set(res.pendingConfirmation ? 'pending' : 'done');
+        // rc1 answers a bare `{ ok: true }` and every sign-up waits for the emailed confirmation
+        // (C27), so only an explicit `pendingConfirmation: false` means "already subscribed".
+        this.result.set(res.pendingConfirmation === false ? 'done' : 'pending');
         return undefined;
       } catch (error) {
         const problem = toApiProblem(error);
