@@ -1,0 +1,200 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { IsNull, Not, Repository, type EntityManager } from 'typeorm';
+import { User, type UserRole } from '../database/entities/user.entity.js';
+import { Session } from '../database/entities/session.entity.js';
+import { AuthToken } from '../database/entities/auth-token.entity.js';
+import { ProblemException } from '../common/problem-details/problem.exception.js';
+import { ErrorCode } from '../common/problem-details/error-codes.js';
+import { toPublicUser, type PublicUser } from './public-user.js';
+
+/**
+ * An unusable Argon2id-shaped hash. Real Argon2id verification against it
+ * always fails (PasswordService.verify catches the parse error and returns
+ * false) — this is not a security-by-obscurity placeholder, the account
+ * genuinely cannot be signed into until /auth/accept/:token sets a real one
+ * (FR-A-09: admins never type another user's password).
+ *
+ * It is a marker, not a timing shield: its cost is m=1,t=1, far cheaper than
+ * a real hash. Login's refusal paths verify against PasswordService's dummy
+ * hash instead (A2). Keep this exact value — BootstrapService and migration
+ * 008 recognise invited users by it.
+ */
+export const UNUSABLE_PASSWORD_HASH =
+  '$argon2id$v=19$m=1,t=1,p=1$AAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+export interface UpdateUserInput {
+  name?: string;
+  email?: string;
+  role?: UserRole;
+  status?: 'active' | 'disabled';
+  unlock?: true;
+}
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @InjectRepository(Session) private readonly sessionRepo: Repository<Session>,
+  ) {}
+
+  async findAll(): Promise<PublicUser[]> {
+    const users = await this.userRepo.find({ order: { createdAt: 'ASC' } });
+    return users.map(toPublicUser);
+  }
+
+  async findById(id: string): Promise<User> {
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new ProblemException(404, ErrorCode.NOT_FOUND, 'User not found');
+    return user;
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepo.findOne({ where: { email } });
+  }
+
+  /** Row creation only — no password. Used by AuthService.invite() (FR-A-09: admins never type another user's password). */
+  async createInvitedUser(email: string, name: string, role: UserRole): Promise<User> {
+    const existing = await this.findByEmail(email);
+    if (existing) {
+      throw new ProblemException(409, ErrorCode.VALIDATION_FAILED, 'A user with that email already exists');
+    }
+    const user = this.userRepo.create({
+      email,
+      name,
+      role,
+      passwordHash: UNUSABLE_PASSWORD_HASH,
+      status: 'invited',
+      failedLogins: 0,
+    });
+    return this.userRepo.save(user);
+  }
+
+  /**
+   * B1-9: how many *usable* admins would remain besides `excludeId` — a
+   * locked admin cannot sign in and cannot unlock anyone (unlock is
+   * @Roles('admin')), so it must not count as cover. The old `isLastAdmin`
+   * counted every admin regardless of lock state, which meant demoting or
+   * deleting the sole *active* admin could still pass "not the last admin"
+   * as long as a second, already-locked admin row existed.
+   */
+  private async usableAdminsBesides(manager: EntityManager, excludeId: string): Promise<number> {
+    return manager.count(User, { where: { role: 'admin', status: 'active', id: Not(excludeId) } });
+  }
+
+  /**
+   * FR-A-03, three rules: a user cannot change their own role; the last
+   * remaining *usable* (active) admin cannot be demoted, disabled or deleted; disabling
+   * cascades to revoke every active session for that user immediately (so
+   * SessionGuard's own `revoked_at IS NULL` check is what actually kills a
+   * locked account's live session on the next request — this is the
+   * primary mechanism, the guard's `status = 'active'` join is the defence-in-depth
+   * layer).
+   *
+   * B1-9: wrapped in a transaction that takes a pessimistic write lock on
+   * the whole admin set (plus the target row) in one statement before any
+   * check runs — the old version read `isLastAdmin` and wrote outside any
+   * lock, so two concurrent requests against the two remaining admins could
+   * both observe "not the last admin" and both succeed, leaving zero.
+   * `wouldRemoveAdminCover` is computed once, off the pre-mutation row, so
+   * a request that both demotes *and* locks the same user checks both
+   * against the same original state rather than a partially-applied one.
+   */
+  async update(actorId: string, targetId: string, input: UpdateUserInput): Promise<{ before: PublicUser; after: PublicUser }> {
+    return this.userRepo.manager.transaction(async (manager) => {
+      await manager
+        .createQueryBuilder(User, 'u')
+        .setLock('pessimistic_write')
+        .where('u.role = :role', { role: 'admin' })
+        .orWhere('u.id = :id', { id: targetId })
+        .getMany();
+
+      const target = await manager.findOne(User, { where: { id: targetId } });
+      if (!target) throw new ProblemException(404, ErrorCode.NOT_FOUND, 'User not found');
+      const before = toPublicUser(target);
+      const wouldRemoveAdminCover = target.role === 'admin' && target.status === 'active';
+
+      if (input.role !== undefined && input.role !== target.role) {
+        if (targetId === actorId) {
+          throw new ProblemException(403, ErrorCode.FORBIDDEN, 'You cannot change your own role');
+        }
+        if (wouldRemoveAdminCover && (await this.usableAdminsBesides(manager, targetId)) === 0) {
+          throw new ProblemException(409, ErrorCode.LAST_ADMIN, 'The last remaining admin cannot be demoted');
+        }
+        target.role = input.role;
+      }
+
+      if (input.name !== undefined) target.name = input.name;
+      const emailChanged = input.email !== undefined && input.email !== target.email;
+      if (input.email !== undefined) target.email = input.email;
+
+      const disabling = input.status === 'disabled' && target.status !== 'disabled';
+      if (disabling && wouldRemoveAdminCover && (await this.usableAdminsBesides(manager, targetId)) === 0) {
+        throw new ProblemException(409, ErrorCode.LAST_ADMIN, 'The last remaining admin cannot be disabled');
+      }
+      if (input.status !== undefined) {
+        if (input.status === 'active' && target.status === 'invited') {
+          throw new ProblemException(409, ErrorCode.VALIDATION_FAILED, 'An invited user becomes active by accepting the invitation');
+        }
+        target.status = input.status;
+      }
+      if (input.unlock) {
+        // C12: an admin unlock clears the lock *and* the counter, so the next
+        // single typo doesn't lock the account straight back up.
+        target.lockedUntil = null;
+        target.failedLogins = 0;
+        target.lockCount = 0;
+      }
+
+      const saved = await manager.save(target);
+
+      if (disabling) {
+        await manager
+          .createQueryBuilder()
+          .update(Session)
+          .set({ revokedAt: () => 'CURRENT_TIMESTAMP(3)' })
+          .where('user_id = :userId', { userId: targetId })
+          .andWhere('revoked_at IS NULL')
+          .execute();
+      }
+      // C3: an outstanding invitation or reset link must not outlive a
+      // disable or an address change (it was sent to the old address).
+      if (disabling || emailChanged) {
+        await manager.delete(AuthToken, { userId: targetId, usedAt: IsNull() });
+      }
+
+      return { before, after: toPublicUser(saved) };
+    });
+  }
+
+  /**
+   * FR-A-03: a user cannot delete their own account; the last remaining
+   * *usable* admin cannot be deleted. Same transaction/lock shape as
+   * `update` and the same reasoning (B1-9).
+   */
+  async remove(actorId: string, targetId: string): Promise<PublicUser> {
+    return this.userRepo.manager.transaction(async (manager) => {
+      await manager
+        .createQueryBuilder(User, 'u')
+        .setLock('pessimistic_write')
+        .where('u.role = :role', { role: 'admin' })
+        .orWhere('u.id = :id', { id: targetId })
+        .getMany();
+
+      const target = await manager.findOne(User, { where: { id: targetId } });
+      if (!target) throw new ProblemException(404, ErrorCode.NOT_FOUND, 'User not found');
+
+      if (targetId === actorId) {
+        throw new ProblemException(403, ErrorCode.FORBIDDEN, 'You cannot delete your own account');
+      }
+      const wouldRemoveAdminCover = target.role === 'admin' && target.status === 'active';
+      if (wouldRemoveAdminCover && (await this.usableAdminsBesides(manager, targetId)) === 0) {
+        throw new ProblemException(409, ErrorCode.LAST_ADMIN, 'The last remaining admin cannot be deleted');
+      }
+
+      const snapshot = toPublicUser(target);
+      await manager.remove(target);
+      return snapshot;
+    });
+  }
+}

@@ -23,6 +23,8 @@ const ssrEnv = (port: number, api: string) => ({
 export default defineConfig({
   testDir: 'e2e/specs',
   outputDir: 'test-results',
+  // Real-API runs: sweep any @e2e.invalid staff a crashed worker left behind (e2e/support/real-db.ts).
+  globalTeardown: process.env['E2E_API_URL'] ? './e2e/support/global-teardown.ts' : undefined,
   // W24: `@mock-only` specs (e2e/support/env.ts mockOnly) need the mock API; the real-API run drops them.
   grepInvert: process.env['E2E_API_URL'] ? /@mock-only/ : undefined,
   fullyParallel: true,
