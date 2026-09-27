@@ -1,11 +1,14 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { LocaleService } from '../../core/i18n/locale.service';
-import { pathForNavSlug } from '../../core/site/nav-routes';
+import { navLabel, pathForNavSlug } from '../../core/site/nav-routes';
 import { SiteStore } from '../../core/site/site.store';
 
 export interface ShellNavLink {
   slug: string;
+  /** The API page title (drawer). */
   label: string;
+  /** W5: the short header-bar label, falling back to `label`. */
+  shortLabel: string;
   link: string;
   /** `home` must match exactly, others by prefix. */
   exact: boolean;
@@ -39,6 +42,7 @@ export class ShellNav {
             {
               slug: item.slug,
               label: item.label,
+              shortLabel: navLabel(item.slug, this.locale.lang(), item.label),
               link: this.locale.link(path),
               exact: path === '/',
             },

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { EntityManager, IsNull, Repository } from 'typeorm';
 import { Application, type ApplicationStatus } from '../database/entities/application.entity.js';
 import { ApplicationDocument } from '../database/entities/application-document.entity.js';
 import { ApplicationEvent } from '../database/entities/application-event.entity.js';
@@ -15,9 +15,19 @@ import { deriveTimeline } from './portal-timeline.js';
 import { computeCompleteness } from './portal-documents.util.js';
 import type { UpdateApplicationDto } from './dto/update-application.dto.js';
 import type { SubmitApplicationDto } from './dto/submit-application.dto.js';
+import { portalLoginUrl } from '../common/links/frontend-url.js';
+import type { ApplicationCorrectionsDto } from './dto/corrections.dto.js';
+import { InterviewSlot } from '../database/entities/interview-slot.entity.js';
+import { toPublicSlot, type PublicInterviewSlot } from './portal-interview.service.js';
 
 /** `status` values a PATCH or a submit may still act on — everything past this point is staff-owned (phase 7's review flow). */
-const EDITABLE_STATUSES: ApplicationStatus[] = ['draft', 'docs_missing'];
+/**
+ * C15: the full autosave PATCH only while `draft`. Once submitted, the
+ * applicant changes nothing except through the audited corrections
+ * endpoint below, and only while a reviewer has the application back in
+ * `docs_missing`.
+ */
+const EDITABLE_STATUSES: ApplicationStatus[] = ['draft'];
 
 export interface ActionNeeded {
   type: 'document_rejected' | 'documents_requested';
@@ -31,6 +41,8 @@ export interface PortalMeResult {
   reference: string;
   status: ApplicationStatus;
   currentStep: number;
+  /** C17: the booked interview slot, or null. */
+  interview: PublicInterviewSlot | null;
   personal: {
     firstName: string | null;
     middleName: string | null;
@@ -53,7 +65,19 @@ export interface PortalMeResult {
   decidedAt: Date | null;
   timeline: ReturnType<typeof deriveTimeline>;
   actionNeeded: ActionNeeded | null;
-  recentEvents: { id: string; type: string; data: Record<string, unknown> | null; createdAt: Date }[];
+  recentEvents: PortalEvent[];
+}
+
+/** What an applicant sees of an application event (recentEvents, GET portal/notifications). */
+export interface PortalEvent {
+  id: string;
+  type: string;
+  data: Record<string, unknown> | null;
+  createdAt: Date;
+}
+
+export function toPortalEvent(e: ApplicationEvent): PortalEvent {
+  return { id: e.id, type: e.type, data: e.data, createdAt: e.createdAt };
 }
 
 @Injectable()
@@ -79,18 +103,63 @@ export class PortalApplicationService {
    * never regresses the step the UI resumes them on. No mail/SMS — a plain
    * autosave is not an event worth notifying anyone about.
    */
+  /**
+   * B14 (safeer-backend-fr-review.md): runs under `pessimistic_write` on
+   * the application row, inside a transaction — two concurrent autosaves
+   * (a double-click, or two open tabs) now serialise instead of racing to
+   * overwrite each other's `Object.assign`.
+   */
   async patch(applicationId: string, dto: UpdateApplicationDto): Promise<{ status: ApplicationStatus; currentStep: number }> {
-    const application = await this.findEditable(applicationId);
+    return this.applicationRepo.manager.transaction(async (manager) => {
+      const application = await this.findEditable(applicationId, manager);
 
-    const keys = Object.keys(dto);
-    Object.assign(application, this.toEntityPatch(dto));
-    if (dto.consent === true && !application.consentAt) {
-      application.consentAt = new Date();
-    }
-    application.currentStep = Math.max(application.currentStep, highestStepInPayload(keys));
+      const keys = Object.keys(dto);
+      Object.assign(application, this.toEntityPatch(dto));
+      if (dto.consent === true && !application.consentAt) {
+        application.consentAt = new Date();
+      }
+      application.currentStep = Math.max(application.currentStep, highestStepInPayload(keys));
 
-    await this.applicationRepo.save(application);
-    return { status: application.status, currentStep: application.currentStep };
+      await manager.save(application);
+      return { status: application.status, currentStep: application.currentStep };
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // PATCH portal/application/corrections
+  // -------------------------------------------------------------------
+
+  /**
+   * C15: while `docs_missing` only, a whitelisted subset of fields
+   * (CORRECTABLE_FIELDS — never email or phone). Every correction writes an
+   * `APPLICANT_CORRECTED` event, visible to staff and the applicant, naming
+   * the fields that actually changed (names only — values stay on the row,
+   * where staff read them, so the event log never duplicates an ID number).
+   * A payload that changes nothing records nothing.
+   */
+  async correct(applicationId: string, dto: ApplicationCorrectionsDto): Promise<{ status: ApplicationStatus; corrected: string[] }> {
+    return this.applicationRepo.manager.transaction(async (manager) => {
+      const application = await this.findEditable(applicationId, manager, ['docs_missing']);
+      const patch = this.toEntityPatch(dto as UpdateApplicationDto) as Record<string, unknown>;
+      const current = application as unknown as Record<string, unknown>;
+      const corrected = Object.keys(patch).filter((key) => (current[key] ?? null) !== (patch[key] ?? null));
+      if (corrected.length === 0) {
+        return { status: application.status, corrected };
+      }
+
+      Object.assign(application, patch);
+      await manager.save(application);
+      await manager.save(
+        manager.create(ApplicationEvent, {
+          applicationId,
+          type: 'APPLICANT_CORRECTED',
+          actorId: null,
+          visibleToApplicant: true,
+          data: { fields: corrected },
+        }),
+      );
+      return { status: application.status, corrected };
+    });
   }
 
   // -------------------------------------------------------------------
@@ -107,46 +176,64 @@ export class PortalApplicationService {
    * see that service's own comment on why re-review is left to phase 7).
    */
   async submit(applicationId: string, dto: SubmitApplicationDto): Promise<{ status: ApplicationStatus; submittedAt: Date }> {
-    const application = await this.applicationRepo.findOne({ where: { id: applicationId } });
-    if (!application) {
-      throw new ProblemException(404, ErrorCode.NOT_FOUND, 'Application not found');
-    }
-    if (application.status !== 'draft') {
-      throw new ProblemException(
-        409,
-        ErrorCode.APPLICATION_LOCKED,
-        'This application has already been submitted and can no longer be resubmitted',
+    // B14 (safeer-backend-fr-review.md): `pessimistic_write` on the
+    // application row, inside a transaction — a double-click (two
+    // near-simultaneous submits) now serialises instead of racing; the
+    // second call sees the first's committed `status = 'new'` and is
+    // rejected by the check below, same outcome as today but now actually
+    // guaranteed rather than merely likely.
+    const application = await this.applicationRepo.manager.transaction(async (manager) => {
+      const application = await manager
+        .createQueryBuilder(Application, 'a')
+        .setLock('pessimistic_write')
+        .where('a.id = :id', { id: applicationId })
+        .getOne();
+      if (!application) {
+        throw new ProblemException(404, ErrorCode.NOT_FOUND, 'Application not found');
+      }
+      if (application.status !== 'draft') {
+        throw new ProblemException(
+          409,
+          ErrorCode.APPLICATION_LOCKED,
+          'This application has already been submitted and can no longer be resubmitted',
+        );
+      }
+
+      const completeness = await computeCompleteness(manager.getRepository(ApplicationDocument), applicationId);
+      if (completeness.missingTypes.length > 0) {
+        throw new ProblemException(
+          409,
+          ErrorCode.DOCUMENTS_INCOMPLETE,
+          'One or more required documents are missing or were rejected',
+          { missing: completeness.missingTypes },
+        );
+      }
+
+      Object.assign(application, this.toEntityPatch(dto));
+      application.consentAt = application.consentAt ?? new Date();
+      application.currentStep = 3;
+      application.status = 'new';
+      application.submittedAt = new Date();
+      await manager.save(application);
+
+      await manager.save(
+        manager.create(ApplicationEvent, {
+          applicationId,
+          type: 'SUBMITTED',
+          actorId: null,
+          visibleToApplicant: true,
+          data: { reference: application.reference },
+        }),
       );
-    }
 
-    const completeness = await computeCompleteness(this.documentRepo, applicationId);
-    if (completeness.missingTypes.length > 0) {
-      throw new ProblemException(
-        409,
-        ErrorCode.DOCUMENTS_INCOMPLETE,
-        'One or more required documents are missing or were rejected',
-        { missing: completeness.missingTypes },
-      );
-    }
+      return application;
+    });
 
-    Object.assign(application, this.toEntityPatch(dto));
-    application.consentAt = application.consentAt ?? new Date();
-    application.currentStep = 3;
-    application.status = 'new';
-    application.submittedAt = new Date();
-    await this.applicationRepo.save(application);
-
-    await this.eventRepo.save(
-      this.eventRepo.create({
-        applicationId,
-        type: 'SUBMITTED',
-        actorId: null,
-        visibleToApplicant: true,
-        data: { reference: application.reference },
-      }),
-    );
-
-    const link = `${this.env.PUBLIC_BASE_URL}/portal`;
+    // Mail/SMS sent only after the transaction commits — same discipline as
+    // ApplicationsService.create()'s own comment on why (a slow/broken send
+    // must never hold the row lock open, and a rolled-back submit must
+    // never have already notified anyone).
+    const link = portalLoginUrl(this.env, application.locale);
     const name = `${application.firstName ?? ''} ${application.lastName ?? ''}`.trim();
     await this.mailService.send({
       key: 'application_submitted',
@@ -157,13 +244,15 @@ export class PortalApplicationService {
     });
     await this.smsService.send({
       key: 'application_submitted',
-      to: application.phone ?? '',
+      to: application.phoneE164 ?? application.phone ?? '',
       vars: { reference: application.reference },
       locale: application.locale,
       entity: { type: 'applications', id: applicationId },
     });
 
-    return { status: application.status, submittedAt: application.submittedAt };
+    // Non-null: this function is the only writer of `submittedAt`, and the
+    // transaction above just set it unconditionally before returning `application`.
+    return { status: application.status, submittedAt: application.submittedAt! };
   }
 
   // -------------------------------------------------------------------
@@ -177,6 +266,8 @@ export class PortalApplicationService {
     }
 
     const hadInterview = (await this.eventRepo.count({ where: { applicationId, type: 'INTERVIEW_BOOKED' } })) > 0;
+    // C17: the booked slot itself, so the portal can show when and where.
+    const bookedSlot = await this.applicationRepo.manager.findOne(InterviewSlot, { where: { applicationId } });
     const timeline = deriveTimeline(application.status, hadInterview);
     const actionNeeded = await this.computeActionNeeded(applicationId);
     const recentEvents = await this.eventRepo.find({
@@ -189,6 +280,7 @@ export class PortalApplicationService {
       reference: application.reference,
       status: application.status,
       currentStep: application.currentStep,
+      interview: bookedSlot ? toPublicSlot(bookedSlot) : null,
       personal: {
         firstName: application.firstName,
         middleName: application.middleName,
@@ -211,7 +303,7 @@ export class PortalApplicationService {
       decidedAt: application.decidedAt,
       timeline,
       actionNeeded,
-      recentEvents: recentEvents.map((e) => ({ id: e.id, type: e.type, data: e.data, createdAt: e.createdAt })),
+      recentEvents: recentEvents.map(toPortalEvent),
     };
   }
 
@@ -223,14 +315,15 @@ export class PortalApplicationService {
     applicationId: string,
     page: number,
     limit: number,
-  ): Promise<{ data: ApplicationEvent[]; total: number; page: number; limit: number }> {
-    const [data, total] = await this.eventRepo.findAndCount({
+  ): Promise<{ data: PortalEvent[]; total: number; page: number; limit: number }> {
+    const [rows, total] = await this.eventRepo.findAndCount({
       where: { applicationId, visibleToApplicant: true },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
-    return { data, total, page, limit };
+    // C35: the same shape as /portal/me's recentEvents — never actorId or visibleToApplicant.
+    return { data: rows.map(toPortalEvent), total, page, limit };
   }
 
   countNotifications(applicationId: string): Promise<number> {
@@ -271,16 +364,23 @@ export class PortalApplicationService {
     return null;
   }
 
-  private async findEditable(applicationId: string): Promise<Application> {
-    const application = await this.applicationRepo.findOne({ where: { id: applicationId } });
+  /** B14: locks the row (`pessimistic_write`) within the caller's transaction — see `patch()`. */
+  private async findEditable(applicationId: string, manager: EntityManager, allowed: ApplicationStatus[] = EDITABLE_STATUSES): Promise<Application> {
+    const application = await manager
+      .createQueryBuilder(Application, 'a')
+      .setLock('pessimistic_write')
+      .where('a.id = :id', { id: applicationId })
+      .getOne();
     if (!application) {
       throw new ProblemException(404, ErrorCode.NOT_FOUND, 'Application not found');
     }
-    if (!EDITABLE_STATUSES.includes(application.status)) {
+    if (!allowed.includes(application.status)) {
       throw new ProblemException(
         409,
         ErrorCode.APPLICATION_LOCKED,
-        'This application can no longer be edited from the portal',
+        allowed.includes('docs_missing')
+          ? 'Corrections are only possible while documents or details are requested'
+          : 'This application can no longer be edited from the portal',
       );
     }
     return application;

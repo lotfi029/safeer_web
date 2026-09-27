@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import type { NewsCategory, Page, Paged, PostDetail, PostSummary } from '../../../core/api/models';
 import { PublicApi } from '../../../core/api/public-api';
 import { loadCritical, type Loaded } from '../../../core/data/loaded';
@@ -35,7 +35,10 @@ export function newsFilters(route: ActivatedRouteSnapshot): NewsFilters {
   };
 }
 
-/** Critical: page meta + the list. Secondary (degrade to empty, F8): categories and featured. */
+/**
+ * Critical: page meta + the list. Secondary (degrade to empty, F8): categories and featured. An
+ * unknown `?category=` is a 400 from the API (C42), rendered as not-found (404), never a 500.
+ */
 export const newsListResolver: ResolveFn<Loaded<NewsListData>> = (route) => {
   const api = inject(PublicApi);
   const filters = newsFilters(route);
@@ -50,6 +53,7 @@ export const newsListResolver: ResolveFn<Loaded<NewsListData>> = (route) => {
         : of<PostSummary | null>(null),
       filters: of(filters),
     }),
+    (problem) => !!filters.category && problem.status === 400,
   );
 };
 
@@ -59,7 +63,11 @@ export interface ArticleData {
   preview: boolean;
 }
 
-/** Critical: the post (404 → not-found page with status 404). `?preview=` is passed through. */
+/**
+ * Critical: the post (404 → not-found page with status 404). `?preview=` is passed through; the page
+ * is a preview only when the API verified the token, i.e. the response carries `previewFileQuery`
+ * (W18: `?preview=junk` on a published post is just the post, no banner, no noindex).
+ */
 export const articleResolver: ResolveFn<Loaded<ArticleData>> = (route) => {
   const api = inject(PublicApi);
   const slug = route.paramMap.get('slug') ?? '';
@@ -68,7 +76,8 @@ export const articleResolver: ResolveFn<Loaded<ArticleData>> = (route) => {
     forkJoin({
       post: api.post(slug, preview),
       categories: api.newsCategories().pipe(catchError(() => of([] as NewsCategory[]))),
-      preview: of(!!preview),
-    }),
+    }).pipe(
+      map(({ post, categories }) => ({ post, categories, preview: !!post.previewFileQuery })),
+    ),
   );
 };

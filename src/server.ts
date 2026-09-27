@@ -78,8 +78,8 @@ app.use((req, res, next) => {
     .handle(req, context)
     .then((response) =>
       response
-        ? finalizeAngularResponse(response, req.path, nonce, env.isProduction).then((final) =>
-            writeResponseToNodeResponse(final, res),
+        ? finalizeAngularResponse(response, req.originalUrl, nonce, env.isProduction).then(
+            (final) => writeResponseToNodeResponse(final, res),
           )
         : next(),
     )

@@ -20,8 +20,9 @@ import { Icon } from '../../../shared/ui/icon/icon';
 type TokenState = 'idle' | 'working' | 'done' | 'invalid' | 'missing';
 
 /**
- * Newsletter double opt-in confirm (`/:lang/newsletter/confirm?token=`) and unsubscribe
- * (`/:lang/newsletter/unsubscribe?token=`), C27. Nothing is posted during SSR. Confirm runs once the
+ * Newsletter double opt-in confirm (`/:lang/newsletter/confirm?email=&token=`) and unsubscribe
+ * (`/:lang/newsletter/unsubscribe?email=&token=`), C27: the API takes `{email, token}`, both from the
+ * mailed link, and answers 400 for a bad or mismatched pair. Nothing is posted during SSR. Confirm runs once the
  * page is interactive in the browser; unsubscribe waits for an explicit click, so mail scanners that
  * pre-fetch links can't unsubscribe anyone. Both pages are `noindex`.
  */
@@ -73,6 +74,8 @@ type TokenState = 'idle' | 'working' | 'done' | 'invalid' | 'missing';
 export class NewsletterTokenPage {
   /** Route data. */
   readonly mode = input<'confirm' | 'unsubscribe'>('confirm');
+  /** `?email=` query param. */
+  readonly email = input<string | undefined>();
   /** `?token=` query param. */
   readonly token = input<string | undefined>();
 
@@ -82,14 +85,18 @@ export class NewsletterTokenPage {
   private readonly t = inject(TranslocoService);
 
   protected readonly state = signal<TokenState>('idle');
-  private readonly cleanToken = computed(() => this.token()?.trim() || null);
+  private readonly link = computed(() => {
+    const email = this.email()?.trim();
+    const token = this.token()?.trim();
+    return email && token ? { email, token } : null;
+  });
 
   constructor() {
     effect(() => {
       this.seo.noindex(this.t.translate(this.key('title')), this.locale.lang());
     });
     afterNextRender(() => {
-      if (!this.cleanToken()) {
+      if (!this.link()) {
         this.state.set('missing');
       } else if (this.mode() === 'confirm') {
         void this.run();
@@ -102,16 +109,16 @@ export class NewsletterTokenPage {
   }
 
   protected async run(): Promise<void> {
-    const token = this.cleanToken();
-    if (!token || this.state() === 'working') {
+    const link = this.link();
+    if (!link || this.state() === 'working') {
       return;
     }
     this.state.set('working');
     try {
       await firstValueFrom(
         this.mode() === 'confirm'
-          ? this.api.newsletterConfirm(token)
-          : this.api.newsletterUnsubscribe(token),
+          ? this.api.newsletterConfirm(link)
+          : this.api.newsletterUnsubscribe(link),
       );
       this.state.set('done');
     } catch {

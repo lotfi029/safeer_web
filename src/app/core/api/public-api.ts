@@ -5,13 +5,14 @@ import { API_PREFIX } from '../config/api-base-url';
 import type {
   AboutItemKind,
   AboutItemsResponse,
-  BoardMember,
+  BoardResponse,
   ContactRequest,
   Country,
   DocumentGroup,
   HomeResponse,
   NewsCategory,
   NewsletterRequest,
+  NewsletterTokenRequest,
   OkResponse,
   Page,
   Paged,
@@ -20,7 +21,6 @@ import type {
   PostDetail,
   PostSummary,
   SiteResponse,
-  SitemapIndex,
   TestimonialsResponse,
   WorkArea,
 } from './models';
@@ -52,15 +52,15 @@ export class PublicApi {
     return this.http.get<Page>(`${API_PREFIX}/pages/${encodeURIComponent(slug)}`);
   }
 
-  /** B18 (mocked until live). */
+  /** B18. */
   aboutItems(kinds: AboutItemKind[]): Observable<AboutItemsResponse> {
     return this.http.get<AboutItemsResponse>(`${API_PREFIX}/about-items`, {
       params: { kind: kinds.join(',') },
     });
   }
 
-  board(): Observable<BoardMember[]> {
-    return this.http.get<BoardMember[]>(`${API_PREFIX}/board`);
+  board(): Observable<BoardResponse> {
+    return this.http.get<BoardResponse>(`${API_PREFIX}/board`);
   }
 
   workAreas(): Observable<WorkArea[]> {
@@ -106,11 +106,6 @@ export class PublicApi {
     return this.http.get<Country[]>(`${API_PREFIX}/meta/countries`);
   }
 
-  /** B15 (mocked until live). */
-  sitemapIndex(): Observable<SitemapIndex> {
-    return this.http.get<SitemapIndex>(`${API_PREFIX}/sitemap-index`);
-  }
-
   contact(body: ContactRequest): Observable<OkResponse> {
     return this.http.post<OkResponse>(`${API_PREFIX}/contact`, body);
   }
@@ -119,14 +114,14 @@ export class PublicApi {
     return this.http.post<OkResponse>(`${API_PREFIX}/newsletter`, body);
   }
 
-  /** C27 (mocked until live). */
-  newsletterConfirm(token: string): Observable<OkResponse> {
-    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/confirm`, { token });
+  /** C27: 400 for a bad or mismatched token. */
+  newsletterConfirm(body: NewsletterTokenRequest): Observable<OkResponse> {
+    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/confirm`, body);
   }
 
-  /** C27 (mocked until live). */
-  newsletterUnsubscribe(token: string): Observable<OkResponse> {
-    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/unsubscribe`, { token });
+  /** C27: 400 for a bad or mismatched token. */
+  newsletterUnsubscribe(body: NewsletterTokenRequest): Observable<OkResponse> {
+    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/unsubscribe`, body);
   }
 }
 

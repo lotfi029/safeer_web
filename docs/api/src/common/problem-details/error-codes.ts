@@ -40,6 +40,18 @@ export const ErrorCode = {
    * submit) — `extra.from`/`extra.to` name the rejected pair.
    */
   INVALID_STATUS_TRANSITION: 'INVALID_STATUS_TRANSITION',
+  /** B2 (safeer-backend-fr-review.md): `POST applications` rejects a second active (non-terminal) application for the same email or phone. Non-enumerating: the response never says which contact detail matched. */
+  APPLICATION_EXISTS: 'APPLICATION_EXISTS',
+  /** B7 (safeer-backend-fr-review.md): an application was assigned to a user who isn't `admin`/`reviewer`, or whose account is locked. */
+  INVALID_ASSIGNEE: 'INVALID_ASSIGNEE',
+  /** C18: `POST portal/documents` — the application has used up its upload quota (file count or total bytes). */
+  QUOTA_EXCEEDED: 'QUOTA_EXCEEDED',
+  /** C34: `PATCH admin/applications/:id/documents/:docId` — the document was superseded, or the application is draft/accepted/rejected. */
+  DOCUMENT_NOT_REVIEWABLE: 'DOCUMENT_NOT_REVIEWABLE',
+  /** A11: `GET admin/applications/:id/documents/:docId/file` — the document was replaced; its file no longer exists (410). */
+  DOCUMENT_SUPERSEDED: 'DOCUMENT_SUPERSEDED',
+  /** C10: `admin/redirects` — the redirect would chain through another redirect, or duplicates one's source. */
+  REDIRECT_CHAIN: 'REDIRECT_CHAIN',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

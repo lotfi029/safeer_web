@@ -1,5 +1,5 @@
 {
-  "_source": "Shape: docs/api/src/site/site.controller.ts + public-site-settings.ts (raw bilingual form; the mock collapses per ?lang). Values: docs/safeer-design-spec.md §1 and the prototype copy (ORG, TAG, BLURB, ADDR, RIGHTS, NAV); social URLs unknown → null.",
+  "_source": "Recorded from GET /api/v1/site by scripts/record-fixtures.mjs",
   "settings": {
     "id": "1",
     "orgNameAr": "جمعية سفير الدعوية",
@@ -17,11 +17,18 @@
     "facebookUrl": null,
     "instagramUrl": null,
     "xUrl": null,
+    "youtubeUrl": null,
+    "linkedinUrl": null,
+    "whatsappUrl": null,
+    "tiktokUrl": null,
+    "mapEmbedUrl": null,
+    "mapLat": null,
+    "mapLng": null,
     "enEnabled": true,
-    "seoTitleAr": null,
-    "seoTitleEn": null,
-    "seoDescriptionAr": null,
-    "seoDescriptionEn": null
+    "seoTitleAr": "جمعية سفير الدعوية",
+    "seoTitleEn": "Safeer Da'wah Association",
+    "seoDescriptionAr": "جمعية أهلية غير ربحية متخصصة في رعاية طلاب وطالبات المنح الدوليين الدارسين في الجامعات السعودية.",
+    "seoDescriptionEn": "A Saudi non-profit association dedicated to supporting international scholarship students at Saudi universities."
   },
   "nav": [
     {
@@ -32,47 +39,47 @@
     {
       "slug": "about",
       "labelAr": "من نحن",
-      "labelEn": "About"
+      "labelEn": "About us"
     },
     {
       "slug": "board",
       "labelAr": "مجلس الإدارة",
-      "labelEn": "Board"
+      "labelEn": "Board of directors"
     },
     {
       "slug": "work",
-      "labelAr": "مجالات عملنا",
-      "labelEn": "Our work"
+      "labelAr": "مجالات عمل الجمعية",
+      "labelEn": "Our areas of work"
     },
     {
       "slug": "scholarships",
-      "labelAr": "منح الوافدين",
-      "labelEn": "Scholarships"
+      "labelAr": "منح الوافدين للدراسة بالجامعات السعودية",
+      "labelEn": "Scholarships for international students in Saudi universities"
     },
     {
       "slug": "news",
-      "labelAr": "الأخبار",
-      "labelEn": "News"
+      "labelAr": "أخبار الجمعية",
+      "labelEn": "Association news"
     },
     {
       "slug": "testimonials",
       "labelAr": "قالوا عنا",
-      "labelEn": "Testimonials"
+      "labelEn": "What people say"
     },
     {
       "slug": "partners",
-      "labelAr": "شركاؤنا",
-      "labelEn": "Partners"
+      "labelAr": "شركاء النجاح",
+      "labelEn": "Our partners"
     },
     {
       "slug": "documents",
-      "labelAr": "التراخيص والسياسات",
-      "labelEn": "Licenses & policies"
+      "labelAr": "التراخيص والسياسات واللوائح",
+      "labelEn": "Licences, policies and regulations"
     },
     {
       "slug": "contact",
       "labelAr": "تواصل معنا",
-      "labelEn": "Contact"
+      "labelEn": "Contact us"
     }
   ],
   "contact": {

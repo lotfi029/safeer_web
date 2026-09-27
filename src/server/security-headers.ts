@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
+import { MAP_FRAME_ORIGINS } from '../app/shared/map/map-embed';
 
 /** Placeholder in `index.html` (`<app-root ngCspNonce="__CSP_NONCE__">`), replaced per response. */
 export const CSP_NONCE_PLACEHOLDER = '__CSP_NONCE__';
@@ -11,7 +12,8 @@ export function createNonce(): string {
 /**
  * Nonce-based CSP (sessions plan R1). No 'strict-dynamic': Angular's bundles are loaded with
  * `<script type="module" src>` (no nonce) and must be allowed by 'self'. Style attributes emitted by
- * SSR (NgOptimizedImage, host style bindings) need `style-src-attr 'unsafe-inline'`.
+ * SSR (NgOptimizedImage, host style bindings) need `style-src-attr 'unsafe-inline'`. Frames: only the
+ * contact-page map hosts the API accepts for `settings.mapEmbedUrl` (A12).
  */
 export function buildCsp(nonce: string): string {
   return [
@@ -22,7 +24,7 @@ export function buildCsp(nonce: string): string {
     "img-src 'self' data:",
     "font-src 'self'",
     "connect-src 'self'",
-    "frame-src 'none'",
+    `frame-src ${MAP_FRAME_ORIGINS.join(' ')}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

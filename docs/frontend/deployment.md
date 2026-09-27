@@ -46,7 +46,7 @@ Values come from `.env` next to the app (loaded at start-up; never committed) or
   - `safeer_api` must keep `trust proxy = 1` (it trusts only the SSR server) and must **bind to `127.0.0.1`**
     (or otherwise be unreachable from the internet). If the API is public, clients can spoof `X-Forwarded-For`
     and bypass its rate limits.
-- **Headers** set by the SSR server: nonce-based CSP (no `strict-dynamic`, `frame-src 'none'`), HSTS
+- **Headers** set by the SSR server: nonce-based CSP (no `strict-dynamic`; `frame-src` allows only `https://www.google.com` and `https://www.openstreetmap.org`, the contact-map hosts, A12), HSTS
   (production), `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`,
   `Cross-Origin-Opener-Policy`. Admin/portal also get `X-Robots-Tag: noindex, nofollow`.
 - **API down:** proxied calls answer `502 application/problem+json` (`UPSTREAM_UNAVAILABLE`), 30 s proxy timeout.

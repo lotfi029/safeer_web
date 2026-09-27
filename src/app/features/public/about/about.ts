@@ -16,6 +16,7 @@ import { PageHead } from '../../../shared/ui/page-head/page-head';
 import { Reveal } from '../../../shared/ui/reveal/reveal';
 import { RichText } from '../../../shared/ui/rich-text/rich-text';
 import { SectionHeading } from '../../../shared/ui/section-heading/section-heading';
+import { plainText } from '../../../shared/text/plain-text';
 import { pageSeo } from '../page-meta';
 import type { AboutPageData } from './about.resolver';
 
@@ -259,15 +260,5 @@ export class AboutPage {
   }
 
   /** About-item bodies are sanitized HTML (C26); the feature card takes plain text. */
-  protected plain(html: string | null | undefined): string | null {
-    if (!html) {
-      return null;
-    }
-    return (
-      html
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim() || null
-    );
-  }
+  protected readonly plain = plainText;
 }

@@ -3,10 +3,10 @@
  * dev interceptor (src/app/core/api/mocks) so the two can never drift (review F6). Shapes follow
  * docs/api/CONTRACT-NOTES.md; content comes only from mocks/fixtures (spec/prototype text or [...]).
  *
- * Every backend item that is not live yet is implemented here to the agreed contract:
- * B1/B2 (OTP channel, phone identifier), B3 (upload rules), B9 (/x button URLs), B12 (board bio),
- * B15 (sitemap-index), B16 (csrfToken on /portal/me), B17 (/admin/roles), B18 (/about-items),
- * B19 (public document shape), C17 (interview), C27 (newsletter confirm/unsubscribe), C35.
+ * Every item here is live in the real API (safeer_api v1.0.0-rc1), and the e2e-real CI job runs the
+ * same specs against it; the mock exists for fast, deterministic runs and for states the dev seed
+ * lacks (seeded applications, preview tokens, staff accounts, auth tokens). The public fixtures are
+ * recorded from the API (scripts/record-fixtures.mjs).
  */
 import { collapseBilingual, resolveLang } from './collapse.mjs';
 
@@ -119,6 +119,8 @@ export function createMockBackend(fixtures) {
   const db = {
     fixtures: clone(fixtures),
     staffSessions: new Map(),
+    // W16: `purpose:token` of the unused invitation/reset links (single-use, like the API).
+    authTokens: new Set(['accept:mock-invite', 'reset:mock-reset']),
     applicantSessions: new Map(),
     applications: new Map(clone(fixtures.applications ?? []).map((a) => [a.id, a])),
     otps: new Map(),
@@ -242,7 +244,11 @@ export function createMockBackend(fixtures) {
         return json(200, collapse(out, lang));
       },
     ],
-    ['GET', /^\/api\/v1\/board$/, ({ lang }) => json(200, collapse(db.fixtures.board ?? [], lang))],
+    [
+      'GET',
+      /^\/api\/v1\/board$/,
+      ({ lang }) => json(200, collapse(db.fixtures.board ?? { board: [], executive: [] }, lang)),
+    ],
     [
       'GET',
       /^\/api\/v1\/work-areas$/,
@@ -293,6 +299,9 @@ export function createMockBackend(fixtures) {
         const page = Math.max(1, Number(query.get('page')) || 1);
         const limit = Math.min(48, Math.max(1, Number(query.get('limit')) || 12));
         const category = query.get('category');
+        // C42: an unknown category is a 400, like the real API.
+        if (category && !(db.fixtures.newsCategories ?? []).some((c) => c.slug === category))
+          return problem(400, 'VALIDATION_FAILED');
         const q = (query.get('q') ?? '').trim().toLowerCase();
         const all = (db.fixtures.posts ?? [])
           .filter((p) => !category || p.category?.slug === category)
@@ -334,6 +343,9 @@ export function createMockBackend(fixtures) {
               bodyEn: post.bodyEn,
               readMinutes: post.readMinutes ?? 2,
               related,
+              ...(post.isPublished === false
+                ? { previewFileQuery: `preview=mock-preview&post=${post.id}` }
+                : {}),
             },
             lang,
           ),
@@ -413,7 +425,7 @@ export function createMockBackend(fixtures) {
       'POST',
       /^\/api\/v1\/newsletter\/confirm$/,
       ({ body }) =>
-        body?.token === 'mock-token'
+        body?.email && body?.token === 'mock-token'
           ? json(200, { ok: true })
           : problem(400, 'VALIDATION_FAILED', {
               issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
@@ -423,7 +435,7 @@ export function createMockBackend(fixtures) {
       'POST',
       /^\/api\/v1\/newsletter\/unsubscribe$/,
       ({ body }) =>
-        body?.token === 'mock-token'
+        body?.email && body?.token === 'mock-token'
           ? json(200, { ok: true })
           : problem(400, 'VALIDATION_FAILED', {
               issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
@@ -448,9 +460,12 @@ export function createMockBackend(fixtures) {
           ],
         });
         if (issues.length) return problem(400, 'VALIDATION_FAILED', { issues });
+        // B2: a second active application for the same email OR phone (like the API).
+        const digits = (x) => String(x ?? '').replace(/[\s-]/g, '');
+        const samePhone = (x) => digits(x) === digits(body.phone);
         const active = [...db.applications.values()].find(
           (a) =>
-            a.email?.toLowerCase() === body.email.toLowerCase() &&
+            (a.email?.toLowerCase() === body.email.toLowerCase() || samePhone(a.phone)) &&
             !['accepted', 'rejected'].includes(a.status),
         );
         if (active) return problem(409, 'APPLICATION_EXISTS');
@@ -522,16 +537,22 @@ export function createMockBackend(fixtures) {
     [
       'GET',
       /^\/api\/v1\/portal\/notifications$/,
-      ({ req }) => {
+      ({ req, query }) => {
         const a = applicantFrom(req);
         if (!a) return problem(401, 'UNAUTHENTICATED');
-        return json(
-          200,
-          (a.app.events ?? [])
-            .slice()
-            .reverse()
-            .map(({ id, type, createdAt, data }) => ({ id, type, createdAt, data: data ?? null })),
-        );
+        // C35: paged like the real API (newest first, limit ≤ 50).
+        const page = Math.max(1, Number(query.get('page')) || 1);
+        const limit = Math.min(50, Math.max(1, Number(query.get('limit')) || 20));
+        const all = (a.app.events ?? [])
+          .slice()
+          .reverse()
+          .map(({ id, type, createdAt, data }) => ({ id, type, createdAt, data: data ?? null }));
+        return json(200, {
+          data: all.slice((page - 1) * limit, page * limit),
+          total: all.length,
+          page,
+          limit,
+        });
       },
     ],
     [
@@ -717,10 +738,10 @@ export function createMockBackend(fixtures) {
           return problem(409, 'SLOT_ALREADY_BOOKED');
         slot.applicationId = a.app.id;
         a.app.interview = {
+          id: slot.id,
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
           location: slot.location,
-          slotId: slot.id,
         };
         (a.app.events ??= []).push({
           id: token(),
@@ -728,7 +749,8 @@ export function createMockBackend(fixtures) {
           createdAt: nowIso(),
           data: null,
         });
-        return json(200, { ok: true });
+        // C17: the booked slot (the real API returns the slot it booked).
+        return json(201, a.app.interview);
       },
     ],
     [
@@ -739,12 +761,16 @@ export function createMockBackend(fixtures) {
         if (!a) return problem(401, 'UNAUTHENTICATED');
         if (!checkCsrf(req, a.session.csrfToken)) return problem(403, 'FORBIDDEN');
         if (!a.app.interview) return problem(404, 'NOT_FOUND');
-        const slot = (db.fixtures.interviewSlots ?? []).find(
-          (s) => s.id === a.app.interview.slotId,
-        );
+        const slot = (db.fixtures.interviewSlots ?? []).find((s) => s.id === a.app.interview.id);
         if (slot) slot.applicationId = null;
         a.app.interview = null;
-        return { status: 204, headers: {}, body: null };
+        (a.app.events ??= []).push({
+          id: token(),
+          type: 'INTERVIEW_CANCELLED',
+          createdAt: nowIso(),
+          data: null,
+        });
+        return json(200, { cancelled: true });
       },
     ],
 
@@ -788,6 +814,23 @@ export function createMockBackend(fixtures) {
           { ok: true },
           { 'set-cookie': 'sf_sid=; Path=/; Max-Age=0; SameSite=Strict' },
         );
+      },
+    ],
+    // W16: invitation / reset links. Like the API: public, single-use tokens, `password` min 8, and
+    // an unknown or used token is a 400 with no field issues ("invalid or expired").
+    [
+      'POST',
+      /^\/api\/v1\/admin\/auth\/(accept|reset)\/([^/]+)$/,
+      ({ params, body }) => {
+        const [purpose, raw] = params;
+        if (typeof body?.password !== 'string' || body.password.length < 8)
+          return problem(400, 'VALIDATION_FAILED', {
+            issues: [{ path: ['password'], message: 'Too small', code: 'too_small' }],
+          });
+        if (!db.authTokens.has(`${purpose}:${decodeURIComponent(raw)}`))
+          return problem(400, 'VALIDATION_FAILED');
+        db.authTokens.delete(`${purpose}:${decodeURIComponent(raw)}`);
+        return json(200, { ok: true });
       },
     ],
     [

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
+import { mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 test.describe('news', () => {
@@ -16,18 +16,21 @@ test.describe('news', () => {
     });
   }
 
-  test.describe('SSR (mock content)', () => {
-    test.skip(!usingMockApi, 'asserts mock fixtures');
+  test.describe('SSR (mock content)', mockOnly('asserts mock fixtures'), () => {
+    test('an unknown category is a 404 page, not a 500 (C42)', async ({ request }) => {
+      const res = await request.get('/en/news?category=no-such-category');
+      expect(res.status()).toBe(404);
+    });
 
     test('category filter, search and pagination live in the URL and render server-side', async ({
       request,
     }) => {
       const all = await (await request.get('/ar/news')).text();
-      expect(all).toContain('href="/ar/news?category=community-activities"');
+      expect(all).toContain('href="/ar/news?category=community"');
       expect(all).toMatch(/href="\/ar\/news\?page=2"/);
       expect(all).toMatch(/<link rel="canonical" href="[^"]*\/ar\/news"/);
 
-      const filtered = await (await request.get('/ar/news?category=community-activities')).text();
+      const filtered = await (await request.get('/ar/news?category=community')).text();
       expect(filtered).toContain('/ar/news/dates-distribution-2020');
       expect(filtered).not.toContain('/ar/news/placeholder-1');
       expect(filtered).toMatch(/aria-current="page"[^>]*>أنشطة مجتمعية|أنشطة مجتمعية<\/a>/);
@@ -68,6 +71,16 @@ test.describe('news', () => {
       expect(await res.text()).toMatch(/<meta name="robots" content="noindex, nofollow"/);
     });
 
+    test(
+      'preview: the cover loads through previewFileQuery (C41)',
+      mockOnly('needs the mock preview token'),
+      async ({ page }) => {
+        await page.goto('/en/news/draft-preview?preview=mock-preview');
+        const cover = page.locator('article img, main img[src*="/files/"]').first();
+        await expect(cover).toHaveAttribute('src', /\/files\/[^?]+\?preview=mock-preview&post=/);
+      },
+    );
+
     test('article body HTML is sanitized again on the client', async ({ page }) => {
       await page.goto('/en/news/draft-preview?preview=mock-preview');
       await expect(page.locator('app-rich-text')).toBeVisible();
@@ -79,6 +92,29 @@ test.describe('news', () => {
     });
   });
 
+  test('?preview=junk on a published article: no banner, no noindex, but no-store (W18)', async ({
+    page,
+    request,
+  }) => {
+    const list = (await (await request.get('/api/v1/news?lang=en&limit=1')).json()) as {
+      data: { slug: string }[];
+    };
+    const path = `/en/news/${list.data[0].slug}`;
+    const plain = await request.get(path);
+    expect(plain.headers()['cache-control']).toBe('no-cache');
+
+    const res = await request.get(`${path}?preview=junk`);
+    expect(res.status()).toBe(200);
+    expect(res.headers()['cache-control']).toBe('no-store');
+    const html = await res.text();
+    expect(html).not.toContain('Preview — this story is not published yet');
+    expect(html).not.toMatch(/<meta name="robots" content="noindex/);
+
+    await page.goto(`${path}?preview=junk`);
+    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.getByText('Preview — this story is not published yet')).toHaveCount(0);
+  });
+
   test('search is debounced and updates the URL', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/en/news');
@@ -87,34 +123,48 @@ test.describe('news', () => {
     await expect(page).toHaveURL(/\/en\/news\?q=dates$/);
   });
 
-  test('newsletter signup asks to confirm by email (C27)', async ({ page }) => {
-    test.skip(!usingMockApi, 'real API drops submits under 3s; covered by the mock');
-    await page.goto('/en/news');
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
-    const band = page.locator('app-newsletter-form');
-    await expect(band.getByLabel('Email')).toBeVisible();
-    await band.getByLabel('Email').fill('reader@example.invalid');
-    await band.getByRole('button', { name: 'Subscribe' }).click();
-    await expect(band.getByRole('status')).toContainText('confirm');
-  });
+  test(
+    'newsletter signup asks to confirm by email (C27)',
+    mockOnly('real API drops submits under 3s; covered by the mock'),
+    async ({ page }) => {
+      await page.goto('/en/news');
+      await page.waitForLoadState('networkidle');
+      await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+      const band = page.locator('app-newsletter-form');
+      await expect(band.getByLabel('Email')).toBeVisible();
+      await band.getByLabel('Email').fill('reader@example.invalid');
+      await band.getByRole('button', { name: 'Subscribe' }).click();
+      await expect(band.getByRole('status')).toContainText('confirm');
+    },
+  );
 
-  test('confirm page confirms in the browser; bad token shows an error', async ({ page }) => {
-    test.skip(!usingMockApi, 'needs the mock token');
-    const res = await page.goto('/en/newsletter/confirm?token=mock-token');
-    expect(await res?.text()).toMatch(/noindex/);
-    await expect(page.getByRole('main').getByRole('status')).toContainText('confirmed');
-    await page.goto('/en/newsletter/confirm?token=bad');
-    await expect(page.getByRole('main').getByRole('alert')).toContainText('invalid');
-  });
+  test(
+    'confirm page confirms in the browser; bad token shows an error',
+    mockOnly('needs the mock token'),
+    async ({ page }) => {
+      const res = await page.goto(
+        '/en/newsletter/confirm?email=reader%40example.com&token=mock-token',
+      );
+      expect(await res?.text()).toMatch(/noindex/);
+      await expect(page.getByRole('main').getByRole('status')).toContainText('confirmed');
+      await page.goto('/en/newsletter/confirm?email=reader%40example.com&token=bad');
+      await expect(page.getByRole('main').getByRole('alert')).toContainText('invalid');
+      // C27: the API needs both values from the link; a link without the email never posts.
+      await page.goto('/en/newsletter/confirm?token=mock-token');
+      await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
+    },
+  );
 
-  test('unsubscribe needs an explicit click', async ({ page }) => {
-    test.skip(!usingMockApi, 'needs the mock token');
-    await page.goto('/ar/newsletter/unsubscribe?token=mock-token');
-    await page.waitForLoadState('networkidle');
-    const button = page.getByRole('button', { name: 'إلغاء الاشتراك' });
-    await expect(button).toBeVisible();
-    await button.click();
-    await expect(page.getByRole('main').getByRole('status')).toContainText('تم إلغاء اشتراكك');
-  });
+  test(
+    'unsubscribe needs an explicit click',
+    mockOnly('needs the mock token'),
+    async ({ page }) => {
+      await page.goto('/ar/newsletter/unsubscribe?email=reader%40example.com&token=mock-token');
+      await page.waitForLoadState('networkidle');
+      const button = page.getByRole('button', { name: 'إلغاء الاشتراك' });
+      await expect(button).toBeVisible();
+      await button.click();
+      await expect(page.getByRole('main').getByRole('status')).toContainText('تم إلغاء اشتراكك');
+    },
+  );
 });

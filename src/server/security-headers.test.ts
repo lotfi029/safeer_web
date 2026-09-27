@@ -21,9 +21,13 @@ describe('CSP (R1)', () => {
     expect(csp).toContain("style-src-attr 'unsafe-inline'");
   });
 
-  it('locks down frames, objects, base and forms', () => {
+  it('frames only the two map hosts the API accepts for mapEmbedUrl (A12)', () => {
+    const frameSrc = csp.split('; ').find((d) => d.startsWith('frame-src '));
+    expect(frameSrc).toBe('frame-src https://www.google.com https://www.openstreetmap.org');
+  });
+
+  it('locks down framing of this site, objects, base and forms', () => {
     for (const d of [
-      "frame-src 'none'",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",

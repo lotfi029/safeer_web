@@ -13,10 +13,11 @@ import {
   form,
   FormField,
   maxLength,
-  pattern,
   required,
   submit,
+  validate,
 } from '@angular/forms/signals';
+import { DomSanitizer } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
@@ -27,7 +28,9 @@ import type { Loaded } from '../../../core/data/loaded';
 import { PageState } from '../../../core/data/page-state';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { SiteStore } from '../../../core/site/site.store';
+import { isPersonName } from '../../../core/validation/person-name';
 import { problemToTreeErrors } from '../../../shared/forms/server-errors';
+import { mapSearchUrl, safeMapEmbedUrl } from '../../../shared/map/map-embed';
 import { Button } from '../../../shared/ui/button/button';
 import { Control, Field } from '../../../shared/ui/field/field';
 import { Icon } from '../../../shared/ui/icon/icon';
@@ -41,9 +44,6 @@ export const CONTACT_SUBJECTS: readonly ContactSubject[] = [
   'feedback',
   'other',
 ];
-
-/** Names: letters (any script), marks, spaces, apostrophes, dots and hyphens (backend C16). */
-export const NAME_PATTERN = /^[\p{L}\p{M}\s'.-]+$/u;
 
 export { contactResolver } from './contact.resolver';
 
@@ -60,7 +60,9 @@ interface ContactModel {
 /**
  * Contact (prototype `#/contact`): contact cards from GET /site, Signal Forms message form →
  * POST /contact with honeypot + `formRenderedAt` (set in the browser after hydration, F12),
- * problem-details field errors, map facade with a directions link (no third-party iframe).
+ * problem-details field errors, and a map facade (A12): when `settings.mapEmbedUrl` is an allowed
+ * Google Maps / OpenStreetMap embed, the iframe loads only after the visitor asks for it, so nothing
+ * third-party is fetched on page load. "Open in maps" uses the pin (`mapLat`/`mapLng`) or the address.
  */
 @Component({
   selector: 'app-contact-page',
@@ -245,21 +247,37 @@ interface ContactModel {
             </div>
 
             <aside class="flex flex-col gap-6">
-              <div class="img-placeholder dim min-h-80">
-                <div
-                  class="flex flex-col items-center gap-3"
-                  role="img"
-                  [attr.aria-label]="
-                    'common.imagePlaceholder'
-                      | transloco: { label: ('pages.contact.map' | transloco) }
-                  "
-                >
-                  <app-icon name="map-pin" [size]="36" />
-                  <span aria-hidden="true">{{
-                    'common.imagePlaceholder'
-                      | transloco: { label: ('pages.contact.map' | transloco) }
-                  }}</span>
-                </div>
+              <div class="img-placeholder dim min-h-80" data-testid="contact-map">
+                @if (mapFrame(); as src) {
+                  <iframe
+                    class="min-h-80 w-full rounded-(--radius-card) border-0"
+                    [src]="src"
+                    [title]="'pages.contact.map' | transloco"
+                    loading="lazy"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                  ></iframe>
+                } @else {
+                  <div
+                    class="flex flex-col items-center gap-3"
+                    role="img"
+                    [attr.aria-label]="
+                      'common.imagePlaceholder'
+                        | transloco: { label: ('pages.contact.map' | transloco) }
+                    "
+                  >
+                    <app-icon name="map-pin" [size]="36" />
+                    <span aria-hidden="true">{{
+                      'common.imagePlaceholder'
+                        | transloco: { label: ('pages.contact.map' | transloco) }
+                    }}</span>
+                  </div>
+                  @if (mapEmbed()) {
+                    <button appButton size="sm" type="button" (click)="showMap.set(true)">
+                      {{ 'pages.contact.showMap' | transloco }}
+                    </button>
+                  }
+                }
                 @if (mapHref(); as href) {
                   <a
                     appButton
@@ -297,16 +315,22 @@ export class ContactPage {
   private readonly site = inject(SiteStore);
   private readonly api = inject(PublicApi);
   private readonly t = inject(TranslocoService);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly seo = pageSeo();
 
   protected readonly subjects = CONTACT_SUBJECTS;
   protected readonly contact = computed(() => this.site.site()?.contact ?? null);
-  protected readonly mapHref = computed(() => {
-    const address = this.contact()?.address;
-    return address
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-      : null;
+  private readonly settings = computed(() => this.site.site()?.settings ?? null);
+  protected readonly mapEmbed = computed(() => safeMapEmbedUrl(this.settings()?.mapEmbedUrl));
+  protected readonly showMap = signal(false);
+  /** Trusted only after `safeMapEmbedUrl` pinned it to the two hosts the CSP `frame-src` allows. */
+  protected readonly mapFrame = computed(() => {
+    const url = this.mapEmbed();
+    return url && this.showMap() ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
   });
+  protected readonly mapHref = computed(() =>
+    mapSearchUrl(this.settings()?.mapLat, this.settings()?.mapLng, this.contact()?.address),
+  );
   protected readonly breadcrumb = computed(() => [
     { label: this.t.translate('pages.breadcrumbHome'), link: this.locale.link('/') },
     { label: this.data().data?.title ?? '' },
@@ -323,7 +347,12 @@ export class ContactPage {
   protected readonly model = form(this.value, (p) => {
     required(p.name);
     maxLength(p.name, 191);
-    pattern(p.name, NAME_PATTERN, { message: this.t.translate('pages.contact.nameInvalid') });
+    // W14: the API's C16 rule (core/validation).
+    validate(p.name, ({ value }) =>
+      value() && !isPersonName(value())
+        ? { kind: 'personName', message: this.t.translate('pages.contact.nameInvalid') }
+        : undefined,
+    );
     maxLength(p.phone, 40);
     required(p.email);
     email(p.email);

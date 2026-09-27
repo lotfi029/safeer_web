@@ -31,7 +31,7 @@ describe('guards', () => {
           {
             path: 'ar/admin/news',
             canActivate: [staffGuard, roleGuard],
-            data: { area: 'news' },
+            data: { area: 'content' },
             component: Page,
           },
           { path: 'ar/admin/login', component: Page },
