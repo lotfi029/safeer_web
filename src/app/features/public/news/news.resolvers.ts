@@ -35,7 +35,10 @@ export function newsFilters(route: ActivatedRouteSnapshot): NewsFilters {
   };
 }
 
-/** Critical: page meta + the list. Secondary (degrade to empty, F8): categories and featured. */
+/**
+ * Critical: page meta + the list. Secondary (degrade to empty, F8): categories and featured. An
+ * unknown `?category=` is a 400 from the API (C42), rendered as not-found (404), never a 500.
+ */
 export const newsListResolver: ResolveFn<Loaded<NewsListData>> = (route) => {
   const api = inject(PublicApi);
   const filters = newsFilters(route);
@@ -50,6 +53,7 @@ export const newsListResolver: ResolveFn<Loaded<NewsListData>> = (route) => {
         : of<PostSummary | null>(null),
       filters: of(filters),
     }),
+    (problem) => !!filters.category && problem.status === 400,
   );
 };
 

@@ -45,11 +45,11 @@ describe('StaffSessionStore', () => {
     await tick();
     ctrl.expectOne('/api/v1/admin/roles').flush({
       roles: ['admin', 'editor'],
-      matrix: { news: ['admin', 'editor'], users: ['admin'] },
+      matrix: { content: ['admin', 'editor'], users: ['admin'] },
     });
     expect(await loaded).toBe(true);
     expect(tokens.staff()).toBe('t1');
-    expect(store.can('news')).toBe(true);
+    expect(store.can('content')).toBe(true);
     expect(store.can('users')).toBe(false);
     expect(store.can('applications')).toBe(false);
   });
@@ -72,7 +72,9 @@ describe('StaffSessionStore', () => {
     await loaded;
     expect(store.matrix()).toBe(ROLE_MATRIX);
     expect(store.can('applications')).toBe(true);
-    expect(store.can('news')).toBe(false);
+    expect(store.can('content')).toBe(false);
+    // A5: message counts follow the inbox area, which a reviewer (and an editor) doesn't have.
+    expect(store.can('inbox')).toBe(false);
   });
 
   it('is anonymous on 401 and shares one in-flight load', async () => {

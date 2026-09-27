@@ -130,7 +130,16 @@
     "isFeatured": false,
     "isPublished": false,
     "readMinutes": 1,
-    "coverAsset": null,
+    "coverAsset": {
+      "id": "900",
+      "publicId": "mock-draft-cover",
+      "kind": "image",
+      "mimeType": "image/webp",
+      "sizeBytes": 1,
+      "widthPx": 1600,
+      "heightPx": 900,
+      "alt": null
+    },
     "category": null
   }
 ]

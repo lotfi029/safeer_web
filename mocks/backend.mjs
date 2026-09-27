@@ -293,6 +293,9 @@ export function createMockBackend(fixtures) {
         const page = Math.max(1, Number(query.get('page')) || 1);
         const limit = Math.min(48, Math.max(1, Number(query.get('limit')) || 12));
         const category = query.get('category');
+        // C42: an unknown category is a 400, like the real API.
+        if (category && !(db.fixtures.newsCategories ?? []).some((c) => c.slug === category))
+          return problem(400, 'VALIDATION_FAILED');
         const q = (query.get('q') ?? '').trim().toLowerCase();
         const all = (db.fixtures.posts ?? [])
           .filter((p) => !category || p.category?.slug === category)
@@ -334,6 +337,9 @@ export function createMockBackend(fixtures) {
               bodyEn: post.bodyEn,
               readMinutes: post.readMinutes ?? 2,
               related,
+              ...(post.isPublished === false
+                ? { previewFileQuery: `preview=mock-preview&post=${post.id}` }
+                : {}),
             },
             lang,
           ),
@@ -413,7 +419,7 @@ export function createMockBackend(fixtures) {
       'POST',
       /^\/api\/v1\/newsletter\/confirm$/,
       ({ body }) =>
-        body?.token === 'mock-token'
+        body?.email && body?.token === 'mock-token'
           ? json(200, { ok: true })
           : problem(400, 'VALIDATION_FAILED', {
               issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
@@ -423,7 +429,7 @@ export function createMockBackend(fixtures) {
       'POST',
       /^\/api\/v1\/newsletter\/unsubscribe$/,
       ({ body }) =>
-        body?.token === 'mock-token'
+        body?.email && body?.token === 'mock-token'
           ? json(200, { ok: true })
           : problem(400, 'VALIDATION_FAILED', {
               issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
@@ -522,16 +528,22 @@ export function createMockBackend(fixtures) {
     [
       'GET',
       /^\/api\/v1\/portal\/notifications$/,
-      ({ req }) => {
+      ({ req, query }) => {
         const a = applicantFrom(req);
         if (!a) return problem(401, 'UNAUTHENTICATED');
-        return json(
-          200,
-          (a.app.events ?? [])
-            .slice()
-            .reverse()
-            .map(({ id, type, createdAt, data }) => ({ id, type, createdAt, data: data ?? null })),
-        );
+        // C35: paged like the real API (newest first, limit ≤ 50).
+        const page = Math.max(1, Number(query.get('page')) || 1);
+        const limit = Math.min(50, Math.max(1, Number(query.get('limit')) || 20));
+        const all = (a.app.events ?? [])
+          .slice()
+          .reverse()
+          .map(({ id, type, createdAt, data }) => ({ id, type, createdAt, data: data ?? null }));
+        return json(200, {
+          data: all.slice((page - 1) * limit, page * limit),
+          total: all.length,
+          page,
+          limit,
+        });
       },
     ],
     [
@@ -717,10 +729,10 @@ export function createMockBackend(fixtures) {
           return problem(409, 'SLOT_ALREADY_BOOKED');
         slot.applicationId = a.app.id;
         a.app.interview = {
+          id: slot.id,
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
           location: slot.location,
-          slotId: slot.id,
         };
         (a.app.events ??= []).push({
           id: token(),
@@ -728,7 +740,8 @@ export function createMockBackend(fixtures) {
           createdAt: nowIso(),
           data: null,
         });
-        return json(200, { ok: true });
+        // C17: the booked slot (the real API returns the slot it booked).
+        return json(201, a.app.interview);
       },
     ],
     [
@@ -739,12 +752,16 @@ export function createMockBackend(fixtures) {
         if (!a) return problem(401, 'UNAUTHENTICATED');
         if (!checkCsrf(req, a.session.csrfToken)) return problem(403, 'FORBIDDEN');
         if (!a.app.interview) return problem(404, 'NOT_FOUND');
-        const slot = (db.fixtures.interviewSlots ?? []).find(
-          (s) => s.id === a.app.interview.slotId,
-        );
+        const slot = (db.fixtures.interviewSlots ?? []).find((s) => s.id === a.app.interview.id);
         if (slot) slot.applicationId = null;
         a.app.interview = null;
-        return { status: 204, headers: {}, body: null };
+        (a.app.events ??= []).push({
+          id: token(),
+          type: 'INTERVIEW_CANCELLED',
+          createdAt: nowIso(),
+          data: null,
+        });
+        return json(200, { cancelled: true });
       },
     ],
 

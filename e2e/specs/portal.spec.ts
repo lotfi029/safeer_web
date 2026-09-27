@@ -86,19 +86,23 @@ test.describe('student portal', () => {
     await expect(page).toHaveURL(/\/en\/portal\/documents$/);
   });
 
-  test('a wrong code shows OTP_INVALID; the message never reveals whether the account exists', async ({
+  test('a wrong code shows OTP_INVALID with the 1-hour lockout hint (A1); nothing reveals whether the account exists', async ({
     page,
   }) => {
     await page.goto('/en/portal/login');
     await page.waitForLoadState('networkidle');
     await page.locator('input[autocomplete="username"]').fill('nobody@mock.invalid');
     await page.locator('form button[type=submit]').click();
-    await expect(page.getByRole('main').getByRole('status')).toContainText(
-      'If these details are registered',
-    );
+    // A4: the request-otp answer never means a code was sent, so the copy doesn't say it was.
+    const sent = page.getByRole('main').getByRole('status');
+    await expect(sent).toContainText('If these details match an application');
+    await expect(sent).not.toContainText(/was sent|on its way/i);
     await page.locator('app-otp-input input').first().click();
     await page.keyboard.type('000000');
-    await expect(page.getByRole('main').getByRole('alert')).toContainText('wrong or has expired');
+    const alert = page.getByRole('main').getByRole('alert');
+    await expect(alert).toContainText('wrong or has expired');
+    await expect(alert).toContainText('try again in an hour');
+    await expect(alert).not.toContainText(/tomorrow/i);
     await expect(page.getByRole('button', { name: /Resend in/ })).toBeDisabled();
   });
 
@@ -202,6 +206,30 @@ test.describe('student portal', () => {
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Confirm booking' }).click();
     await expect(dialog.getByRole('alert')).toContainText('This slot is taken');
+  });
+
+  test('interview: a 429 on booking or cancelling says to try again in an hour (A9)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await signIn(page, REFS.interview);
+    await page.route(/\/api\/v1\/portal\/interview(\?|$)/, (route) =>
+      ['POST', 'DELETE'].includes(route.request().method())
+        ? route.fulfill({
+            status: 429,
+            contentType: 'application/problem+json',
+            body: JSON.stringify({ status: 429, code: 'RATE_LIMITED', title: 'Too Many Requests' }),
+          })
+        : route.continue(),
+    );
+    await page
+      .getByTestId('interview')
+      .getByRole('button', { name: 'Book this slot' })
+      .first()
+      .click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Confirm booking' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('Try again in an hour');
   });
 
   test('sign out clears the session', async ({ page }) => {

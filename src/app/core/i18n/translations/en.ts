@@ -241,6 +241,12 @@ export const en: Translation = {
       SLOT_ALREADY_BOOKED: 'This slot is taken. Please choose another one.',
       INTERVIEW_NOT_AVAILABLE: 'Interview booking is not available right now.',
       INVALID_STATUS_TRANSITION: 'The application cannot move to this status.',
+      QUOTA_EXCEEDED:
+        'The upload limit for this application has been reached. Contact us if you need to send more files.',
+      DOCUMENT_NOT_REVIEWABLE: 'This document can no longer be reviewed.',
+      DOCUMENT_SUPERSEDED: 'This document was replaced, so its file is no longer available.',
+      INVALID_ASSIGNEE: 'This person cannot be assigned to the application.',
+      REDIRECT_CHAIN: 'This redirect would chain through another redirect.',
       UPSTREAM_UNAVAILABLE: 'The service is temporarily unavailable. Please try again shortly.',
       UPSTREAM_TIMEOUT: 'The request took too long. Please try again.',
       CONFLICT: 'This conflicted with another change. Refresh and try again.',

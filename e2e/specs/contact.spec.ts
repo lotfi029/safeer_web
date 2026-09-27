@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
+import { MOCK_API_URL, usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 test.describe('contact page', () => {
@@ -30,6 +30,77 @@ test.describe('contact page', () => {
     await expect(name).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByLabel('Email')).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByText('your message has arrived')).toHaveCount(0);
+  });
+
+  test('the page loads no iframe and makes no third-party request (A12)', async ({ page }) => {
+    const thirdParty: string[] = [];
+    page.on('request', (r) => {
+      if (!/^http:\/\/localhost:/.test(r.url())) thirdParty.push(r.url());
+    });
+    await page.goto('/en/contact');
+    await page.waitForLoadState('networkidle');
+    // Holds whatever the settings say: an embed only loads after a click.
+    await expect(page.getByTestId('contact-map').locator('iframe')).toHaveCount(0);
+    expect(thirdParty).toEqual([]);
+  });
+
+  test.describe('map embed (A12)', () => {
+    test.describe.configure({ mode: 'serial' });
+    test.skip(!usingMockApi, 'sets the map through the mock API');
+    // Test-only values (never shipped): the mock's site settings are patched, then restored.
+    const EMBED = 'https://www.openstreetmap.org/export/embed.html?bbox=46.6,24.6,46.7,24.7';
+    const setSite = (request: import('@playwright/test').APIRequestContext, data: object) =>
+      request.post(`${MOCK_API_URL}/__site`, { data });
+    test.afterEach(async ({ request }) => {
+      await setSite(request, { mapEmbedUrl: null, mapLat: null, mapLng: null });
+    });
+
+    test('loads the iframe only on click, from an allowed host, within the CSP', async ({
+      page,
+      request,
+    }) => {
+      await setSite(request, { mapEmbedUrl: EMBED, mapLat: 24.65, mapLng: 46.65 });
+      await page.route('https://www.openstreetmap.org/**', (route) =>
+        route.fulfill({ contentType: 'text/html', body: '<p>map</p>' }),
+      );
+      const violations: string[] = [];
+      page.on('console', (m) => {
+        if (/Content.Security.Policy/i.test(m.text())) violations.push(m.text());
+      });
+      await page.goto('/en/contact');
+      await page.waitForLoadState('networkidle');
+      const map = page.getByTestId('contact-map');
+      await expect(map.locator('iframe')).toHaveCount(0);
+      await expect(map.getByRole('link', { name: 'Open the location in maps' })).toHaveAttribute(
+        'href',
+        /query=24\.65%2C46\.65$/,
+      );
+      const frameRequest = page.waitForRequest((r) => r.url().startsWith(EMBED.split('?')[0]));
+      await map.getByRole('button', { name: 'Show the interactive map' }).click();
+      await expect(map.locator('iframe')).toHaveAttribute('src', EMBED);
+      await expect(map.locator('iframe')).toHaveAttribute('title', /Map of the office/);
+      await frameRequest;
+      expect(violations).toEqual([]);
+    });
+
+    test('without a map or pin, "open in maps" searches the address', async ({ page }) => {
+      await page.goto('/en/contact');
+      const map = page.getByTestId('contact-map');
+      await expect(map.getByRole('button', { name: 'Show the interactive map' })).toHaveCount(0);
+      await expect(map.getByRole('link', { name: 'Open the location in maps' })).toHaveAttribute(
+        'href',
+        /google\.com\/maps\/search\/\?api=1&query=Riyadh/,
+      );
+    });
+
+    test('a host outside the allow-list never becomes an iframe', async ({ page, request }) => {
+      await setSite(request, { mapEmbedUrl: 'https://maps.example.com/embed?x=1' });
+      await page.goto('/en/contact');
+      await page.waitForLoadState('networkidle');
+      const map = page.getByTestId('contact-map');
+      await expect(map.getByRole('button', { name: 'Show the interactive map' })).toHaveCount(0);
+      await expect(map.locator('iframe')).toHaveCount(0);
+    });
   });
 
   test('the honeypot is hidden from people and assistive tech', async ({ page }) => {

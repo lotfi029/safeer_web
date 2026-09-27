@@ -23,6 +23,7 @@ import { srcsetWidths } from './files-image-loader';
         [ngSrcset]="srcset()"
         [sizes]="sizes()"
         [priority]="priority()"
+        [loaderParams]="fileQuery() ? { fileQuery: fileQuery() } : {}"
         [alt]="alt() ?? a.alt ?? ''"
         [class]="imgClass()"
       />
@@ -50,6 +51,8 @@ export class Image {
   /** Fallback aspect ratio when the asset has no dimensions (and for the placeholder). */
   readonly aspect = input<[number, number]>([16, 9]);
   readonly imgClass = input('');
+  /** C41: a news preview's `previewFileQuery`, appended to the `/files/…` URLs. */
+  readonly fileQuery = input<string | null | undefined>(null);
 
   /** The placeholder is a flex box: display utilities meant for the `<img>` would break its centring. */
   protected readonly placeholderClass = computed(() =>

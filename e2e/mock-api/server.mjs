@@ -5,6 +5,7 @@
  *   GET /__log           → recent requests seen by the mock (SSR-path assertions)
  *   DELETE /__log        → clears the log
  *   POST /__reset        → resets mock state (?reference=SA-… restores one seeded application)
+ *   POST /__site         → merges a JSON body into the site settings (map specs); send nulls to restore
  */
 import { createServer } from 'node:http';
 import { createMockBackend } from '../../mocks/backend.mjs';
@@ -67,6 +68,10 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/__log') {
     if (req.method === 'DELETE') log.length = 0;
     return send(res, 200, log);
+  }
+  if (url.pathname === '/__site' && req.method === 'POST') {
+    Object.assign(backend.db.fixtures.site.settings, (await readBody(req, url)) ?? {});
+    return send(res, 200, { ok: true });
   }
   if (url.pathname === '/__reset') {
     // `?reference=SA-…` restores just that seeded application (and frees its interview slot) so

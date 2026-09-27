@@ -19,6 +19,11 @@ test.describe('news', () => {
   test.describe('SSR (mock content)', () => {
     test.skip(!usingMockApi, 'asserts mock fixtures');
 
+    test('an unknown category is a 404 page, not a 500 (C42)', async ({ request }) => {
+      const res = await request.get('/en/news?category=no-such-category');
+      expect(res.status()).toBe(404);
+    });
+
     test('category filter, search and pagination live in the URL and render server-side', async ({
       request,
     }) => {
@@ -68,6 +73,13 @@ test.describe('news', () => {
       expect(await res.text()).toMatch(/<meta name="robots" content="noindex, nofollow"/);
     });
 
+    test('preview: the cover loads through previewFileQuery (C41)', async ({ page }) => {
+      test.skip(!usingMockApi, 'needs the mock preview token');
+      await page.goto('/en/news/draft-preview?preview=mock-preview');
+      const cover = page.locator('article img, main img[src*="/files/"]').first();
+      await expect(cover).toHaveAttribute('src', /\/files\/[^?]+\?preview=mock-preview&post=/);
+    });
+
     test('article body HTML is sanitized again on the client', async ({ page }) => {
       await page.goto('/en/news/draft-preview?preview=mock-preview');
       await expect(page.locator('app-rich-text')).toBeVisible();
@@ -101,16 +113,21 @@ test.describe('news', () => {
 
   test('confirm page confirms in the browser; bad token shows an error', async ({ page }) => {
     test.skip(!usingMockApi, 'needs the mock token');
-    const res = await page.goto('/en/newsletter/confirm?token=mock-token');
+    const res = await page.goto(
+      '/en/newsletter/confirm?email=reader%40example.com&token=mock-token',
+    );
     expect(await res?.text()).toMatch(/noindex/);
     await expect(page.getByRole('main').getByRole('status')).toContainText('confirmed');
-    await page.goto('/en/newsletter/confirm?token=bad');
+    await page.goto('/en/newsletter/confirm?email=reader%40example.com&token=bad');
     await expect(page.getByRole('main').getByRole('alert')).toContainText('invalid');
+    // C27: the API needs both values from the link; a link without the email never posts.
+    await page.goto('/en/newsletter/confirm?token=mock-token');
+    await expect(page.getByRole('main').getByRole('alert')).toBeVisible();
   });
 
   test('unsubscribe needs an explicit click', async ({ page }) => {
     test.skip(!usingMockApi, 'needs the mock token');
-    await page.goto('/ar/newsletter/unsubscribe?token=mock-token');
+    await page.goto('/ar/newsletter/unsubscribe?email=reader%40example.com&token=mock-token');
     await page.waitForLoadState('networkidle');
     const button = page.getByRole('button', { name: 'إلغاء الاشتراك' });
     await expect(button).toBeVisible();

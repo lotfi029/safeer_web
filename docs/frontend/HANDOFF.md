@@ -64,7 +64,7 @@ The server modules live in `src/server/*.ts`, each with a `.test.ts`. Deployment
 | `src/app/core/api/contract-assumptions.md` | Not created. The assumptions are listed in §6 below. | `docs/api/CONTRACT-NOTES.md` covered almost everything. |
 | Apply form "hydrates on interaction" | Normal hydration at bootstrap | Deferred hydration resets values typed before it runs. |
 | Newsletter band `hydrate on viewport` | Plain `@defer (on viewport)`, rendered in the browser only | Same reason. It's below the fold and not needed for SEO. |
-| Contact map facade loads an iframe on click | Static placeholder + "open in maps" link | Keeps `frame-src 'none'`. Add the map host to the CSP when the client supplies the embed. |
+| Contact map facade loads an iframe on click | Done (A12): a "show the map" button loads `settings.mapEmbedUrl` in an iframe, only when it is a Google Maps embed or OpenStreetMap URL (`shared/map/map-embed.ts`). "Open in maps" uses `mapLat`/`mapLng`, or the address. | `frame-src` allows exactly those two origins. Nothing third-party loads until the visitor clicks. |
 | Scholarship steps as `app-timeline` | Custom rail (vertical below xl, 5-column row at xl) | `app-timeline` models done/now/pending states, which don't fit static numbered steps. |
 | Prototype: `scholarshipNote` in apply step 3 | Step 2 | Follows the plan. |
 | Prototype: single OTP text input | 6-box `app-otp-input` | Follows the brief. |

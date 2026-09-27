@@ -12,6 +12,7 @@ import type {
   HomeResponse,
   NewsCategory,
   NewsletterRequest,
+  NewsletterTokenRequest,
   OkResponse,
   Page,
   Paged,
@@ -119,14 +120,14 @@ export class PublicApi {
     return this.http.post<OkResponse>(`${API_PREFIX}/newsletter`, body);
   }
 
-  /** C27 (mocked until live). */
-  newsletterConfirm(token: string): Observable<OkResponse> {
-    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/confirm`, { token });
+  /** C27: 400 for a bad or mismatched token. */
+  newsletterConfirm(body: NewsletterTokenRequest): Observable<OkResponse> {
+    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/confirm`, body);
   }
 
-  /** C27 (mocked until live). */
-  newsletterUnsubscribe(token: string): Observable<OkResponse> {
-    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/unsubscribe`, { token });
+  /** C27: 400 for a bad or mismatched token. */
+  newsletterUnsubscribe(body: NewsletterTokenRequest): Observable<OkResponse> {
+    return this.http.post<OkResponse>(`${API_PREFIX}/newsletter/unsubscribe`, body);
   }
 }
 

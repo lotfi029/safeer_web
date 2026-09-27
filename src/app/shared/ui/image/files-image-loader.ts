@@ -28,7 +28,8 @@ export function srcsetWidths(originalWidth: number | null): number[] {
 
 /**
  * NgOptimizedImage loader. `ngSrc="files/{publicId}"` → `/files/{publicId}/{variant}`; any other
- * source (e.g. `/brand/safeer-logo.png`) is returned as-is.
+ * source (e.g. `/brand/safeer-logo.png`) is returned as-is. `loaderParams.fileQuery` (a news preview's
+ * `previewFileQuery`, C41) is appended so an unpublished post's images load without a session.
  */
 export function filesImageLoader(config: ImageLoaderConfig): string {
   if (!config.src.startsWith(FILES_PREFIX)) {
@@ -36,5 +37,20 @@ export function filesImageLoader(config: ImageLoaderConfig): string {
   }
   const publicId = config.src.slice(FILES_PREFIX.length);
   const variant = config.width ? variantFor(config.width) : 'card';
-  return `/files/${encodeURIComponent(publicId)}/${variant}`;
+  const query = config.loaderParams?.['fileQuery'];
+  return `/files/${encodeURIComponent(publicId)}/${variant}${query ? `?${String(query)}` : ''}`;
+}
+
+/** C41: appends a preview's `previewFileQuery` to every same-site `/files/…` URL in body HTML. */
+export function withFileQuery(
+  html: string | null,
+  query: string | null | undefined,
+): string | null {
+  if (!html || !query) {
+    return html;
+  }
+  return html.replace(
+    /(\b(?:src|href)=["']|\bsrcset=["'][^"']*?|,\s*)(\/files\/[^"'\s,?#]+)/g,
+    (_m, lead: string, url: string) => `${lead}${url}?${query}`,
+  );
 }

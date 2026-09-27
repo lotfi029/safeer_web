@@ -1,6 +1,6 @@
 import { inject, RESPONSE_INIT } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
-import { toApiProblem } from '../api/problem';
+import { toApiProblem, type ApiProblem } from '../api/problem';
 
 export type LoadFailure = 'notFound' | 'unavailable' | 'error';
 
@@ -10,17 +10,21 @@ export type Loaded<T> = { data: T; failure: null } | { data: null; failure: Load
 /**
  * Loads a page's critical data (review F8). On failure it sets the SSR status — 404 for
  * NOT_FOUND, 503 + Retry-After: 30 when the API is unreachable, else 500 — and returns the failure
- * so the page renders the matching error panel (`<app-page-state>`). Must be called in an injection
- * context (a resolver) before the first await.
+ * so the page renders the matching error panel (`<app-page-state>`). `isNotFound` lets a page treat
+ * another problem as not-found too (a 400 for an unknown `?category=`, C42). Must be called in an
+ * injection context (a resolver) before the first await.
  */
-export function loadCritical<T>(source: Observable<T>): Promise<Loaded<T>> {
+export function loadCritical<T>(
+  source: Observable<T>,
+  isNotFound?: (problem: ApiProblem) => boolean,
+): Promise<Loaded<T>> {
   const responseInit = inject(RESPONSE_INIT, { optional: true });
   return firstValueFrom(source).then(
     (data): Loaded<T> => ({ data, failure: null }),
     (error): Loaded<T> => {
       const problem = toApiProblem(error);
       const failure: LoadFailure =
-        problem.status === 404
+        problem.status === 404 || isNotFound?.(problem)
           ? 'notFound'
           : problem.status === 0 || problem.status >= 502 || problem.code === 'NETWORK'
             ? 'unavailable'
