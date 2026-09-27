@@ -38,6 +38,7 @@ const KEEP = [
   /^src\/(messages\/messages|users\/users|media\/media|contact\/contact)\.service\.ts$/,
   /^src\/(mail\/mail|sms\/sms)-(settings|templates)\.service\.ts$/,
   /^src\/portal\/portal-interview\.service\.ts$/,
+  /^src\/contact\/newsletter-token\.util\.ts$/,
 ];
 const DOCS = ['openapi.json', 'docs/backend/API-CHANGES.md', 'docs/backend/ARCHITECTURE.md'];
 

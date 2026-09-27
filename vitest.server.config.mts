@@ -9,6 +9,8 @@ export default defineConfig({
       'scripts/**/*.test.mjs',
       'mocks/**/*.test.mjs',
       'e2e/support/**/*.test.ts',
+      // Pure-TS app modules checked against the API snapshot in docs/api (drift tests).
+      'src/app/**/*.node.test.ts',
     ],
   },
 });

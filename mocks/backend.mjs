@@ -8,10 +8,33 @@
  * lacks (seeded applications, preview tokens, staff accounts, auth tokens). The public fixtures are
  * recorded from the API (scripts/record-fixtures.mjs).
  */
+import { adminRoutes, contactMessage } from './admin.mjs';
 import { collapseBilingual, resolveLang } from './collapse.mjs';
 
 export const MOCK_OTP_CODE = '123456';
 export const MOCK_STAFF_PASSWORD = 'mock-password';
+const FIXTURE_STAFF = new Set(
+  ['admin', 'reviewer', 'editor', 'support'].map((r) => `${r}@mock.invalid`),
+);
+
+/** A staff row as the API returns it (PublicUser): never the password, lock state as isLocked/lockedUntil. */
+function publicStaff(user) {
+  const { password: _password, ...rest } = user;
+  const lockedUntil = user.lockedUntil ?? null;
+  return {
+    id: rest.id,
+    name: rest.name,
+    email: rest.email,
+    role: rest.role,
+    status: user.status ?? 'active',
+    isLocked: !!lockedUntil && Date.parse(lockedUntil) > Date.now(),
+    lockedUntil,
+    failedLogins: user.failedLogins ?? 0,
+    lastLoginAt: user.lastLoginAt ?? null,
+    createdAt: user.createdAt ?? '2026-09-01T09:00:00.000Z',
+    updatedAt: user.updatedAt ?? '2026-09-01T09:00:00.000Z',
+  };
+}
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
 const REQUIRED_DOC_TYPES = ['id_copy', 'certificate', 'admission_letter'];
@@ -119,13 +142,19 @@ export function createMockBackend(fixtures) {
   const db = {
     fixtures: clone(fixtures),
     staffSessions: new Map(),
+    loginAttempts: new Map(),
     // W16: `purpose:token` of the unused invitation/reset links (single-use, like the API).
-    authTokens: new Set(['accept:mock-invite', 'reset:mock-reset']),
+    // `purpose:token` → the staff id it belongs to (null for the two demo links).
+    authTokens: new Map([
+      ['accept:mock-invite', null],
+      ['reset:mock-reset', null],
+    ]),
     applicantSessions: new Map(),
     applications: new Map(clone(fixtures.applications ?? []).map((a) => [a.id, a])),
     otps: new Map(),
     newsletter: new Map(),
-    contact: [],
+    messages: [],
+    audit: [],
     seq: 184,
   };
 
@@ -387,12 +416,22 @@ export function createMockBackend(fixtures) {
     [
       'POST',
       /^\/api\/v1\/contact$/,
-      ({ body }) => {
+      ({ body, lang }) => {
         const issues = [];
         for (const k of ['name', 'email', 'subject', 'body'])
           if (!body?.[k]) issues.push({ path: [k], message: 'Required', code: 'invalid_type' });
         if (body?.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.email))
           issues.push({ path: ['email'], message: 'Invalid email', code: 'invalid_string' });
+        // The API's personName(): Arabic or Latin letters, marks, spaces, ' and - only.
+        if (
+          body?.name &&
+          !/^(?:(?=[\p{Script=Arabic}\p{Script=Latin}])\p{L}|\p{M}|['’ -])+$/u.test(body.name)
+        )
+          issues.push({
+            path: ['name'],
+            message: "must contain only Arabic or Latin letters, spaces, ' and -",
+            code: 'invalid_format',
+          });
         if (
           body?.subject &&
           !['scholarship', 'partnership', 'feedback', 'other'].includes(body.subject)
@@ -405,41 +444,60 @@ export function createMockBackend(fixtures) {
         if (typeof body?.formRenderedAt !== 'number')
           issues.push({ path: ['formRenderedAt'], message: 'Required', code: 'invalid_type' });
         if (issues.length) return problem(400, 'VALIDATION_FAILED', { issues });
-        if (!body.website) db.contact.push(body);
+        if (!body.website) db.messages.push(contactMessage(db, body, lang, nowIso));
         return json(201, { ok: true });
       },
     ],
     [
       'POST',
       /^\/api\/v1\/newsletter$/,
-      ({ body }) => {
+      ({ body, lang }) => {
         if (!body?.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.email))
           return problem(400, 'VALIDATION_FAILED', {
             issues: [{ path: ['email'], message: 'Invalid email', code: 'invalid_string' }],
           });
-        db.newsletter.set(body.email, { confirmed: false });
-        return json(201, { ok: true, pendingConfirmation: true });
+        // A NewsletterSubscriber row (the admin newsletter list shows these).
+        const address = String(body.email).trim().toLowerCase();
+        if (!body.website && !db.newsletter.has(address))
+          db.newsletter.set(address, {
+            id: String(++db.seq),
+            email: address,
+            locale: lang,
+            confirmedAt: null,
+            ipHash: null,
+            unsubscribedAt: null,
+            createdAt: nowIso(),
+          });
+        // rc1 answers a bare `{ ok: true }` (CONTRACT-NOTES mentions `pendingConfirmation`; it isn't sent).
+        return json(201, { ok: true });
       },
     ],
     [
       'POST',
       /^\/api\/v1\/newsletter\/confirm$/,
-      ({ body }) =>
-        body?.email && body?.token === 'mock-token'
-          ? json(200, { ok: true })
-          : problem(400, 'VALIDATION_FAILED', {
-              issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
-            }),
+      ({ body }) => {
+        if (!body?.email || body?.token !== 'mock-token')
+          return problem(400, 'VALIDATION_FAILED', {
+            issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
+          });
+        // Like the API: sets confirmedAt on a pending, still-subscribed row (if any).
+        const row = db.newsletter.get(String(body.email).trim().toLowerCase());
+        if (row && !row.confirmedAt && !row.unsubscribedAt) row.confirmedAt = nowIso();
+        return json(200, { ok: true });
+      },
     ],
     [
       'POST',
       /^\/api\/v1\/newsletter\/unsubscribe$/,
-      ({ body }) =>
-        body?.email && body?.token === 'mock-token'
-          ? json(200, { ok: true })
-          : problem(400, 'VALIDATION_FAILED', {
-              issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
-            }),
+      ({ body }) => {
+        if (!body?.email || body?.token !== 'mock-token')
+          return problem(400, 'VALIDATION_FAILED', {
+            issues: [{ path: ['token'], message: 'Invalid token', code: 'custom' }],
+          });
+        const row = db.newsletter.get(String(body.email).trim().toLowerCase());
+        if (row && !row.unsubscribedAt) row.unsubscribedAt = nowIso();
+        return json(200, { ok: true });
+      },
     ],
 
     // ---------- apply ----------
@@ -779,16 +837,30 @@ export function createMockBackend(fixtures) {
       'POST',
       /^\/api\/v1\/admin\/auth\/login$/,
       ({ body }) => {
-        const user = (db.fixtures.staff ?? []).find(
-          (u) => u.email.toLowerCase() === String(body?.email ?? '').toLowerCase(),
-        );
-        if (!user || body?.password !== MOCK_STAFF_PASSWORD) return problem(401, 'UNAUTHENTICATED');
+        const email = String(body?.email ?? '').toLowerCase();
+        // Like the API's per-email limiter (5/min), except for the shared fixture accounts that
+        // parallel mock specs all sign in with.
+        if (!FIXTURE_STAFF.has(email)) {
+          const now = Date.now();
+          const recent = (db.loginAttempts.get(email) ?? []).filter((t) => now - t < 60_000);
+          recent.push(now);
+          db.loginAttempts.set(email, recent);
+          if (recent.length > 5) return problem(429, 'RATE_LIMITED');
+        }
+        const user = (db.fixtures.staff ?? []).find((u) => u.email.toLowerCase() === email);
+        // A2/C3: unknown, wrong password, disabled and locked all get the same 401.
+        const usable =
+          user &&
+          body?.password === (user.password ?? MOCK_STAFF_PASSWORD) &&
+          (user.status ?? 'active') === 'active' &&
+          !(user.lockedUntil && Date.parse(user.lockedUntil) > Date.now());
+        if (!usable) return problem(401, 'UNAUTHENTICATED');
         const sid = token();
         const csrfToken = token();
-        db.staffSessions.set(sid, { user, csrfToken });
+        db.staffSessions.set(sid, { user: publicStaff(user), csrfToken });
         return json(
           200,
-          { user, csrfToken },
+          { user: publicStaff(user), csrfToken },
           { 'set-cookie': `sf_sid=${sid}; Path=/; SameSite=Strict` },
         );
       },
@@ -816,6 +888,17 @@ export function createMockBackend(fixtures) {
         );
       },
     ],
+    // Always `{ ok: true }` (no enumeration); the real API mails a reset link to active accounts.
+    [
+      'POST',
+      /^\/api\/v1\/admin\/auth\/forgot$/,
+      ({ body }) =>
+        typeof body?.email === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.email)
+          ? json(201, { ok: true })
+          : problem(400, 'VALIDATION_FAILED', {
+              issues: [{ path: ['email'], message: 'Invalid email', code: 'invalid_string' }],
+            }),
+    ],
     // W16: invitation / reset links. Like the API: public, single-use tokens, `password` min 8, and
     // an unknown or used token is a 400 with no field issues ("invalid or expired").
     [
@@ -827,9 +910,19 @@ export function createMockBackend(fixtures) {
           return problem(400, 'VALIDATION_FAILED', {
             issues: [{ path: ['password'], message: 'Too small', code: 'too_small' }],
           });
-        if (!db.authTokens.has(`${purpose}:${decodeURIComponent(raw)}`))
+        const key = `${purpose}:${decodeURIComponent(raw)}`;
+        if (!db.authTokens.has(key)) return problem(400, 'VALIDATION_FAILED');
+        // Like the API: the password is set and the account becomes active (accepting an invite).
+        const user = (db.fixtures.staff ?? []).find((u) => u.id === db.authTokens.get(key));
+        // C3: only an invited account can accept; only an active one can reset.
+        if (user && (user.status ?? 'active') !== (purpose === 'accept' ? 'invited' : 'active'))
           return problem(400, 'VALIDATION_FAILED');
-        db.authTokens.delete(`${purpose}:${decodeURIComponent(raw)}`);
+        if (user) {
+          user.password = body.password;
+          if (purpose === 'accept') user.status = 'active';
+          user.lockedUntil = null;
+        }
+        db.authTokens.delete(key);
         return json(200, { ok: true });
       },
     ],
@@ -837,8 +930,13 @@ export function createMockBackend(fixtures) {
       'GET',
       /^\/api\/v1\/admin\/roles$/,
       ({ req }) =>
-        staffFrom(req) ? json(200, clone(db.fixtures.roles)) : problem(401, 'UNAUTHENTICATED'),
+        staffFrom(req)
+          ? json(200, { roles: db.fixtures.roles.roles, matrix: db.fixtures.roles.matrix })
+          : problem(401, 'UNAUTHENTICATED'),
     ],
+
+    // ---------- admin (mocks/admin.mjs) ----------
+    ...adminRoutes({ db, json, problem, clone, nowIso, token, staffFrom, checkCsrf }),
   ];
 
   function summary(p) {

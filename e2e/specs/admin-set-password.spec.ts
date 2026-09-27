@@ -1,6 +1,10 @@
 import { expect, type Page, test } from '@playwright/test';
-import { MOCK_API_URL, mockOnly } from '../support/env';
+import { submitLogin } from '../support/admin';
 import { gotoHydrated } from '../support/hydration';
+import { authToken, staffAccount } from '../support/real-api';
+import { useRealDb } from '../support/real-db';
+
+useRealDb(test);
 
 async function fill(page: Page, password: string, confirm = password): Promise<void> {
   await page.getByRole('textbox', { name: 'New password', exact: true }).fill(password);
@@ -50,26 +54,32 @@ test.describe('staff invitation and password reset links (W16)', () => {
   });
 
   for (const mode of ['accept', 'reset'] as const) {
-    test(
-      `${mode}: a valid link sets the password once, then leads to sign in`,
-      mockOnly('the real API only mails its tokens; the mock mints one per test'),
-      async ({ page, request }) => {
-        const { token } = (await (
-          await request.post(`${MOCK_API_URL}/__auth-token`, { data: { purpose: mode } })
-        ).json()) as { token: string };
-        await gotoHydrated(page, `/en/admin/${mode}/${token}`);
-        await fill(page, 'a-new-password');
-        await page.getByRole('button', { name: /Set/ }).click();
-        await expect(page.getByRole('status')).toContainText('You can now sign in');
-        await page.getByRole('link', { name: 'Go to sign in' }).click();
-        await expect(page).toHaveURL(/\/en\/admin\/login$/);
+    test(`${mode}: a valid link sets the password once, then that password signs in`, async ({
+      page,
+    }) => {
+      // An invitation is for an invited account (C3); a reset is for an active one.
+      const user = await staffAccount(
+        'reviewer',
+        mode === 'accept' ? { status: 'invited' } : { fresh: true },
+      );
+      const token = await authToken(user, mode === 'accept' ? 'invite' : 'reset');
+      const password = `new-${Date.now()}-password`;
+      await gotoHydrated(page, `/en/admin/${mode}/${token}`);
+      await fill(page, password);
+      await page.getByRole('button', { name: /Set/ }).click();
+      await expect(page.getByRole('status')).toContainText('You can now sign in');
+      await page.getByRole('link', { name: 'Go to sign in' }).click();
+      await expect(page).toHaveURL(/\/en\/admin\/login$/);
+      await page.waitForLoadState('networkidle');
+      await submitLogin(page, user.email, password);
+      await expect(page).toHaveURL(/\/en\/admin$/);
 
-        // Single-use: the same link is refused the second time.
-        await gotoHydrated(page, `/en/admin/${mode}/${token}`);
-        await fill(page, 'a-new-password');
-        await page.getByRole('button', { name: /Set/ }).click();
-        await expect(page.getByRole('alert')).toContainText('invalid or has expired');
-      },
-    );
+      // Single-use: the same link is refused the second time.
+      await page.getByRole('button', { name: 'Sign out' }).click();
+      await gotoHydrated(page, `/en/admin/${mode}/${token}`);
+      await fill(page, `${password}-again`);
+      await page.getByRole('button', { name: /Set/ }).click();
+      await expect(page.getByRole('alert')).toContainText('invalid or has expired');
+    });
   }
 });
