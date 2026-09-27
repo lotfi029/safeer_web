@@ -57,6 +57,37 @@ test.describe('public pages: home, board', () => {
     expect(leadBox!.width).toBeGreaterThan(itemBox!.width * 1.5);
   });
 
+  test('home: CMS section names never show; images are either the asset or a labelled placeholder (W6, W7)', async ({
+    page,
+    request,
+  }) => {
+    const home = (await (await request.get('/api/v1/home?lang=ar')).json()) as {
+      sections: { sectionKey: string; label: string | null; imageAsset: unknown }[];
+    };
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/ar');
+    await page.waitForLoadState('networkidle');
+    // Load every deferred section.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForLoadState('networkidle');
+    const main = page.locator('main');
+    for (const key of ['hero', 'cta']) {
+      const label = home.sections.find((s) => s.sectionKey === key)?.label;
+      if (label) await expect(main.getByText(label, { exact: true })).toHaveCount(0);
+    }
+    const hero = main.locator('section').first();
+    if (home.sections.find((s) => s.sectionKey === 'hero')?.imageAsset) {
+      await expect(hero.locator('img[src*="/files/"]')).toHaveAttribute('alt', /.+/);
+    }
+    const placeholders = main.locator('.img-placeholder[role="img"]');
+    for (const ph of await placeholders.all()) {
+      const text = (await ph.textContent())?.trim() ?? '';
+      expect(text).toMatch(/^\[صورة: .+\]$/);
+      await expect(ph).toHaveAttribute('aria-label', text);
+    }
+  });
+
   test('forward arrows point in the reading direction', async ({ page }) => {
     for (const lang of ['ar', 'en'] as const) {
       await page.goto(`/${lang}`);

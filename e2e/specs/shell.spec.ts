@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { SSR_DEAD_API_URL, mockOnly, usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 import { measureHeader } from '../support/header';
+import { smallTargets } from '../support/targets';
 
 test.describe('public shell', () => {
   for (const { viewport, locale } of matrix()) {
@@ -160,4 +161,27 @@ test.describe('server: legacy URLs, SEO files, failure modes', () => {
     expect(res.headers()['retry-after']).toBe('30');
     expect(await res.text()).toContain('نعود قريبًا');
   });
+});
+
+test.describe('touch targets (W8)', () => {
+  for (const lang of ['ar', 'en'] as const) {
+    test(`footer, breadcrumb and news-card links are at least 44px (${lang} @390)`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const failures: string[] = [];
+      for (const path of ['', '/news', '/about']) {
+        await page.goto(`/${lang}${path}`);
+        await page.waitForLoadState('networkidle');
+        await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+        await page.waitForLoadState('networkidle');
+        const small = await smallTargets(
+          page,
+          'footer a, nav[aria-label] ol a, app-news-card h3 a, app-news-card h2 a',
+        );
+        failures.push(...small.map((s) => `${path || '/'}: ${s}`));
+      }
+      expect(failures).toEqual([]);
+    });
+  }
 });
