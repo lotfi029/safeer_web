@@ -123,7 +123,19 @@ export async function openAt(
   await waitForHydration(page);
 }
 
-/** The standard per-screen check: no horizontal scroll + axe (serious/critical fail) + screenshot. */
+/**
+ * Whether a screen is also checked in the dark theme at this viewport: every viewport in the full
+ * matrix, 1440 only per PR (Phase 10).
+ */
+export function checksDark(viewport: Viewport): boolean {
+  return !!process.env['E2E_FULL_MATRIX'] || viewport.name === '1440';
+}
+
+/**
+ * The standard per-screen check: no horizontal scroll + axe (serious/critical fail) + screenshot,
+ * then the same in the other theme (`checksDark`) by flipping `data-theme` on the rendered page,
+ * which is exactly what the theme toggle does.
+ */
 export async function checkScreen(
   page: Page,
   testInfo: TestInfo,
@@ -134,4 +146,20 @@ export async function checkScreen(
   await expectNoHorizontalScroll(page);
   await expectNoSeriousA11yViolations(page);
   await screenshot(page, testInfo, name, viewport, locale);
+  if (!checksDark(viewport) || name.endsWith('-dark')) return;
+  const before = await page.evaluate(() => {
+    const root = document.documentElement;
+    const was = root.getAttribute('data-theme');
+    root.setAttribute('data-theme', 'dark');
+    return was;
+  });
+  if (before === 'dark') return;
+  await expectNoHorizontalScroll(page);
+  await expectNoSeriousA11yViolations(page);
+  await screenshot(page, testInfo, `${name}-dark`, viewport, locale);
+  await page.evaluate((was) => {
+    const root = document.documentElement;
+    if (was === null) root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', was);
+  }, before);
 }

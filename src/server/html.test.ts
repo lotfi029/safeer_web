@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { finalizeAngularResponse } from './html';
+import { compactCss, finalizeAngularResponse, inlineStylesheet } from './html';
 
 const page =
   '<html><body><app-root ngcspnonce="__CSP_NONCE__"></app-root><script nonce="__CSP_NONCE__"></script></body></html>';
@@ -56,5 +56,39 @@ describe('finalizeAngularResponse', () => {
     );
     expect(res.headers.has('content-security-policy')).toBe(false);
     expect(res.headers.get('content-security-policy-report-only')).toContain("'nonce-N'");
+  });
+});
+
+describe('inlineStylesheet (Phase 10: the @font-face sheet)', () => {
+  const sheet = {
+    href: '/fonts/fonts.css',
+    css: compactCss('/* c */\n@font-face {\n  src: url($&);\n}\n'),
+  };
+  const html =
+    '<head><link rel="stylesheet" href="/fonts/fonts.css" data-beasties-skip=""><title>x</title></head>';
+
+  it('swaps the link for a nonce’d style, keeping `$` sequences literally', () => {
+    expect(sheet.css).toBe('@font-face {src: url($&);}');
+    expect(inlineStylesheet(html, sheet, 'N')).toBe(
+      '<head><style nonce="N">@font-face {src: url($&);}</style><title>x</title></head>',
+    );
+  });
+
+  it('leaves HTML without the link alone and cannot close the style element early', () => {
+    expect(inlineStylesheet('<head></head>', sheet, 'N')).toBe('<head></head>');
+    expect(inlineStylesheet(html, { ...sheet, css: 'a{}</style><script>' }, 'N')).toContain(
+      String.raw`a{}<\/style><script></style>`,
+    );
+  });
+
+  it('is applied by finalizeAngularResponse', async () => {
+    const res = await finalizeAngularResponse(
+      new Response(html, { headers: { 'content-type': 'text/html' } }),
+      '/ar',
+      'N',
+      true,
+      sheet,
+    );
+    expect(await res.text()).toContain('<style nonce="N">@font-face');
   });
 });
