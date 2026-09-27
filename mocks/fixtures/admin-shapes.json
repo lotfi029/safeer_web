@@ -90,7 +90,10 @@
         "degreeLevel": "string",
         "submittedAt": "string",
         "createdAt": "string",
-        "assignedReviewer": null,
+        "assignedReviewer": {
+          "id": "string",
+          "name": "string"
+        },
         "hasUnreviewedResubmission": "boolean"
       }
     ],
@@ -471,10 +474,10 @@
         "slug": "string",
         "titleAr": "string",
         "titleEn": "string",
-        "excerptAr": "string",
-        "excerptEn": "string",
-        "bodyAr": null,
-        "bodyEn": null,
+        "excerptAr": null,
+        "excerptEn": null,
+        "bodyAr": "string",
+        "bodyEn": "string",
         "categoryId": "string",
         "coverAssetId": "string",
         "publishedOn": "string",
@@ -520,7 +523,7 @@
         "widthPx": "number",
         "heightPx": "number",
         "altAr": "string",
-        "altEn": "string",
+        "altEn": null,
         "uploadedBy": null,
         "createdAt": "string",
         "updatedAt": "string"
@@ -529,5 +532,221 @@
     "total": "number",
     "page": "number",
     "limit": "number"
-  }
+  },
+  "users": [
+    {
+      "id": "string",
+      "name": "string",
+      "email": "string",
+      "role": "string",
+      "status": "string",
+      "isLocked": "boolean",
+      "lockedUntil": null,
+      "failedLogins": "number",
+      "lastLoginAt": "string",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "settings": {
+    "id": "string",
+    "orgNameAr": "string",
+    "orgNameEn": "string",
+    "taglineAr": "string",
+    "taglineEn": "string",
+    "footerBlurbAr": "string",
+    "footerBlurbEn": "string",
+    "rightsLineAr": "string",
+    "rightsLineEn": "string",
+    "phone": "string",
+    "email": "string",
+    "addressAr": "string",
+    "addressEn": "string",
+    "facebookUrl": null,
+    "instagramUrl": null,
+    "xUrl": null,
+    "youtubeUrl": null,
+    "linkedinUrl": null,
+    "whatsappUrl": null,
+    "tiktokUrl": null,
+    "mapEmbedUrl": null,
+    "mapLat": null,
+    "mapLng": null,
+    "enEnabled": "boolean",
+    "seoTitleAr": "string",
+    "seoTitleEn": "string",
+    "seoDescriptionAr": "string",
+    "seoDescriptionEn": "string",
+    "notifyEmailOnStatusChange": "boolean",
+    "notifySmsOnStatusChange": "boolean",
+    "applicationRefPrefix": "string",
+    "updatedBy": null,
+    "updatedAt": "string"
+  },
+  "cacheStats": {
+    "entries": "number",
+    "maxEntries": "number",
+    "hits": "number",
+    "misses": "number",
+    "hitRate": "number",
+    "uptimeSeconds": "number"
+  },
+  "mailSettings": {
+    "id": "string",
+    "isEnabled": "boolean",
+    "driver": "string",
+    "host": null,
+    "port": null,
+    "encryption": "string",
+    "username": null,
+    "fromNameAr": "string",
+    "fromNameEn": "string",
+    "fromEmail": "string",
+    "replyTo": "string",
+    "notifyEmail": "string",
+    "lastTestAt": null,
+    "lastTestOk": null,
+    "lastTestError": null,
+    "updatedBy": null,
+    "updatedAt": "string",
+    "passwordIsSet": "boolean"
+  },
+  "mailTemplates": [
+    {
+      "id": "string",
+      "key": "string",
+      "nameAr": "string",
+      "nameEn": "string",
+      "subjectAr": "string",
+      "subjectEn": "string",
+      "bodyAr": "string",
+      "bodyEn": "string",
+      "variables": ["string"],
+      "isEnabled": "boolean",
+      "updatedBy": null,
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "mailLog": {
+    "data": [
+      {
+        "id": "string",
+        "templateKey": "string",
+        "locale": "string",
+        "toEmail": "string",
+        "subject": "string",
+        "status": "string",
+        "attempts": "number",
+        "error": null,
+        "hasPayload": "boolean",
+        "entityType": "string",
+        "entityId": "string",
+        "nextRetryAt": null,
+        "sentAt": null,
+        "createdAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "smsSettings": {
+    "id": "string",
+    "isEnabled": "boolean",
+    "driver": "string",
+    "providerUrl": null,
+    "senderName": "string",
+    "lastTestAt": null,
+    "lastTestOk": null,
+    "lastTestError": null,
+    "updatedBy": null,
+    "updatedAt": "string",
+    "tokenIsSet": "boolean"
+  },
+  "smsTemplates": [
+    {
+      "id": "string",
+      "key": "string",
+      "nameAr": "string",
+      "nameEn": "string",
+      "bodyAr": "string",
+      "bodyEn": "string",
+      "variables": ["string"],
+      "isEnabled": "boolean",
+      "updatedBy": null,
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "smsLog": {
+    "data": [
+      {
+        "id": "string",
+        "templateKey": "string",
+        "locale": "string",
+        "toPhone": "string",
+        "status": "string",
+        "attempts": "number",
+        "error": "string",
+        "entityType": "string",
+        "entityId": "string",
+        "sentAt": null,
+        "createdAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "audit": {
+    "data": [
+      {
+        "id": "string",
+        "actorId": "string",
+        "action": "string",
+        "entityType": "string",
+        "entityId": "string",
+        "entityLabel": "string",
+        "diff": null,
+        "ipHash": "string",
+        "createdAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "redirects": {
+    "data": [],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "interviewSlots": {
+    "data": [
+      {
+        "id": "string",
+        "startsAt": "string",
+        "endsAt": "string",
+        "locationAr": "string",
+        "locationEn": "string",
+        "applicationId": null,
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "sessions": [
+    {
+      "id": "string",
+      "userAgent": "string",
+      "createdAt": "string",
+      "lastSeenAt": "string",
+      "isCurrent": "boolean"
+    }
+  ]
 }

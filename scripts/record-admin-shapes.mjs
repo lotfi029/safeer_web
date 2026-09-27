@@ -44,6 +44,29 @@ export const ADMIN_SHAPES = {
   news: '/admin/news?limit=5',
   newsCategories: '/admin/news-categories?limit=5',
   media: '/admin/media?limit=5',
+  // Phase 9: system.
+  users: '/admin/users',
+  settings: '/admin/settings',
+  cacheStats: '/admin/cache/stats',
+  mailSettings: '/admin/mail/settings',
+  mailTemplates: '/admin/mail/templates',
+  mailLog: '/admin/mail/log?limit=5',
+  smsSettings: '/admin/sms/settings',
+  smsTemplates: '/admin/sms/templates',
+  smsLog: '/admin/sms/log?limit=5',
+  audit: '/admin/audit?limit=5',
+  redirects: '/admin/redirects?limit=5',
+  interviewSlots: '/admin/interview-slots?limit=5',
+  sessions: '/admin/auth/sessions',
+};
+
+/** Single system resources whose values seed the mock (`--content` → fixtures/adminSystem.json). */
+export const ADMIN_SYSTEM = {
+  settings: '/admin/settings',
+  mailSettings: '/admin/mail/settings',
+  mailTemplates: '/admin/mail/templates',
+  smsSettings: '/admin/sms/settings',
+  smsTemplates: '/admin/sms/templates',
 };
 
 /**
@@ -68,12 +91,18 @@ export const ADMIN_CONTENT = [
   'media',
 ];
 
-/** A row an e2e run created (seeded names/emails, contact-form testimonials). */
+/**
+ * A row an e2e run created and didn't clean up (a failed test): seeded names/emails, contact-form
+ * testimonials, `e2e-…` uploads, and the letters-only tags of e2e/support/content.ts `tagOf()`.
+ */
 export function isE2eRow(row) {
   if (row.source === 'contact_form') return true;
   return Object.values(row).some(
     (v) =>
-      typeof v === 'string' && /(^E2E |^Sender |@e2e\.invalid|@example\.invalid|^\[E2E)/.test(v),
+      typeof v === 'string' &&
+      (/(^E2E |^Sender |@e2e\.invalid|@example\.invalid|^\[E2E|^e2e-)/.test(v) ||
+        /^\[?[A-Z][a-z]+ [a-j]{7}\]?( en)?$/.test(v) ||
+        ['[مسودة]', '[نص شهادة منشورة]', '[غلاف]', '[عنوان القسم]'].includes(v)),
   );
 }
 
@@ -203,6 +232,15 @@ async function record(api, admin, out, only) {
       console.log(`recorded ${endpoint}: ${content[endpoint].length}`);
     }
     writeFileSync('mocks/fixtures/adminContent.json', `${JSON.stringify(content, null, 2)}\n`);
+    const system = {
+      _source: 'Recorded from safeer_api by scripts/record-admin-shapes.mjs --content',
+    };
+    for (const [name, path] of Object.entries(ADMIN_SYSTEM)) system[name] = await get(path);
+    // Test sends and saves from e2e runs are not part of the seed.
+    for (const k of ['mailSettings', 'smsSettings']) {
+      Object.assign(system[k], { lastTestAt: null, lastTestOk: null, lastTestError: null });
+    }
+    writeFileSync('mocks/fixtures/adminSystem.json', `${JSON.stringify(system, null, 2)}\n`);
   }
 }
 

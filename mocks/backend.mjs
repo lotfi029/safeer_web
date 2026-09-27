@@ -18,7 +18,7 @@ const FIXTURE_STAFF = new Set(
 );
 
 /** A staff row as the API returns it (PublicUser): never the password, lock state as isLocked/lockedUntil. */
-function publicStaff(user) {
+export function publicStaff(user) {
   const { password: _password, ...rest } = user;
   const lockedUntil = user.lockedUntil ?? null;
   return {
@@ -764,7 +764,7 @@ export function createMockBackend(fixtures) {
     [
       'GET',
       /^\/api\/v1\/portal\/interview-slots$/,
-      ({ req }) => {
+      ({ req, lang }) => {
         const a = applicantFrom(req);
         if (!a) return problem(401, 'UNAUTHENTICATED');
         if (a.app.status !== 'interview') return problem(409, 'INTERVIEW_NOT_AVAILABLE');
@@ -773,11 +773,12 @@ export function createMockBackend(fixtures) {
           200,
           (db.fixtures.interviewSlots ?? [])
             .filter((s) => !s.applicationId && s.startsAt > nowIso())
-            .map(({ id, startsAt, endsAt, location }) => ({
+            .map(({ id, startsAt, endsAt, location, locationAr, locationEn }) => ({
               id,
               startsAt,
               endsAt,
-              location,
+              // Seeded slots carry `location`; slots made in the admin carry the Ar/En pair.
+              location: location ?? (lang === 'en' ? locationEn || locationAr : locationAr) ?? null,
               applicationId: null,
             })),
         );
@@ -836,7 +837,7 @@ export function createMockBackend(fixtures) {
     [
       'POST',
       /^\/api\/v1\/admin\/auth\/login$/,
-      ({ body }) => {
+      ({ req, body }) => {
         const email = String(body?.email ?? '').toLowerCase();
         // Like the API's per-email limiter (5/min), except for the shared fixture accounts that
         // parallel mock specs all sign in with.
@@ -857,7 +858,15 @@ export function createMockBackend(fixtures) {
         if (!usable) return problem(401, 'UNAUTHENTICATED');
         const sid = token();
         const csrfToken = token();
-        db.staffSessions.set(sid, { user: publicStaff(user), csrfToken });
+        const at = nowIso();
+        db.staffSessions.set(sid, {
+          id: String(++db.seq),
+          user: publicStaff(user),
+          csrfToken,
+          userAgent: req.headers['user-agent'] ?? null,
+          createdAt: at,
+          lastSeenAt: at,
+        });
         return json(
           200,
           { user: publicStaff(user), csrfToken },
