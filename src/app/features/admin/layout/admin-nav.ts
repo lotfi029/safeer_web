@@ -45,6 +45,21 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
       },
     ],
   },
+  {
+    label: 'content',
+    items: [
+      { path: 'pages', label: 'pages', icon: 'panels-top-left', area: 'content' },
+      { path: 'news', label: 'news', icon: 'newspaper', area: 'content' },
+      { path: 'work-areas', label: 'workAreas', icon: 'target', area: 'content' },
+      { path: 'board', label: 'board', icon: 'users', area: 'content' },
+      { path: 'testimonials', label: 'testimonials', icon: 'quote', area: 'inbox' },
+      { path: 'partners', label: 'partners', icon: 'handshake', area: 'content' },
+      { path: 'documents', label: 'documents', icon: 'folder', area: 'content' },
+      { path: 'stats', label: 'stats', icon: 'chart-column', area: 'content' },
+      { path: 'about-items', label: 'aboutItems', icon: 'list-checks', area: 'content' },
+      { path: 'media', label: 'media', icon: 'image', area: 'content' },
+    ],
+  },
 ];
 
 export interface ResolvedNavItem extends AdminNavItem {

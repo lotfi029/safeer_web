@@ -90,10 +90,7 @@
         "degreeLevel": "string",
         "submittedAt": "string",
         "createdAt": "string",
-        "assignedReviewer": {
-          "id": "string",
-          "name": "string"
-        },
+        "assignedReviewer": null,
         "hasUnreviewedResubmission": "boolean"
       }
     ],
@@ -220,6 +217,313 @@
         "ipHash": "string",
         "unsubscribedAt": "string",
         "createdAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "workAreas": {
+    "data": [
+      {
+        "id": "string",
+        "icon": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "workAreaItems": {
+    "data": [
+      {
+        "id": "string",
+        "workAreaId": "string",
+        "textAr": "string",
+        "textEn": "string",
+        "sortOrder": "number",
+        "isPublished": "boolean",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "board": {
+    "data": [
+      {
+        "id": "string",
+        "nameAr": "string",
+        "nameEn": "string",
+        "roleAr": "string",
+        "roleEn": "string",
+        "grp": "string",
+        "isLead": "boolean",
+        "bioAr": null,
+        "bioEn": null,
+        "photoAssetId": null,
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "testimonials": {
+    "data": [
+      {
+        "id": "string",
+        "quoteAr": "string",
+        "quoteEn": "string",
+        "authorName": "string",
+        "authorDescAr": "string",
+        "authorDescEn": "string",
+        "status": "string",
+        "isFeatured": "boolean",
+        "source": "string",
+        "sourceMessageId": "string",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "themes": {
+    "data": [
+      {
+        "id": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "descriptionAr": "string",
+        "descriptionEn": "string",
+        "isImprovement": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "partners": {
+    "data": [
+      {
+        "id": "string",
+        "nameAr": "string",
+        "nameEn": "string",
+        "category": "string",
+        "url": null,
+        "logoAssetId": "string",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "docCategories": {
+    "data": [
+      {
+        "id": "string",
+        "slug": "string",
+        "nameAr": "string",
+        "nameEn": "string",
+        "isPublished": "boolean",
+        "sortOrder": "number"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "documents": {
+    "data": [
+      {
+        "id": "string",
+        "categoryId": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "assetId": "string",
+        "docDate": "string",
+        "downloadCount": "number",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "stats": {
+    "data": [
+      {
+        "id": "string",
+        "value": "string",
+        "labelAr": "string",
+        "labelEn": "string",
+        "subAr": null,
+        "subEn": null,
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "aboutItems": {
+    "data": [
+      {
+        "id": "string",
+        "kind": "string",
+        "icon": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "bodyAr": "string",
+        "bodyEn": "string",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "pages": {
+    "data": [
+      {
+        "id": "string",
+        "slug": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "metaTitleAr": "string",
+        "metaTitleEn": "string",
+        "metaDescriptionAr": "string",
+        "metaDescriptionEn": "string",
+        "isPublished": "boolean",
+        "needsReview": "boolean",
+        "createdAt": "string",
+        "updatedAt": "string",
+        "sectionsCount": "number"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "pageSections": {
+    "data": [
+      {
+        "id": "string",
+        "pageId": "string",
+        "sectionKey": "string",
+        "labelAr": "string",
+        "labelEn": "string",
+        "headingAr": "string",
+        "headingEn": "string",
+        "bodyAr": "string",
+        "bodyEn": "string",
+        "primaryButtonLabelAr": "string",
+        "primaryButtonLabelEn": "string",
+        "primaryButtonUrl": "string",
+        "secondaryButtonLabelAr": "string",
+        "secondaryButtonLabelEn": "string",
+        "secondaryButtonUrl": "string",
+        "imageAssetId": "string",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "news": {
+    "data": [
+      {
+        "id": "string",
+        "slug": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "excerptAr": "string",
+        "excerptEn": "string",
+        "bodyAr": null,
+        "bodyEn": null,
+        "categoryId": "string",
+        "coverAssetId": "string",
+        "publishedOn": "string",
+        "isFeatured": "boolean",
+        "isLegacy": "boolean",
+        "isPublished": "boolean",
+        "createdBy": null,
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "newsCategories": {
+    "data": [
+      {
+        "id": "string",
+        "slug": "string",
+        "nameAr": "string",
+        "nameEn": "string",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "media": {
+    "data": [
+      {
+        "id": "string",
+        "publicId": "string",
+        "kind": "string",
+        "mimeType": "string",
+        "sizeBytes": "number",
+        "originalName": "string",
+        "storageKey": "string",
+        "checksumSha256": "string",
+        "widthPx": "number",
+        "heightPx": "number",
+        "altAr": "string",
+        "altEn": "string",
+        "uploadedBy": null,
+        "createdAt": "string",
+        "updatedAt": "string"
       }
     ],
     "total": "number",

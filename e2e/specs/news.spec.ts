@@ -1,13 +1,16 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { randomInt } from 'node:crypto';
-import { mockOnly } from '../support/env';
+import { cleanupContent, draftWithPreview, ensureNewsPages } from '../support/content';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 import { newsletterToken } from '../support/newsletter-token';
 import { disposeSetupAdmin, findSubscriber, postNewsletter } from '../support/real-api';
 import { useRealDb } from '../support/real-db';
 
 useRealDb(test);
-test.afterAll(disposeSetupAdmin);
+test.afterAll(async () => {
+  await cleanupContent();
+  await disposeSetupAdmin();
+});
 
 interface PostSummary {
   slug: string;
@@ -65,19 +68,17 @@ test.describe('news', () => {
       expect(search).toContain('noindex');
     });
 
-    test(
-      'pagination: page 2 is linked, has rel=prev and its own canonical',
-      mockOnly(
-        'needs more published posts than one page; the dev seed has 3 (Phase 8 creates them)',
-      ),
-      async ({ request }) => {
-        const all = await (await request.get('/ar/news')).text();
-        expect(all).toMatch(/href="\/ar\/news\?page=2"/);
-        const page2 = await (await request.get('/en/news?page=2')).text();
-        expect(page2).toMatch(/rel="prev"/);
-        expect(page2).toMatch(/<link rel="canonical" href="[^"]*\/en\/news\?page=2"/);
-      },
-    );
+    test('pagination: page 2 is linked, has rel=prev and its own canonical', async ({
+      request,
+    }) => {
+      // Real API: more published stories than one page, created through the admin API.
+      await ensureNewsPages();
+      const all = await (await request.get('/ar/news')).text();
+      expect(all).toMatch(/href="\/ar\/news\?page=2"/);
+      const page2 = await (await request.get('/en/news?page=2')).text();
+      expect(page2).toMatch(/rel="prev"/);
+      expect(page2).toMatch(/<link rel="canonical" href="[^"]*\/en\/news\?page=2"/);
+    });
 
     test('article SSR: SEO, JSON-LD NewsArticle + BreadcrumbList', async ({ request }) => {
       const [post] = await publishedPosts(request, 'en');
@@ -99,38 +100,44 @@ test.describe('news', () => {
     });
   });
 
-  test.describe(
-    'unpublished article + preview',
-    mockOnly(
-      'needs an unpublished post and a preview token (Phase 8 creates them through the admin API)',
-    ),
-    () => {
-      test('unpublished article: 404 without preview, noindex with ?preview=', async ({
-        request,
-      }) => {
-        expect((await request.get('/ar/news/draft-preview')).status()).toBe(404);
-        const res = await request.get('/ar/news/draft-preview?preview=mock-preview');
-        expect(res.status()).toBe(200);
-        expect(await res.text()).toMatch(/<meta name="robots" content="noindex, nofollow"/);
-      });
+  test.describe('unpublished article + preview', () => {
+    // Real API: a draft with a cover and a preview token from GET admin/preview-token.
+    let draft: { slug: string; token: string };
+    test.beforeAll(async () => {
+      draft = await draftWithPreview();
+    });
 
-      test('preview: the cover loads through previewFileQuery (C41)', async ({ page }) => {
-        await page.goto('/en/news/draft-preview?preview=mock-preview');
-        const cover = page.locator('article img, main img[src*="/files/"]').first();
-        await expect(cover).toHaveAttribute('src', /\/files\/[^?]+\?preview=mock-preview&post=/);
-      });
+    test('unpublished article: 404 without preview, noindex with ?preview=', async ({
+      request,
+    }) => {
+      expect((await request.get(`/ar/news/${draft.slug}`)).status()).toBe(404);
+      const res = await request.get(
+        `/ar/news/${draft.slug}?preview=${encodeURIComponent(draft.token)}`,
+      );
+      expect(res.status()).toBe(200);
+      expect(await res.text()).toMatch(/<meta name="robots" content="noindex, nofollow"/);
+    });
 
-      test('article body HTML is sanitized again on the client', async ({ page }) => {
-        await page.goto('/en/news/draft-preview?preview=mock-preview');
-        await expect(page.locator('app-rich-text')).toBeVisible();
-        expect(await page.locator('app-rich-text script').count()).toBe(0);
-        expect(await page.locator('app-rich-text [onerror]').count()).toBe(0);
-        expect(
-          await page.evaluate(() => (window as unknown as { __xss?: number }).__xss),
-        ).toBeUndefined();
-      });
-    },
-  );
+    test('preview: the cover loads through previewFileQuery (C41)', async ({ page }) => {
+      await page.goto(`/en/news/${draft.slug}?preview=${encodeURIComponent(draft.token)}`);
+      const cover = page.locator('article img, main img[src*="/files/"]').first();
+      await expect(cover).toHaveAttribute('src', /\/files\/[^?]+\?preview=[^&]+&post=/);
+      // It actually loads (an unpublished cover is only served with the preview query).
+      await expect
+        .poll(() => cover.evaluate((img: HTMLImageElement) => img.naturalWidth))
+        .toBeGreaterThan(0);
+    });
+
+    test('article body HTML is sanitized again on the client', async ({ page }) => {
+      await page.goto(`/en/news/${draft.slug}?preview=${encodeURIComponent(draft.token)}`);
+      await expect(page.locator('app-rich-text')).toBeVisible();
+      expect(await page.locator('app-rich-text script').count()).toBe(0);
+      expect(await page.locator('app-rich-text [onerror]').count()).toBe(0);
+      expect(
+        await page.evaluate(() => (window as unknown as { __xss?: number }).__xss),
+      ).toBeUndefined();
+    });
+  });
 
   test('?preview=junk on a published article: no banner, no noindex, but no-store (W18)', async ({
     page,

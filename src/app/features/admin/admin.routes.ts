@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { roleGuard, staffGuard, staffLoginGuard } from '../../core/auth/guards';
+import type { StaffArea } from '../../core/auth/role-matrix';
 import { adminStringsGuard } from '../../core/i18n/admin-strings';
 
 /**
@@ -8,6 +9,24 @@ import { adminStringsGuard } from '../../core/i18n/admin-strings';
  * `GET /admin/roles` matrix (no area = any staff member). `adminStringsGuard` loads the admin
  * dictionary for the current locale first.
  */
+/** A config-driven content screen (CrudPage) for the given CRUD collections. */
+function crud(
+  path: string,
+  collections: string[],
+  title: string,
+  note: string | null = null,
+  area: StaffArea = 'content',
+): Routes {
+  return [
+    {
+      path,
+      canActivate: [roleGuard],
+      data: { area, collections, title, note },
+      loadComponent: () => import('./content/crud/crud-page').then((m) => m.CrudPage),
+    },
+  ];
+}
+
 export const ADMIN_ROUTES: Routes = [
   {
     path: '',
@@ -74,6 +93,53 @@ export const ADMIN_ROUTES: Routes = [
             canActivate: [roleGuard],
             data: { area: 'inbox' },
             loadComponent: () => import('./messages/messages').then((m) => m.MessagesPage),
+          },
+          // ---------- content (Phase 8) ----------
+          ...crud('pages', ['pages'], 'pages'),
+          {
+            path: 'pages/:id',
+            canActivate: [roleGuard],
+            data: { area: 'content' },
+            loadComponent: () => import('./content/pages/page-editor').then((m) => m.PageEditor),
+          },
+          {
+            path: 'news',
+            canActivate: [roleGuard],
+            data: { area: 'content' },
+            loadComponent: () => import('./content/news/news-list').then((m) => m.AdminNewsList),
+          },
+          ...crud('news/categories', ['newsCategories'], 'newsCategories'),
+          {
+            path: 'news/new',
+            canActivate: [roleGuard],
+            data: { area: 'content' },
+            loadComponent: () => import('./content/news/news-editor').then((m) => m.NewsEditor),
+          },
+          {
+            path: 'news/:id',
+            canActivate: [roleGuard],
+            data: { area: 'content' },
+            loadComponent: () => import('./content/news/news-editor').then((m) => m.NewsEditor),
+          },
+          ...crud('work-areas', ['workAreas'], 'workAreas', 'workAreas.note'),
+          ...crud('board', ['board'], 'board'),
+          ...crud(
+            'testimonials',
+            ['themes', 'testimonials'],
+            'testimonials',
+            'testimonials.note',
+            'inbox',
+          ),
+          ...crud('partners', ['partners'], 'partners'),
+          ...crud('documents', ['documents', 'docCategories'], 'documents', 'documents.note'),
+          ...crud('stats', ['stats'], 'stats', 'stats.note'),
+          ...crud('about-items', ['aboutItems'], 'aboutItems'),
+          {
+            path: 'media',
+            canActivate: [roleGuard],
+            data: { area: 'content' },
+            loadComponent: () =>
+              import('./content/media/media-library').then((m) => m.MediaLibrary),
           },
           { path: '**', redirectTo: '' },
         ],

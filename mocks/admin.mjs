@@ -7,6 +7,8 @@
  * Every route here is live in the real API; the e2e suite runs against both.
  */
 
+import { contentRoutes } from './admin-content.mjs';
+
 export const STATUS_TRANSITIONS = {
   draft: [],
   new: ['under_review'],
@@ -357,6 +359,7 @@ export function adminRoutes(ctx) {
   const findApp = (id) => db.applications.get(id);
 
   return [
+    ...contentRoutes({ db, json, problem, nowIso, guard, fixtures: db.fixtures }),
     [
       'GET',
       /^\/api\/v1\/admin\/overview$/,
