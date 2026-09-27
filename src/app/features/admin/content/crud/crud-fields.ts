@@ -183,18 +183,23 @@ export class CrudFields {
   }
 
   protected inputType(f: CrudField): string {
-    return f.type === 'date'
-      ? 'date'
-      : f.type === 'number'
-        ? 'number'
-        : f.type === 'url'
-          ? 'url'
-          : 'text';
+    return f.type === 'datetime'
+      ? 'datetime-local'
+      : f.type === 'date'
+        ? 'date'
+        : f.type === 'number'
+          ? 'number'
+          : f.type === 'url'
+            ? 'url'
+            : 'text';
   }
 
   protected dirOf(item: Input): 'rtl' | 'ltr' | null {
     if (item.lang === 'ar') return 'rtl';
-    if (item.lang === 'en' || ['url', 'slug', 'digits', 'date'].includes(item.field.type))
+    if (
+      item.lang === 'en' ||
+      ['url', 'slug', 'digits', 'date', 'datetime'].includes(item.field.type)
+    )
       return 'ltr';
     return null;
   }
@@ -212,11 +217,13 @@ export function toFieldErrors(
     out[key] = list.map((kind) =>
       kind === 'slug'
         ? { kind, message: t('admin.content.slugRule') }
-        : kind === 'reserved'
-          ? { kind, message: t('admin.content.slugReserved') }
-          : kind === 'maxLength'
-            ? ({ kind, maxLength: field?.max } as FieldErrorLike)
-            : { kind },
+        : kind === 'after'
+          ? { kind, message: t('admin.content.after') }
+          : kind === 'reserved'
+            ? { kind, message: t('admin.content.slugReserved') }
+            : kind === 'maxLength'
+              ? ({ kind, maxLength: field?.max } as FieldErrorLike)
+              : { kind },
     );
   }
   return out;
