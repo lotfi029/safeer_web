@@ -119,6 +119,8 @@ export function createMockBackend(fixtures) {
   const db = {
     fixtures: clone(fixtures),
     staffSessions: new Map(),
+    // W16: `purpose:token` of the unused invitation/reset links (single-use, like the API).
+    authTokens: new Set(['accept:mock-invite', 'reset:mock-reset']),
     applicantSessions: new Map(),
     applications: new Map(clone(fixtures.applications ?? []).map((a) => [a.id, a])),
     otps: new Map(),
@@ -812,6 +814,23 @@ export function createMockBackend(fixtures) {
           { ok: true },
           { 'set-cookie': 'sf_sid=; Path=/; Max-Age=0; SameSite=Strict' },
         );
+      },
+    ],
+    // W16: invitation / reset links. Like the API: public, single-use tokens, `password` min 8, and
+    // an unknown or used token is a 400 with no field issues ("invalid or expired").
+    [
+      'POST',
+      /^\/api\/v1\/admin\/auth\/(accept|reset)\/([^/]+)$/,
+      ({ params, body }) => {
+        const [purpose, raw] = params;
+        if (typeof body?.password !== 'string' || body.password.length < 8)
+          return problem(400, 'VALIDATION_FAILED', {
+            issues: [{ path: ['password'], message: 'Too small', code: 'too_small' }],
+          });
+        if (!db.authTokens.has(`${purpose}:${decodeURIComponent(raw)}`))
+          return problem(400, 'VALIDATION_FAILED');
+        db.authTokens.delete(`${purpose}:${decodeURIComponent(raw)}`);
+        return json(200, { ok: true });
       },
     ],
     [

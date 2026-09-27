@@ -13,6 +13,17 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./auth/admin-login').then((m) => m.AdminLogin),
   },
   { path: 'forbidden', loadComponent: () => import('./forbidden').then((m) => m.Forbidden) },
+  // W16: the links the API mails to staff (C2). Public: the token is the credential.
+  {
+    path: 'accept/:token',
+    data: { mode: 'accept' },
+    loadComponent: () => import('./auth/set-password').then((m) => m.AdminSetPassword),
+  },
+  {
+    path: 'reset/:token',
+    data: { mode: 'reset' },
+    loadComponent: () => import('./auth/set-password').then((m) => m.AdminSetPassword),
+  },
   {
     path: '',
     pathMatch: 'full',

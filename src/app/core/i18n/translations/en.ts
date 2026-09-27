@@ -266,6 +266,28 @@ export const en: Translation = {
       title: 'No access',
       body: 'This page is not available to your role.',
     },
+    setPassword: {
+      accept: {
+        title: 'Accept your invitation',
+        lead: 'Choose a password for your staff account.',
+        submit: 'Set password and activate',
+        done: 'Your account is active. You can now sign in.',
+      },
+      reset: {
+        title: 'Reset your password',
+        lead: 'Choose a new password for your staff account.',
+        submit: 'Set new password',
+        done: 'Your password has been changed. You can now sign in.',
+      },
+      password: 'New password',
+      confirm: 'Confirm password',
+      hint: 'At least {{min}} characters.',
+      tooShort: 'The password must be at least {{min}} characters.',
+      mismatch: 'The passwords do not match.',
+      invalidLink:
+        'This link is invalid or has expired. Ask an administrator to send you a new one.',
+      toLogin: 'Go to sign in',
+    },
     home: 'Dashboard',
     logout: 'Sign out',
   },

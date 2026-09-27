@@ -6,6 +6,7 @@
  *   DELETE /__log        → clears the log
  *   POST /__reset        → resets mock state (?reference=SA-… restores one seeded application)
  *   POST /__site         → merges a JSON body into the site settings (map specs); send nulls to restore
+ *   POST /__auth-token   → {purpose: accept|reset} → a fresh single-use token (W16 specs)
  */
 import { createServer } from 'node:http';
 import { createMockBackend } from '../../mocks/backend.mjs';
@@ -72,6 +73,13 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/__site' && req.method === 'POST') {
     Object.assign(backend.db.fixtures.site.settings, (await readBody(req, url)) ?? {});
     return send(res, 200, { ok: true });
+  }
+  if (url.pathname === '/__auth-token' && req.method === 'POST') {
+    const { purpose } = (await readBody(req, url)) ?? {};
+    if (purpose !== 'accept' && purpose !== 'reset') return send(res, 400, { ok: false });
+    const token = `e2e-${purpose}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    backend.db.authTokens.add(`${purpose}:${token}`);
+    return send(res, 200, { token });
   }
   if (url.pathname === '/__reset') {
     // `?reference=SA-…` restores just that seeded application (and frees its interview slot) so
