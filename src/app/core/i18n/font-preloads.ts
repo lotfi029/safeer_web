@@ -1,18 +1,14 @@
 import type { Lang } from './lang';
 
 /**
- * W13: the faces the first screen actually uses, per language: body text (400) and the display
- * heading (700). Everything else loads on demand through /fonts/fonts.css (font-display: swap).
+ * W13: the body-text face (400) per language, which is the LCP text on the public pages. Every other
+ * face is found through the @font-face rules the server inlines into the HTML (font-display: swap).
+ * Phase 10 (Lighthouse, simulated slow 4G): also preloading the 700 face only competed with the
+ * document and scripts for bandwidth before the first paint.
  */
 export const ABOVE_THE_FOLD_FONTS: Readonly<Record<Lang, readonly string[]>> = {
-  ar: [
-    '/fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2',
-    '/fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2',
-  ],
-  en: [
-    '/fonts/ibm-plex-sans-latin-400-normal.woff2',
-    '/fonts/ibm-plex-sans-latin-700-normal.woff2',
-  ],
+  ar: ['/fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2'],
+  en: ['/fonts/ibm-plex-sans-latin-400-normal.woff2'],
 };
 
 const MARK = 'data-font-preload';

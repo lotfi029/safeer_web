@@ -1,7 +1,34 @@
-import { expect, test } from '@playwright/test';
+import { type APIRequestContext, expect, test } from '@playwright/test';
+import { signInAs } from '../support/admin';
 import { trackCspViolations } from '../support/csp';
+import { staffAccount } from '../support/real-api';
+import { useRealDb } from '../support/real-db';
 
-const PAGES = ['/ar', '/en', '/ar/admin', '/ar/portal'];
+useRealDb(test);
+
+/**
+ * One page per route type (Phase 10): SSR home in both locales, a CMS page, a list, an article, the
+ * contact page (map host), the apply form, and the CSR admin and portal entry points.
+ */
+const PAGES = [
+  '/ar',
+  '/en',
+  '/en/about',
+  '/ar/news',
+  'article',
+  '/ar/contact',
+  '/en/apply',
+  '/ar/admin',
+  '/ar/portal',
+];
+
+/** `article` stands for the newest published post (the mock fixtures or the real seed). */
+async function resolvePath(request: APIRequestContext, path: string): Promise<string> {
+  if (path !== 'article') return path;
+  const res = await request.get('/api/v1/news?lang=ar&limit=1');
+  const [post] = ((await res.json()) as { data: { slug: string }[] }).data;
+  return `/ar/news/${post.slug}`;
+}
 
 function nonceFromCsp(csp: string): string {
   const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
@@ -12,7 +39,7 @@ function nonceFromCsp(csp: string): string {
 test.describe('security headers + CSP (R1, R2)', () => {
   for (const path of PAGES) {
     test(`${path}: every inline <script>/<style> carries the header nonce`, async ({ request }) => {
-      const res = await request.get(path);
+      const res = await request.get(await resolvePath(request, path));
       expect(res.status()).toBe(200);
       const headers = res.headers();
       const csp = headers['content-security-policy'];
@@ -68,12 +95,73 @@ test.describe('security headers + CSP (R1, R2)', () => {
   for (const path of PAGES) {
     test(`${path}: zero CSP violations in the browser after hydration`, async ({ page }) => {
       const violations = await trackCspViolations(page);
-      await page.goto(path);
+      await page.goto(await resolvePath(page.request, path));
       await expect(page.locator('h1')).toBeVisible();
       await page.waitForLoadState('networkidle');
       expect(await violations()).toEqual([]);
     });
   }
+});
+
+test.describe('CSP on the remaining route types', () => {
+  test('the 404 page carries the CSP and loads without violations', async ({ page }) => {
+    const violations = await trackCspViolations(page);
+    const res = await page.goto('/en/no-such-page-anywhere');
+    expect(res?.status()).toBe(404);
+    expect(res?.headers()['content-security-policy']).toContain("script-src 'self' 'nonce-");
+    await expect(page.locator('h1')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    expect(await violations()).toEqual([]);
+  });
+
+  test('signed-in admin screens (CSR) run without violations', async ({ page }) => {
+    const admin = await staffAccount('admin');
+    const violations = await trackCspViolations(page);
+    await signInAs(page, admin, '/admin', 'ar');
+    for (const path of [
+      '/admin',
+      '/admin/applications',
+      '/admin/news/new',
+      '/admin/media',
+      '/admin/system/settings',
+      '/admin/system/mail?tab=templates',
+    ]) {
+      await page.goto(`/ar${path}`);
+      await expect(page.locator('h1')).toBeVisible();
+      await page.waitForLoadState('networkidle');
+    }
+    expect(await violations()).toEqual([]);
+  });
+
+  test('frame-src: the two map hosts load, any other host is blocked (A12)', async ({ page }) => {
+    for (const host of [
+      'https://www.openstreetmap.org',
+      'https://www.google.com',
+      'https://evil.example',
+    ]) {
+      await page.route(`${host}/**`, (route) =>
+        route.fulfill({ contentType: 'text/html', body: '<p>map</p>' }),
+      );
+    }
+    const violations = await trackCspViolations(page);
+    await page.goto('/en/contact');
+    await expect(page.locator('h1')).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    const embed = (src: string) =>
+      page.evaluate((url) => {
+        const frame = document.createElement('iframe');
+        frame.src = url;
+        document.body.append(frame);
+      }, src);
+    await embed('https://www.openstreetmap.org/export/embed.html?bbox=46.6,24.6,46.7,24.7');
+    await embed('https://www.google.com/maps/embed?pb=1');
+    await page.waitForTimeout(500);
+    expect(await violations()).toEqual([]);
+    await embed('https://evil.example/embed');
+    await expect
+      .poll(async () => (await violations()).join(' '))
+      .toMatch(/frame-src.*evil.example|evil.example.*frame-src/);
+  });
 });
 
 test('control: the violation tracker does catch an injected inline script', async ({ page }) => {

@@ -128,7 +128,7 @@ const ICONS: Record<ToastKind, IconName> = {
 
     <ng-template #item let-toast>
       <div
-        class="note pointer-events-auto items-center py-3 pe-3 shadow-[var(--shadow-md)]"
+        class="note toast-in pointer-events-auto items-center py-3 pe-3 shadow-[var(--shadow-md)]"
         [class.note-ok]="toast.kind === 'success'"
         [class.note-warn]="toast.kind === 'error'"
         [attr.data-kind]="toast.kind"

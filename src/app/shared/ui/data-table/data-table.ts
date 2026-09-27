@@ -134,7 +134,8 @@ const ALIGN = { start: 'text-start', center: 'text-center', end: 'text-end' } as
       }
     } @else {
       <!-- md+: semantic table -->
-      <div class="card card-flush hidden overflow-x-auto md:block">
+      <!-- relative: the sr-only labels inside (absolutely positioned) must stay in this scroll box, not widen the page. -->
+      <div class="card card-flush relative hidden overflow-x-auto md:block">
         <table class="w-full border-collapse text-start">
           <caption class="sr-only">
             {{

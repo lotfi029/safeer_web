@@ -38,6 +38,71 @@
     }
   }
 
+  /* Overlays (Phase 10): dialogs rise and fade in, the side drawer slides in from the inline end,
+     the bottom sheet from below, toasts from the inline end. Enter only: the CDK removes panes
+     synchronously on close. */
+  .cdk-overlay-backdrop.app-scrim {
+    animation: fade-in 200ms ease both;
+  }
+
+  .app-dialog-panel {
+    animation: dialog-in 220ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  .app-drawer-panel {
+    --slide-from: 100%;
+    animation: slide-in-inline 280ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  :root[dir='rtl'] .app-drawer-panel {
+    --slide-from: -100%;
+  }
+
+  .app-sheet-panel {
+    animation: slide-in-block 280ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  .toast-in {
+    --slide-from: 16px;
+    animation: toast-in 240ms ease both;
+  }
+
+  :root[dir='rtl'] .toast-in {
+    --slide-from: -16px;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+
+  @keyframes slide-in-inline {
+    from {
+      transform: translateX(var(--slide-from));
+    }
+  }
+
+  @keyframes slide-in-block {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateX(var(--slide-from));
+    }
+  }
+
   @keyframes skeleton-pulse {
     50% {
       opacity: 0.55;
