@@ -269,10 +269,7 @@ export async function applicationIn(
   const who = newApplicant(tag);
   const applicant = await ApiClient.create();
   try {
-    const { reference, csrfToken } = await applicant.post<{ reference: string; csrfToken: string }>(
-      'applications',
-      { ...STEP1, ...who },
-    );
+    const { reference, csrfToken } = await createWithRetry(applicant, { ...STEP1, ...who });
     applicant.csrf = csrfToken;
     const admin = await setupAdmin();
     const found = await admin.get<{ data: Array<{ id: string; reference: string }> }>(
@@ -428,4 +425,24 @@ export async function postNewsletter(tag: string): Promise<string> {
     await ctx.dispose();
   }
   return email;
+}
+
+/**
+ * BF-2 (backend follow-up): two `POST /applications` at the same moment can deadlock in MySQL (the
+ * duplicate-check locking read and the reference counter), and rc1 answers the loser with a 500
+ * "Database error" instead of retrying the transaction. Parallel workers hit it now and then, so the
+ * setup retries a 500 (only a 500) a few times.
+ */
+async function createWithRetry(
+  client: ApiClient,
+  body: object,
+): Promise<{ reference: string; csrfToken: string }> {
+  for (let attempt = 1; ; attempt++) {
+    const res = await client.ctx.post('applications', { data: body });
+    if (res.ok()) return (await res.json()) as { reference: string; csrfToken: string };
+    if (res.status() !== 500 || attempt >= 4) {
+      throw new Error(`POST applications → ${res.status()} ${await res.text()}`);
+    }
+    await new Promise((r) => setTimeout(r, 200 * attempt));
+  }
 }
