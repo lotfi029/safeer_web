@@ -50,9 +50,38 @@ Set `E2E_SCREENS_DIR=docs/frontend/screens/phase-N` to write the committed 390/1
 
 ## CI
 
-`.github/workflows/ci.yml`: lint → unit (app + server) → build + budgets → e2e (mock API, or the real API when the
-`E2E_API_URL` repository variable is set). The full 6 × 2 matrix runs in `nightly.yml`, on demand, and on PRs
-labelled `full-matrix`.
+`.github/workflows/ci.yml` runs two jobs on every PR:
+
+- **build-test**: lint → unit (app + server) → build + budgets → e2e against the mock API.
+- **e2e-real** (W24): the same e2e suite against the real `safeer_api` at the `SAFEER_API_REF` repository variable
+  (default `v1.0.0-rc1`) on MySQL 8 with the API's dev seed. Specs tagged `@mock-only` are dropped there (list them
+  with `npx playwright test --list --grep @mock-only`; each carries its reason as an annotation).
+
+The full 6 × 2 matrix runs against the mock in `nightly.yml`, on demand, and on PRs labelled `full-matrix`.
+
+### Run e2e against the real API locally
+
+With Docker and a built `safeer_api` checkout at the pinned ref next to this repo
+(`git checkout v1.0.0-rc1 && npm ci && npm run build` there):
+
+```bash
+docker run -d --name safeer-e2e-db -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=safeer -p 3307:3306 mysql:8.0
+```
+
+```bash
+DB_PORT=3307 node scripts/real-api.mjs ../safeer_api --detach
+```
+
+```bash
+npm run build:e2e && E2E_API_URL=http://127.0.0.1:3900 npx playwright test
+```
+
+`scripts/real-api.mjs` (also used by CI) migrates the database and boots the API on :3900 with `NODE_ENV=test`, the
+API's own switch for skipping its per-IP rate limits (applications 5/h, OTP 5/h, contact 3/h, admin login 5/min).
+Every e2e request reaches the API from one IP through the SSR proxy with parallel workers, so ordering specs can't
+stay inside those budgets. Otherwise `test` behaves like `development` (dev seed, dev OTP hook). Rate limiting stays
+covered by the API's own tests, and the site's 429 handling by the mock. Add `--no-migrate` to reuse the database;
+stop the API with the pid it prints.
 
 ## Mocks
 

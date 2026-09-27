@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
+import { mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 const PDF = {
@@ -57,9 +57,7 @@ test.describe('apply flow', () => {
     );
   });
 
-  test.describe('against the mock API', () => {
-    test.skip(!usingMockApi, 'creates applications');
-
+  test.describe('against the mock API', mockOnly('creates applications'), () => {
     test('happy path: create → autosave → uploads → submit → reference', async ({ page }) => {
       const email = `apply-${Date.now()}@mock.invalid`;
       await page.goto('/en/apply');

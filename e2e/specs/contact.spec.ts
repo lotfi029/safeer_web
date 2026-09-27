@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { MOCK_API_URL, usingMockApi } from '../support/env';
+import { MOCK_API_URL, mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 test.describe('contact page', () => {
@@ -44,9 +44,8 @@ test.describe('contact page', () => {
     expect(thirdParty).toEqual([]);
   });
 
-  test.describe('map embed (A12)', () => {
+  test.describe('map embed (A12)', mockOnly('sets the map through the mock API'), () => {
     test.describe.configure({ mode: 'serial' });
-    test.skip(!usingMockApi, 'sets the map through the mock API');
     // Test-only values (never shipped): the mock's site settings are patched, then restored.
     const EMBED = 'https://www.openstreetmap.org/export/embed.html?bbox=46.6,24.6,46.7,24.7';
     const setSite = (request: import('@playwright/test').APIRequestContext, data: object) =>
@@ -116,22 +115,27 @@ test.describe('contact page', () => {
     await expect(page.getByLabel('Subject')).toHaveValue('partnership');
   });
 
-  test('a valid message is sent with formRenderedAt and an empty honeypot', async ({ page }) => {
-    test.skip(!usingMockApi, 'real API drops submits under 3s; covered by the mock');
-    await page.goto('/en/contact');
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('textbox', { name: 'Name' }).fill('Test Person');
-    await page.getByLabel('Email').fill('person@example.invalid');
-    await page.getByRole('textbox', { name: 'Message' }).fill('[...]');
-    const [req] = await Promise.all([
-      page.waitForRequest((r) => /\/api\/v1\/contact(\?|$)/.test(r.url()) && r.method() === 'POST'),
-      page.getByRole('button', { name: 'Send' }).click(),
-    ]);
-    const body = req.postDataJSON();
-    expect(body).toMatchObject({ name: 'Test Person', subject: 'scholarship', website: '' });
-    expect(typeof body.formRenderedAt).toBe('number');
-    await expect(page.getByText('your message has arrived')).toBeVisible();
-  });
+  test(
+    'a valid message is sent with formRenderedAt and an empty honeypot',
+    mockOnly('real API drops submits under 3s; covered by the mock'),
+    async ({ page }) => {
+      await page.goto('/en/contact');
+      await page.waitForLoadState('networkidle');
+      await page.getByRole('textbox', { name: 'Name' }).fill('Test Person');
+      await page.getByLabel('Email').fill('person@example.invalid');
+      await page.getByRole('textbox', { name: 'Message' }).fill('[...]');
+      const [req] = await Promise.all([
+        page.waitForRequest(
+          (r) => /\/api\/v1\/contact(\?|$)/.test(r.url()) && r.method() === 'POST',
+        ),
+        page.getByRole('button', { name: 'Send' }).click(),
+      ]);
+      const body = req.postDataJSON();
+      expect(body).toMatchObject({ name: 'Test Person', subject: 'scholarship', website: '' });
+      expect(typeof body.formRenderedAt).toBe('number');
+      await expect(page.getByText('your message has arrived')).toBeVisible();
+    },
+  );
 
   test('server field errors from problem+json land on the field', async ({ page }) => {
     await page.route(/\/api\/v1\/contact(\?|$)/, (route) =>

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SSR_DEAD_API_URL, usingMockApi } from '../support/env';
+import { SSR_DEAD_API_URL, mockOnly, usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 test.describe('public shell', () => {
@@ -30,23 +30,24 @@ test.describe('public shell', () => {
     );
   });
 
-  test('desktop nav comes from GET /site in API order and marks the current page', async ({
-    page,
-  }) => {
-    test.skip(!usingMockApi, 'asserts the mock nav');
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/ar');
-    const nav = page.getByRole('navigation', { name: 'القائمة الرئيسية' });
-    const links = nav.getByRole('link');
-    // Header bar: the 7 primary pages (prototype NAV) in API order; the drawer lists all 10.
-    await expect(links).toHaveCount(7);
-    await expect(links.first()).toHaveText('الرئيسية');
-    await expect(links.first()).toHaveAttribute('aria-current', 'page');
-    await expect(nav.getByRole('link', { name: 'مجالات عملنا' })).toHaveAttribute(
-      'href',
-      '/ar/work-areas',
-    );
-  });
+  test(
+    'desktop nav comes from GET /site in API order and marks the current page',
+    mockOnly('asserts the mock nav'),
+    async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto('/ar');
+      const nav = page.getByRole('navigation', { name: 'القائمة الرئيسية' });
+      const links = nav.getByRole('link');
+      // Header bar: the 7 primary pages (prototype NAV) in API order; the drawer lists all 10.
+      await expect(links).toHaveCount(7);
+      await expect(links.first()).toHaveText('الرئيسية');
+      await expect(links.first()).toHaveAttribute('aria-current', 'page');
+      await expect(nav.getByRole('link', { name: 'مجالات عملنا' })).toHaveAttribute(
+        'href',
+        '/ar/work-areas',
+      );
+    },
+  );
 
   test('below 1100px the nav is in a focus-trapped drawer that closes on Escape (F7)', async ({
     page,
@@ -103,12 +104,15 @@ test.describe('server: legacy URLs, SEO files, failure modes', () => {
     }
   });
 
-  test('redirect table hits answer 301 (redirects/resolve)', async ({ request }) => {
-    test.skip(!usingMockApi, 'uses the mock redirect fixture');
-    const res = await request.get('/about-us', { maxRedirects: 0 });
-    expect(res.status()).toBe(301);
-    expect(res.headers()['location']).toBe('/ar/about');
-  });
+  test(
+    'redirect table hits answer 301 (redirects/resolve)',
+    mockOnly('uses the mock redirect fixture'),
+    async ({ request }) => {
+      const res = await request.get('/about-us', { maxRedirects: 0 });
+      expect(res.status()).toBe(301);
+      expect(res.headers()['location']).toBe('/ar/about');
+    },
+  );
 
   test('unknown legacy paths and locale-less paths answer 404', async ({ request }) => {
     expect((await request.get('/some-old-page', { maxRedirects: 0 })).status()).toBe(404);

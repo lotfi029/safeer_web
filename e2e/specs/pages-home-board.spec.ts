@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
+import { mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 test.describe('public pages: home, board', () => {
@@ -25,18 +25,21 @@ test.describe('public pages: home, board', () => {
     expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
   });
 
-  test('board SSR: the chair (isLead) spans two columns', async ({ page }) => {
-    test.skip(!usingMockApi, 'asserts mock board');
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/ar/board');
-    const lead = page.locator('li.band').first();
-    await expect(lead).toBeVisible();
-    const [leadBox, itemBox] = await Promise.all([
-      lead.boundingBox(),
-      page.locator('section[aria-labelledby=board-members] li:not(.band)').first().boundingBox(),
-    ]);
-    expect(leadBox!.width).toBeGreaterThan(itemBox!.width * 1.5);
-  });
+  test(
+    'board SSR: the chair (isLead) spans two columns',
+    mockOnly('asserts mock board'),
+    async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto('/ar/board');
+      const lead = page.locator('li.band').first();
+      await expect(lead).toBeVisible();
+      const [leadBox, itemBox] = await Promise.all([
+        lead.boundingBox(),
+        page.locator('section[aria-labelledby=board-members] li:not(.band)').first().boundingBox(),
+      ]);
+      expect(leadBox!.width).toBeGreaterThan(itemBox!.width * 1.5);
+    },
+  );
 
   test('forward arrows point in the reading direction', async ({ page }) => {
     for (const lang of ['ar', 'en'] as const) {

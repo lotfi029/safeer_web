@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { MOCK_API_URL, usingMockApi } from '../support/env';
+import { MOCK_API_URL, mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 const MOCK_OTP = '123456';
@@ -38,8 +38,7 @@ async function signIn(
   await page.waitForLoadState('networkidle');
 }
 
-test.describe('student portal', () => {
-  test.skip(!usingMockApi, 'uses seeded mock applications and the mock OTP');
+test.describe('student portal', mockOnly('uses seeded mock applications and the mock OTP'), () => {
   // Tests that change an application restore just that one first (`__reset?reference=`), so
   // other specs' mock sessions survive; tests using the same application run serially.
   test.describe.configure({ mode: 'serial' });

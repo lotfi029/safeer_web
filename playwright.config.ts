@@ -23,6 +23,8 @@ const ssrEnv = (port: number, api: string) => ({
 export default defineConfig({
   testDir: 'e2e/specs',
   outputDir: 'test-results',
+  // W24: `@mock-only` specs (e2e/support/env.ts mockOnly) need the mock API; the real-API run drops them.
+  grepInvert: process.env['E2E_API_URL'] ? /@mock-only/ : undefined,
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: 0,
@@ -33,7 +35,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
     launchOptions: { executablePath },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: { executablePath } } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: { executablePath } } },
+  ],
   webServer: [
     ...(process.env['E2E_API_URL']
       ? []
