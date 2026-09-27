@@ -3,10 +3,10 @@
  * dev interceptor (src/app/core/api/mocks) so the two can never drift (review F6). Shapes follow
  * docs/api/CONTRACT-NOTES.md; content comes only from mocks/fixtures (spec/prototype text or [...]).
  *
- * Every backend item that is not live yet is implemented here to the agreed contract:
- * B1/B2 (OTP channel, phone identifier), B3 (upload rules), B9 (/x button URLs), B12 (board bio),
- * B15 (sitemap-index), B16 (csrfToken on /portal/me), B17 (/admin/roles), B18 (/about-items),
- * B19 (public document shape), C17 (interview), C27 (newsletter confirm/unsubscribe), C35.
+ * Every item here is live in the real API (safeer_api v1.0.0-rc1), and the e2e-real CI job runs the
+ * same specs against it; the mock exists for fast, deterministic runs and for states the dev seed
+ * lacks (seeded applications, preview tokens, staff accounts, auth tokens). The public fixtures are
+ * recorded from the API (scripts/record-fixtures.mjs).
  */
 import { collapseBilingual, resolveLang } from './collapse.mjs';
 

@@ -1,16 +1,16 @@
 # safeer_web — Session 1 handoff
 
-Session 1 (Phases 0–6) is done. It covers the public site, the apply flow and the student portal. The admin area has only its auth plumbing. Session 2 should read this file first, then `docs/safeer-frontend-sessions-plan.md` Part B.
+Session 1 (Phases 0–6) is done, plus the fix pass after the delivery review (W1–W24, `docs/safeer-delivery-review.md` §4). It covers the public site, the apply flow, the student portal, and the staff invitation/reset pages. The rest of the admin area has only its auth plumbing. Session 2 should read this file first, then `docs/safeer-frontend-sessions-plan.md` Part B.
 
-- **PRs:** stacked draft PRs lotfi029/safeer_web#1 through #7, one per phase.
-- **Base branches:** each phase branched from the previous `feat/phase-N` because nothing was merged yet.
-- **Merge order:** merge in order #1 → #7, then this PR.
-- **Test totals at exit:**
+- **PRs:** phases #1–#8 are merged into `main`. The fix pass is lotfi029/safeer_web#9 (`fix/session-1-review`).
+- **Backend:** everything here is built and tested against the real `safeer_api` at **`v1.0.0-rc1`** (the `SAFEER_API_REF` repository variable). Nothing is mocked because it's missing; the mock exists for speed and for states the dev seed lacks.
+- **Test totals at exit (fix pass):**
   - lint clean
-  - unit tests: 46 files, 163 tests
-  - server tests: 52
-  - e2e: **311/311** on the full 6 viewports × ar/en matrix
-  - initial bundle: **135.9 KB gzip** (limit 150)
+  - unit tests: 50 files, 190 tests
+  - server + script tests: 62
+  - e2e against the mock: **195/195** (390/1440 × ar/en)
+  - e2e against the real API (`e2e-real`): **141/141**; the other 54 specs are `@mock-only` (§5)
+  - initial bundle: **136.5 KB gzip** (limit 150)
 
 ---
 
@@ -60,7 +60,7 @@ The server modules live in `src/server/*.ts`, each with a `.test.ts`. Deployment
 |---|---|---|
 | `httpResource` or services + `toSignal` for page data | Route resolvers + `Loaded<T>` | One place to set the SSR status (404/503/500) before render, and the data arrives as a plain input. |
 | F11: `openapi-typescript` → committed `core/api/generated.ts` | **Not done.** Request and response types are hand-written in `core/api/models.ts`, checked against `docs/api/openapi.json` and the mappers in `docs/api/src`. | Time went into the screens. Session 2 can add `npm run api:types` (`npx -y openapi-typescript@7 docs/api/openapi.json -o src/app/core/api/generated.ts`) and swap the request types over. |
-| Per-endpoint `LIVE_ENDPOINTS` mock toggle | **Not done.** Mocks are all-or-nothing: `environment.useMocks` for `ng serve`, and the Node mock API for e2e. Setting `E2E_API_URL` runs e2e against a real API. | Nothing was live yet to toggle. Add a path allow-list in `mock-backend.interceptor.ts` when the first B-item lands. |
+| Per-endpoint `LIVE_ENDPOINTS` mock toggle | **Not needed.** Every endpoint is live in rc1. Mocks are all-or-nothing: `environment.useMocks` for `ng serve`, and the Node mock API for e2e. CI runs the same e2e suite against the real API too (`e2e-real`, W24). | The mock stays for fast, deterministic runs and for states the dev seed lacks. |
 | `src/app/core/api/contract-assumptions.md` | Not created. The assumptions are listed in §6 below. | `docs/api/CONTRACT-NOTES.md` covered almost everything. |
 | Apply form "hydrates on interaction" | Normal hydration at bootstrap | Deferred hydration resets values typed before it runs. |
 | Newsletter band `hydrate on viewport` | Plain `@defer (on viewport)`, rendered in the browser only | Same reason. It's below the fold and not needed for SEO. |
@@ -69,6 +69,9 @@ The server modules live in `src/server/*.ts`, each with a `.test.ts`. Deployment
 | Prototype: `scholarshipNote` in apply step 3 | Step 2 | Follows the plan. |
 | Prototype: single OTP text input | 6-box `app-otp-input` | Follows the brief. |
 | Eyebrow colour `--secondary` | New token `--secondary-text: #197679` | `#1c8184` on `--surface` is 4.41:1, below AA. The new token is 5.1:1. |
+| Header nav labels from `GET /site` | Short labels keyed by slug (`NAV_SHORT_LABELS` in `core/site/nav-routes.ts`, the prototype's `NAV`), falling back to the API title; the drawer keeps the API titles (W5) | The API nav carries full page titles ("Scholarships for international students in Saudi universities"), which overflowed the header at 1440 in English. |
+| Home section `label` as eyebrow | Only for the keys in `EYEBROW_SECTION_KEYS` (`home.ts`); never the hero or CTA (W6) | `label` is the section's name in the CMS ("Hero"), not public copy. |
+| Fonts in the global stylesheet | `@font-face` in the static `public/fonts/fonts.css` (`data-beasties-skip`), plus 2 per-language preloads from `core/i18n/font-preloads.ts` (W13) | The critical-CSS inliner preloaded all 14 faces on every page. |
 
 ---
 
@@ -127,9 +130,9 @@ Everything is in `src/app/shared/ui/`. Each component is standalone and OnPush, 
 
 | Service | Covers |
 |---|---|
-| `PublicApi` | site, home, pages, about-items, board, work-areas, news, testimonials, partners, documents, countries, sitemap-index, contact, newsletter + confirm/unsubscribe |
-| `PortalApi` | applications, portal me/patch/submit, documents (upload with `reportProgress`), notifications, interview slots/book/cancel, OTP auth |
-| `StaffApi` | admin auth, `/admin/me`, `/admin/roles`. **Session 2 adds the admin feature APIs here or in sibling services.** |
+| `PublicApi` | site, home, pages, about-items, board (`{board, executive}`, W1), work-areas, news, testimonials, partners, documents, countries, contact, newsletter + confirm/unsubscribe (`{email, token}`, W3). `sitemap.xml` reads `sitemap-index` server-side (`src/server/sitemap.ts`), not through `PublicApi`. |
+| `PortalApi` | applications, portal me/patch/submit, **`correct()` (`PATCH /portal/application/corrections`, C15, `docs_missing` only)**, documents (upload with `reportProgress`; one current document per type, W4), notifications (paged `{data,total,page,limit}`, W2), interview slots/book/cancel, OTP auth |
+| `StaffApi` | admin auth (login, logout, **`acceptInvite`, `resetPassword`**, W16), `/admin/me`, `/admin/roles`. **Session 2 adds the admin feature APIs here or in sibling services.** |
 
 - **Models:** `models.ts` holds collapsed, locale-resolved shapes. B19: documents type only the public fields.
 - **Errors:** `problem.ts` defines `ApiProblem` ({status, code, fieldErrors from zod `issues[].path[0]`, extra}), `toApiProblem()`, and `problemMessageKey()` (maps to `errors.codes.*`).
@@ -143,8 +146,9 @@ Everything is in `src/app/shared/ui/`. Each component is standalone and OnPush, 
 | `csrf` | Adds `X-CSRF-Token` from `CsrfTokens` on non-GET requests |
 | `problemDetails` | Normalises errors to `ApiError`. A 401 in an area triggers `SessionExpiry`, except for auth probes. |
 | mock (dev only) | Answers from the in-app mock backend |
-| `apiBaseUrl` | Prefixes the API base URL |
 | `serverForward` (SSR only) | XFF + Accept-Language from the request, 5 s timeout |
+
+**Server-side API base (W9).** Requests stay relative (`/api/v1/…`) through every interceptor. On the server, `InternalApiBackend` (`core/http/internal-api.backend.ts`, provided as `HttpBackend` in `app.config.server.ts`) rewrites them to `API_INTERNAL_URL` *below* Angular's HTTP transfer cache. So the server and the browser key the cache on the same URL: the browser reuses the SSR responses (no `/api/v1` request after hydration), and the internal origin never reaches the page. Don't reintroduce a URL-rewriting interceptor; `e2e/specs/transfer-cache.spec.ts` guards this.
 
 The HTTP transfer cache carries only anonymous public GETs.
 
@@ -153,12 +157,12 @@ The HTTP transfer cache carries only anonymous public GETs.
 - `StaffSessionStore`
   - `me` and `csrfToken`, loaded from `/admin/me`.
   - Guards: `staffGuard`, `staffLoginGuard`.
-  - `roleGuard` reads `data.area` and checks `GET /admin/roles` (B17, mocked), falling back to `role-matrix.ts`.
+  - `roleGuard` reads `data.area` and checks `GET /admin/roles` (B17). The area keys are the API's real ones (W15): `applications, content, inbox, users, settings, audit` and the `*.delete` variants. `role-matrix.ts` is the typed fallback.
 - `ApplicantSessionStore`
   - `me` and `canWrite`.
   - `startSession(csrf)` is called after `POST /applications` and after `verify-otp`.
-  - `refresh()` re-reads `/portal/me`; its `csrfToken` (B16) keeps writes working after a reload.
-  - `onClear()` fires on logout and 401.
+  - `refresh()` re-reads `/portal/me`; its `csrfToken` (B16) keeps writes working after a reload. **Only a 401 ends the session (W11):** a 502, timeout or network error keeps a signed-in student signed in, and leaves an unknown session unknown so it's retried.
+  - `onClear()` fires on logout, 401 and `clear()`. The store itself removes the apply form's offline draft then (W10; the key is in `core/auth/apply-draft-key.ts`).
   - Guards: `applicantGuard`, `applicantLoginGuard`.
 
 **Adding an endpoint and its mock**
@@ -167,12 +171,16 @@ The HTTP transfer cache carries only anonymous public GETs.
 2. Add a route in `mocks/backend.mjs` as `[METHOD, /^\/api\/v1\/…$/, ({lang, query, params, body, req}) => json(…) | problem(…)]`.
 3. For fixture data, create `mocks/fixtures/<name>.json` and list it in `mocks/fixtures.mjs`.
    - Bilingual fields use the `xAr`/`xEn` pair, which `collapseBilingual` resolves per language.
-   - **Only spec content or `[…]` placeholders. Never invent content.**
+   - **Public fixtures are recorded from the API, never hand-shaped:** add the endpoint to `RECORDABLE` in `scripts/record-fixtures.mjs` and run `node scripts/record-fixtures.mjs --only <name>` against a running API. It fetches `ar` and `en` and merges them into the `xAr`/`xEn` form. The hand-written mock nav labels are what hid W5.
+   - Hand-written fixtures (`posts`, `testimonials`, staff/portal state): **only spec content or `[…]` placeholders. Never invent content.**
 4. The same backend serves both `ng serve` (in-app interceptor) and the e2e mock API (`e2e/mock-api/server.mjs`, port 3100), so one change covers both.
+5. Add an e2e test that runs against **both** APIs unless it truly can't (then tag it, §5).
 
 The e2e mock has these test-only routes:
 - `/api/v1/__echo`
-- `GET` / `DELETE /__log`
+- `GET` / `DELETE /__log` (shared by parallel workers: find your own entries, e.g. by client IP; don't clear it)
+- `POST /__site` merges into the site settings (send nulls to restore)
+- `POST /__auth-token` `{purpose: accept|reset}` mints a single-use staff link token (W16)
 - `POST /__reset`, with `?reference=SA-…` to restore a single seeded application
 
 ---
@@ -214,7 +222,9 @@ The e2e mock has these test-only routes:
 - **Autosave** (`features/apply/apply-payload.ts`)
   - Diff with `changedFields(synced, value)` and send only fields that are currently valid.
   - `toPatch()` sends `null` only for the four nullable fields (F4) and omits other empty values.
-- **Offline draft** (`apply-draft.ts`): sessionStorage, 24 h TTL, never stores ID number or birth date (F5).
+- **Offline draft** (`apply-draft.ts`): sessionStorage, 24 h TTL, never stores ID number or birth date (F5), tied to its application `reference` and cleared by `ApplicantSessionStore` on logout/401 (W10).
+- **Validation that mirrors the API** (`core/validation/`, W14): `isPersonName()` is the API's C16 name rule, and `normalizePhone()` is its B2 phone rule, including Arabic-Indic and Persian digits. Use these, never a local regex, so the client rejects exactly what the API would. Keep them in sync with `safeer_api` `src/common/validation/person-name.ts` and `src/common/phone.ts`.
+- **API HTML in text-only slots:** `plainText()` (`shared/text/plain-text.ts`) strips tags and decodes entities; use it for card and section leads.
 - Anti-spam forms (contact, newsletter):
   - Hidden honeypot `website` inside an `aria-hidden` sr-only wrapper.
   - `formRenderedAt` set in `afterNextRender`.
@@ -238,9 +248,9 @@ The e2e mock has these test-only routes:
 - Muted text on the dark `.band` fails contrast. Use the `band-*` tokens there.
 
 **Hydration gotcha**
-- A value typed into a server-rendered field *before* hydration can be reset when the component hydrates.
+- A value typed into a server-rendered field *before* hydration can be reset when the component hydrates. Event replay replays clicks, not input.
 - Keep critical forms eagerly hydrated. Render below-the-fold forms client-side (`@defer (on viewport)` with no `hydrate`).
-- In e2e, wait for `networkidle` before typing.
+- `App` sets `<html data-hydrated>` after the first client render. In e2e, use `gotoHydrated()` / `waitForHydration()` (`e2e/support/hydration.ts`; `openAt` already waits) before typing. `networkidle` alone made an apply spec flaky under load.
 
 **Lint**
 - `npm run lint` runs ng lint (angular-eslint with template a11y rules as errors and OnPush required), lint-styles and prettier (with the Tailwind plugin).
@@ -254,7 +264,10 @@ The e2e mock has these test-only routes:
 - **e2e:** `npx playwright test` (set `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium` in this container).
   - `webServer` starts the mock API (3100), the SSR build from `dist/safeer_web-e2e` (4100), and a second SSR server pointed at a dead API (4101).
   - Build first with `npm run build:e2e`: production optimisations, CSP enforced, `/_kit` included.
-  - `E2E_API_URL` switches to a real API. Mock-only tests `test.skip(!usingMockApi)`.
+  - `E2E_API_URL` switches to a real API (the mock server isn't started).
+- **Against the real API (W24):** CI job `e2e-real` in `ci.yml` checks out `lotfi029/safeer_api` at `vars.SAFEER_API_REF` (default `v1.0.0-rc1`), runs MySQL 8, and boots the API through `scripts/real-api.mjs`, which is the same script you use locally (README "Run e2e against the real API locally", 3 commands). The API runs with `NODE_ENV=test`: its own switch for skipping the per-IP `@Throttle` buckets, which a parallel suite from one IP would exhaust; otherwise it behaves like `development` (dev seed, dev OTP hook). Rate limiting stays tested in the API; the site's 429 handling in the mock.
+- **`@mock-only`:** `mockOnly(reason)` from `e2e/support/env.ts` tags a test or describe block; `playwright.config.ts` drops the tag when `E2E_API_URL` is set, and the reason shows as an annotation. List them with `npx playwright test --list --grep @mock-only`. Tag only what truly can't run against the real API (mock routes, mock accounts/tokens, fixture content the dev seed lacks), and prefer contract-bound assertions (compare with the API response) over fixture-bound ones.
+- **Applicants against the real API:** the API refuses a second active application for the same email **or** phone (409), so every spec creates its applicant with `newApplicant()` (random email and phone) in `apply.spec.ts`.
 - **Matrix helper** (`e2e/support/matrix.ts`)
   - `matrix()` gives 390 and 1440 × ar/en per PR. With `E2E_FULL_MATRIX=1` it covers 360/390/768/1024/1440/1920 × ar/en, which runs nightly and on the `full-matrix` label.
   - `openAt(page, path, viewport, locale, theme?)` opens the page with reduced motion.
@@ -266,7 +279,8 @@ The e2e mock has these test-only routes:
   - `mocks/fixtures/*.json`, one source for dev and e2e (F6).
   - Mock credentials: OTP `123456`; staff `admin|reviewer|editor|support@mock.invalid` with password `mock-password`.
   - Seeded applications `SA-2026-00101…00107`, one per status.
-  - Tokens: newsletter `mock-token`, article preview `mock-preview`.
+  - Tokens: newsletter `mock-token`, article preview `mock-preview`, staff links `mock-invite` (`/:lang/admin/accept/mock-invite`) and `mock-reset`, single-use per mock process.
+  - Public fixtures are recorded from the API (`scripts/record-fixtures.mjs`, §3).
   - Portal specs run serially and restore their application with `__reset?reference=`.
 - **Prod artifact:** `scripts/check-prod-artifact.mjs` fails if the production build contains the mock registry or the `/_kit` route.
 
@@ -276,40 +290,39 @@ The e2e mock has these test-only routes:
 
 ### Backend items (`docs/safeer-backend-fix-prompt.md`)
 
+All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real` job, except where a row says the test is mock-only.
+
 | Item | Status in this frontend |
 |---|---|
-| B1 OTP channel choice | UI built, **mocked** (`channel` sent to `request-otp`) |
-| B2 phone identifier + `APPLICATION_EXISTS` | UI built, **mocked** |
+| B1 OTP channel choice | Built; `channel` sent to `request-otp`. e2e mock-only (needs a seeded application + known OTP). |
+| B2 phone identifier + `APPLICATION_EXISTS` | Built; 409 on the same email **or** phone, e2e against both APIs |
 | B3 re-upload rules | Enforced in the UI (`canUpload`) and the mock |
-| B9 clean `/x` button URLs | Fixtures already use `/x`; a legacy `#/x` mapper stays in `core/site/nav-routes.ts` |
-| B12 board bio | Rendered when present, **mocked** |
-| B15 `GET /sitemap-index` | **Mocked**; `sitemap.xml` depends on it |
-| B16 `csrfToken` on `/portal/me` | **Mocked**. Without it, writes after a reload fail (`ApplicantSessionStore.canWrite` is false). |
-| B17 `GET /admin/roles` | **Mocked**, with a typed fallback in `core/auth/role-matrix.ts` |
-| B18 `GET /about-items?kind=` | **Mocked** (About, Scholarships) |
+| B9 clean `/x` button URLs | Used as is; a legacy `#/x` mapper stays in `core/site/nav-routes.ts` |
+| B12 board bio | Rendered when present |
+| B15 `GET /sitemap-index` | Read server-side by `sitemap.xml` |
+| B16 `csrfToken` on `/portal/me` | Writes keep working after a reload |
+| B17 `GET /admin/roles` | Real area keys (W15), typed fallback in `core/auth/role-matrix.ts` |
+| B18 `GET /about-items?kind=` | About, Scholarships, home |
 | B19 public document fields only | Types ignore `storageKey`/`checksum` |
-| C2 frontend routes | `/:lang/portal/login`, `/:lang/admin/login` |
-| C17 interview in `/portal/me` + `DELETE /portal/interview` | **Mocked** |
-| C26 sanitized HTML for section/about bodies | Rendered through `app-rich-text` (re-sanitized) |
-| C27 newsletter double opt-in, confirm/unsubscribe | Pages built, **mocked** |
-| C35 notifications shape | Used as `[{id, type, createdAt, data}]` |
+| C2 frontend routes | `/:lang/portal/login`, `/:lang/admin/login`, **`/:lang/admin/accept/:token`, `/:lang/admin/reset/:token` (W16)** |
+| C15 corrections | `PortalApi.correct()` → `PATCH /portal/application/corrections`, `docs_missing` only |
+| C17 interview in `/portal/me` + `DELETE /portal/interview` | Built; e2e mock-only (needs seeded slots) |
+| C26 sanitized HTML for section/about bodies | Rendered through `app-rich-text` (re-sanitized); `plainText()` for text-only slots |
+| C27 newsletter double opt-in, confirm/unsubscribe | `{email, token}` from the mailed link (W3) |
+| C35 notifications | Paged `{data,total,page,limit}` with the API's event set (W2) |
+| A1–A12 (`API-CHANGES.md`) | Adopted in `cf40539` |
 
-**Assumed shapes, not yet in `docs/api`**
-- `redirects/resolve` → `{toPath, statusCode}`
-- `sitemap-index` → `{pages, posts, categories}`
-- about-items grouped by kind
-- `/portal/me.interview` → `{startsAt, endsAt, location}`
-- newsletter confirm/unsubscribe → `POST {token}` → `{ok}`
-
-**Before Session 2 starts:** refresh `docs/api/` from `safeer_api` and remove each mock whose item is live.
+**Contract source:** `docs/api/` is the rc1 snapshot (W23). Refresh it with `node scripts/snapshot-api.mjs ../safeer_api <ref>` whenever `SAFEER_API_REF` moves, then re-record the fixtures.
 
 ### Known issues / TODOs
 - **Accordion headings:** `app-accordion-item` puts its heading inside `<summary>`, so work-area titles on mobile aren't headings in the accessibility tree.
 - **Filter-bar chips on phones:** in `linkMode` the chips move into a bottom sheet below 480px. The partners page uses plain chip links instead. News keeps the sheet; revisit if SEO reviewers want the links visible.
 - **SSR forms and hydration:** see the hydration gotcha in §4.
-- **Admin area:** stub login, forbidden page and guarded placeholders only (`features/admin`). The whole dashboard is Session 2.
+- **Admin area:** stub login, forbidden page, guarded placeholders, and the working invitation/reset pages (`features/admin/auth/set-password.ts`, W16). The whole dashboard, the designed login and a "forgot password" page (`POST /admin/auth/forgot`) are Session 2.
 - **Lighthouse:** not run in Session 1. It's a Session 2 exit criterion.
-- **Types:** F11 generated types and the per-endpoint mock toggle are not done (see §1).
+- **Types:** F11 generated types are not done (see §1).
+- **Dev-seed images:** the API's dev seed stores flat-colour JPEGs for its sample assets (hero, news covers), so those render as plain grey-teal boxes. They are real images with their alt, not missing placeholders (W7); sections with no asset show the labelled `[صورة: …]` placeholder.
+- **Testimonials against the real API:** the dev seed publishes themes but no quotes, so the quote layout is only covered by the mock.
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
 
 ### Still needed from the client
@@ -338,21 +351,17 @@ npm run e2e:full             # full 6×2 matrix
 npm run mock-api             # standalone mock API on :3100
 ```
 
-**CI** (`.github/workflows/ci.yml`, on pull_request, cancel-in-progress): `lint → unit → build → e2e`.
-1. `npm ci`
-2. `npm run lint`
-3. `npm run test:ci`
-4. `npm run test:server`
-5. `npm run build:ci`
-6. Cached Playwright Chromium
-7. `npx playwright test` against the mock, or `vars.E2E_API_URL`
-8. Upload the report and screenshots
+**CI** (`.github/workflows/ci.yml`, on pull_request, cancel-in-progress), two jobs:
+- `build-test`: `npm ci` → lint → unit → server tests → `build:ci` → cached Playwright Chromium → e2e against the mock → upload the report and screenshots.
+- `e2e-real` (W24): MySQL 8 service → `safeer_api` at `vars.SAFEER_API_REF` (default `v1.0.0-rc1`) → `npm ci && npm run build` there → `node scripts/real-api.mjs safeer_api --detach` → `build:e2e` → e2e with `E2E_API_URL` (`@mock-only` dropped) → upload the report and `api.log`.
+
+To run the real-API suite locally, see the README ("Run e2e against the real API locally"). `node scripts/record-fixtures.mjs` re-records the public fixtures from that API.
 
 **Nightly** (`nightly.yml`): cron `17 1 * * *`, `workflow_dispatch`, and the `full-matrix` PR label. It runs `build:e2e` and then the full 6×2 matrix.
 
 ---
 
-## As-built routes (Phases 0–6)
+## As-built routes (Phases 0–6 + fix pass)
 
 | Route | Mode | Notes |
 |---|---|---|
@@ -365,6 +374,7 @@ npm run mock-api             # standalone mock API on :3100
 | `/:lang/portal/login` | CSR | `?returnUrl=` |
 | `/:lang/portal`, `/:lang/portal/documents` | CSR | `applicantGuard` |
 | `/:lang/admin/login`, `/admin`, `/admin/forbidden`, `/admin/system/users` | CSR | Auth plumbing only |
+| `/:lang/admin/accept/:token`, `/:lang/admin/reset/:token` | CSR | Public; set a password from the mailed link (W16) |
 | `/:lang/_kit` | SSR | dev and e2e builds only |
 | `/:lang/**` | SSR | 404 page, status 404 |
 | `/**` | SSR | Bare 404 |
@@ -378,19 +388,20 @@ npm run mock-api             # standalone mock API on :3100
 |---|---|---|---|---|
 | Header / footer | every public page | `GET /site` | `e2e/specs/shell.spec.ts` | Done |
 | Home | `/:lang` | `GET /home` | `pages-home-board.spec.ts`, `placeholder.spec.ts` | Done |
-| About | `/:lang/about` | `GET /pages/about`, `GET /about-items?kind=vision,mission,goal` (B18) | `pages-a.spec.ts` | Done (B18 mocked) |
-| Board | `/:lang/board` | `GET /pages/board`, `GET /board` | `pages-home-board.spec.ts` | Done (B12 mocked) |
+| About | `/:lang/about` | `GET /pages/about`, `GET /about-items?kind=vision,mission,goal` (B18) | `pages-a.spec.ts` | Done |
+| Board | `/:lang/board` | `GET /pages/board`, `GET /board` (`{board, executive}`) | `pages-home-board.spec.ts` | Done |
 | Work areas | `/:lang/work-areas` | `GET /pages/work`, `GET /work-areas`, `GET /testimonials` (themes) | `pages-a.spec.ts` | Done |
-| Scholarships | `/:lang/scholarships` | `GET /pages/scholarships`, `GET /about-items?kind=care_pillar,scholarship_step,requirement` | `pages-a.spec.ts` | Done (B18 mocked) |
+| Scholarships | `/:lang/scholarships` | `GET /pages/scholarships`, `GET /about-items?kind=care_pillar,scholarship_step,requirement` | `pages-a.spec.ts` | Done |
 | News list | `/:lang/news` | `GET /pages/news`, `GET /news`, `/news/featured`, `/news-categories`, `POST /newsletter` | `news.spec.ts` | Done |
 | Article | `/:lang/news/:slug` | `GET /news/:slug`, `/news-categories` | `news.spec.ts` | Done |
-| Newsletter confirm / unsubscribe | `/:lang/newsletter/{confirm,unsubscribe}` | `POST /newsletter/confirm`, `/newsletter/unsubscribe` (C27) | `news.spec.ts` | Done (C27 mocked) |
+| Newsletter confirm / unsubscribe | `/:lang/newsletter/{confirm,unsubscribe}` | `POST /newsletter/confirm`, `/newsletter/unsubscribe` `{email, token}` (C27) | `news.spec.ts` | Done |
 | Testimonials | `/:lang/testimonials` | `GET /pages/testimonials`, `GET /testimonials` | `pages-b.spec.ts` | Done |
 | Partners | `/:lang/partners` | `GET /pages/partners`, `GET /partners` | `pages-b.spec.ts` | Done |
 | Documents | `/:lang/documents` | `GET /pages/documents`, `GET /documents` | `pages-b.spec.ts` | Done |
-| Contact | `/:lang/contact` | `GET /pages/contact`, `POST /contact` | `contact.spec.ts` | Done (map is a static facade) |
-| Apply | `/:lang/apply` | `GET /meta/countries`, `POST /applications`, `PATCH /portal/application`, `GET/POST/DELETE /portal/documents`, `POST /portal/application/submit`, `GET /portal/me` | `apply.spec.ts`, `apply-payload.spec.ts`, `apply-draft.spec.ts` | Done (B2, B16 mocked) |
-| Portal login | `/:lang/portal/login` | `POST /portal/auth/request-otp`, `verify-otp` | `portal.spec.ts` | Done (B1 mocked) |
-| Portal status | `/:lang/portal` | `GET /portal/me`, `/portal/notifications`, `/portal/interview-slots`, `POST/DELETE /portal/interview` | `portal.spec.ts` | Done (C17 mocked) |
+| Contact | `/:lang/contact` | `GET /pages/contact`, `POST /contact` | `contact.spec.ts` | Done (map loads on click, A12) |
+| Apply | `/:lang/apply` | `GET /meta/countries`, `POST /applications`, `PATCH /portal/application`, `GET/POST/DELETE /portal/documents`, `POST /portal/application/submit`, `GET /portal/me` | `apply.spec.ts`, `apply-payload.spec.ts`, `apply-draft.spec.ts` | Done; e2e against both APIs |
+| Portal login | `/:lang/portal/login` | `POST /portal/auth/request-otp`, `verify-otp` | `portal.spec.ts` | Done |
+| Portal status | `/:lang/portal` | `GET /portal/me`, `/portal/notifications`, `/portal/interview-slots`, `POST/DELETE /portal/interview`, `PATCH /portal/application/corrections` | `portal.spec.ts` | Done |
 | My documents | `/:lang/portal/documents` | `GET/POST /portal/documents`, `/portal/documents/:id/file` | `portal.spec.ts`, `portal-rules.spec.ts` | Done (B3 rules) |
 | 404 / 500 / 503 | any | n/a | `shell.spec.ts`, `server-routing.spec.ts` | Done |
+| Staff invitation / reset | `/:lang/admin/{accept,reset}/:token` | `POST /admin/auth/accept/:token`, `/admin/auth/reset/:token` | `admin-set-password.spec.ts` | Done (W16) |

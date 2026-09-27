@@ -7,7 +7,8 @@ import { buildCsp, cspHeaderName, injectNonce } from './security-headers';
  */
 export async function finalizeAngularResponse(
   response: Response,
-  path: string,
+  /** Request path with its query string (`req.originalUrl`). */
+  url: string,
   nonce: string,
   isProduction: boolean,
 ): Promise<Response> {
@@ -19,7 +20,7 @@ export async function finalizeAngularResponse(
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.set(cspHeaderName(isProduction), buildCsp(nonce));
-  for (const [name, value] of Object.entries(htmlCacheHeaders(path))) {
+  for (const [name, value] of Object.entries(htmlCacheHeaders(url))) {
     headers.set(name, value);
   }
   return new Response(html, { status: response.status, statusText: response.statusText, headers });

@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { SSR_DEAD_API_URL, mockOnly, usingMockApi } from '../support/env';
+import { MOCK_API_URL, SSR_DEAD_API_URL, mockOnly, usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 import { measureHeader } from '../support/header';
 import { smallTargets } from '../support/targets';
+import { gotoHydrated } from '../support/hydration';
 
 test.describe('public shell', () => {
   for (const { viewport, locale } of matrix()) {
@@ -225,3 +226,57 @@ test.describe('fonts (W13)', () => {
     });
   }
 });
+
+test('client-side navigation into a private area drops the public page’s SEO tags (W19)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await gotoHydrated(page, '/en/news');
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+  await page.getByRole('link', { name: 'Student portal' }).first().click();
+  await expect(page).toHaveURL(/\/en\/portal\/login/);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+  await expect(page.locator('link[rel="canonical"], link[rel="alternate"][hreflang]')).toHaveCount(
+    0,
+  );
+  await expect(page.locator('meta[property^="og:"], meta[name="description"]')).toHaveCount(0);
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+});
+
+test(
+  'the footer shows every social link that is set, https only (W20)',
+  mockOnly('sets the social URLs through the mock API; the dev seed has none'),
+  async ({ page, request }) => {
+    const urls = {
+      facebookUrl: 'https://facebook.com/safeer',
+      instagramUrl: 'https://instagram.com/safeer',
+      xUrl: 'https://x.com/safeer',
+      youtubeUrl: 'https://youtube.com/@safeer',
+      linkedinUrl: 'https://linkedin.com/company/safeer',
+      whatsappUrl: 'https://wa.me/966500000000',
+      tiktokUrl: 'javascript:alert(1)',
+    };
+    await request.post(`${MOCK_API_URL}/__site`, { data: urls });
+    try {
+      await page.goto('/en');
+      const social = page.getByRole('contentinfo').getByRole('list', { name: /social/i });
+      for (const [name, href] of [
+        ['Facebook', urls.facebookUrl],
+        ['Instagram', urls.instagramUrl],
+        ['X', urls.xUrl],
+        ['YouTube', urls.youtubeUrl],
+        ['LinkedIn', urls.linkedinUrl],
+        ['WhatsApp', urls.whatsappUrl],
+      ]) {
+        await expect(social.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
+      }
+      // A non-https URL is never rendered.
+      await expect(social.getByRole('link', { name: 'TikTok' })).toHaveCount(0);
+      await expect(social.getByRole('link')).toHaveCount(6);
+    } finally {
+      await request.post(`${MOCK_API_URL}/__site`, {
+        data: Object.fromEntries(Object.keys(urls).map((k) => [k, null])),
+      });
+    }
+  },
+);

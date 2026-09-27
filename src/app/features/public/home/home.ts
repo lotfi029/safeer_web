@@ -456,9 +456,16 @@ export class HomePage {
                       },
                     }
                   : {}),
-                sameAs: [settings.facebookUrl, settings.instagramUrl, settings.xUrl].filter(
-                  Boolean,
-                ),
+                // W20: every profile the settings carry.
+                sameAs: [
+                  settings.facebookUrl,
+                  settings.instagramUrl,
+                  settings.xUrl,
+                  settings.youtubeUrl,
+                  settings.linkedinUrl,
+                  settings.whatsappUrl,
+                  settings.tiktokUrl,
+                ].filter(Boolean),
               },
             ]
           : [],

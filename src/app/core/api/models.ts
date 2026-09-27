@@ -131,7 +131,7 @@ export interface AboutItem {
 export type AboutItemKind =
   'vision' | 'mission' | 'goal' | 'care_pillar' | 'scholarship_step' | 'requirement';
 
-/** B18 (mocked): `GET /about-items?kind=a,b` → grouped by kind. */
+/** B18: `GET /about-items?kind=a,b` → grouped by kind. */
 export type AboutItemsResponse = Partial<Record<AboutItemKind, AboutItem[]>>;
 
 export interface WorkAreaItem {
@@ -260,13 +260,6 @@ export interface PostDetail extends PostSummary {
    * `/files/…` URLs so an unpublished cover loads without a session.
    */
   previewFileQuery?: string;
-}
-
-/** B15 (mocked): `GET /sitemap-index`. */
-export interface SitemapIndex {
-  pages: { slug: string; updatedAt: string }[];
-  posts: { slug: string; updatedAt: string }[];
-  categories: { slug: string }[];
 }
 
 // ---------- forms ----------

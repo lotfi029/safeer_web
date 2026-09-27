@@ -92,6 +92,29 @@ test.describe('news', () => {
     });
   });
 
+  test('?preview=junk on a published article: no banner, no noindex, but no-store (W18)', async ({
+    page,
+    request,
+  }) => {
+    const list = (await (await request.get('/api/v1/news?lang=en&limit=1')).json()) as {
+      data: { slug: string }[];
+    };
+    const path = `/en/news/${list.data[0].slug}`;
+    const plain = await request.get(path);
+    expect(plain.headers()['cache-control']).toBe('no-cache');
+
+    const res = await request.get(`${path}?preview=junk`);
+    expect(res.status()).toBe(200);
+    expect(res.headers()['cache-control']).toBe('no-store');
+    const html = await res.text();
+    expect(html).not.toContain('Preview — this story is not published yet');
+    expect(html).not.toMatch(/<meta name="robots" content="noindex/);
+
+    await page.goto(`${path}?preview=junk`);
+    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.getByText('Preview — this story is not published yet')).toHaveCount(0);
+  });
+
   test('search is debounced and updates the URL', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/en/news');

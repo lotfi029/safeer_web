@@ -21,7 +21,6 @@ import type {
   PostDetail,
   PostSummary,
   SiteResponse,
-  SitemapIndex,
   TestimonialsResponse,
   WorkArea,
 } from './models';
@@ -53,7 +52,7 @@ export class PublicApi {
     return this.http.get<Page>(`${API_PREFIX}/pages/${encodeURIComponent(slug)}`);
   }
 
-  /** B18 (mocked until live). */
+  /** B18. */
   aboutItems(kinds: AboutItemKind[]): Observable<AboutItemsResponse> {
     return this.http.get<AboutItemsResponse>(`${API_PREFIX}/about-items`, {
       params: { kind: kinds.join(',') },
@@ -105,11 +104,6 @@ export class PublicApi {
 
   countries(): Observable<Country[]> {
     return this.http.get<Country[]>(`${API_PREFIX}/meta/countries`);
-  }
-
-  /** B15 (mocked until live). */
-  sitemapIndex(): Observable<SitemapIndex> {
-    return this.http.get<SitemapIndex>(`${API_PREFIX}/sitemap-index`);
   }
 
   contact(body: ContactRequest): Observable<OkResponse> {
