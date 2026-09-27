@@ -83,6 +83,7 @@ Mocked admin endpoints: **none**.
 ### 0.4 Backend follow-ups (found in Stage 2; not fixed here)
 
 - **BF-1** `POST /newsletter` answers a bare `{ ok: true }` in rc1, but `CONTRACT-NOTES.md` documents `{ ok: true, pendingConfirmation: true }`. The form now treats any `ok` as "check your email" (it is always double opt-in), and the mock matches rc1.
+- **BF-2** Two `POST /applications` at the same moment can deadlock in MySQL ("Deadlock found when trying to get lock", seen in CI with 2 workers): the duplicate-check locking read and the yearly reference counter take locks in different orders, and rc1 answers the loser with a 500 "Database error" instead of retrying the transaction. Suggested fix in the API: retry the create transaction on ER_LOCK_DEADLOCK. The e2e setup (`applicationIn`) retries a 500 meanwhile.
 
 ### 0.5 Admin area (as built)
 
@@ -518,4 +519,3 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | Applications | `/:lang/admin/applications` | `GET /admin/applications`, `/counts`, `/assignees`, `/export.csv`, `POST /bulk` | `admin-applications.spec.ts` | Done (Phase 7) |
 | Application review | `/:lang/admin/applications/:id` | `GET/PATCH /admin/applications/:id`, `POST …/request-documents`, `PATCH …/documents/:docId`, `GET …/file`, `POST …/notes` | `admin-applications.spec.ts` | Done (Phase 7) |
 | Messages | `/:lang/admin/messages[/:id]` | `GET /admin/messages[/:id]`, `POST …/reply`, `PATCH`, `POST …/convert-to-testimonial`, `DELETE` | `admin-messages.spec.ts` | Done (Phase 7) |
-- **BF-2** Two `POST /applications` at the same moment can deadlock in MySQL ("Deadlock found when trying to get lock", seen in CI with 2 workers): the duplicate-check locking read and the yearly reference counter take locks in different orders, and rc1 answers the loser with a 500 "Database error" instead of retrying the transaction. Suggested fix in the API: retry the create transaction on ER_LOCK_DEADLOCK. The e2e setup (`applicationIn`) retries a 500 meanwhile.
