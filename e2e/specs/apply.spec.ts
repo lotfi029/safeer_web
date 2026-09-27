@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { randomInt } from 'node:crypto';
+import { gotoHydrated, waitForHydration } from '../support/hydration';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 const PDF = {
@@ -61,8 +62,7 @@ test.describe('apply flow', () => {
   });
 
   test('step 1 validation blocks Next and focuses the first invalid field', async ({ page }) => {
-    await page.goto('/en/apply');
-    await page.waitForLoadState('networkidle');
+    await gotoHydrated(page, '/en/apply');
     await page.getByRole('button', { name: 'Next — academic details' }).click();
     await expect(page.getByRole('textbox', { name: 'First', exact: true })).toBeFocused();
     await expect(page.getByRole('textbox', { name: 'Email' })).toHaveAttribute(
@@ -73,8 +73,7 @@ test.describe('apply flow', () => {
 
   test.describe('applying (creates applications; runs against the real API too)', () => {
     test('happy path: create → autosave → uploads → submit → reference', async ({ page }) => {
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await fillStep1(page, newApplicant('apply'));
       const created = page.waitForResponse(
         (r) => /\/api\/v1\/applications(\?|$)/.test(r.url()) && r.request().method() === 'POST',
@@ -116,8 +115,7 @@ test.describe('apply flow', () => {
     test('a second upload of a type replaces the first, with no client-side delete (W4)', async ({
       page,
     }) => {
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await fillStep1(page, newApplicant('replace'));
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await fillStep2(page);
@@ -147,8 +145,7 @@ test.describe('apply flow', () => {
     });
 
     test('client rejects unsupported file types before uploading', async ({ page }) => {
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await fillStep1(page, newApplicant('type'));
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await fillStep2(page);
@@ -184,8 +181,7 @@ test.describe('apply flow', () => {
         },
       });
       expect(first.status()).toBe(201);
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await fillStep1(page, applicant);
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await expect(page.getByRole('main').getByRole('alert')).toContainText('already exists');
@@ -195,8 +191,7 @@ test.describe('apply flow', () => {
     test('offline autosave keeps a device copy without ID number/birth date, then restores it', async ({
       page,
     }) => {
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await fillStep1(page, newApplicant('offline'));
       await page.getByRole('textbox', { name: 'ID / residency number' }).fill('1234567890');
       await page.getByRole('button', { name: 'Next — academic details' }).click();
@@ -215,6 +210,7 @@ test.describe('apply flow', () => {
       await page.reload();
 
       await page.waitForLoadState('networkidle');
+      await waitForHydration(page);
       await expect(page.getByText('We found a copy saved on this device')).toBeVisible();
       await page.getByRole('button', { name: 'Restore' }).click();
       await expect(page.getByRole('textbox', { name: 'University' })).toHaveValue(
@@ -225,13 +221,13 @@ test.describe('apply flow', () => {
     test('reload resumes the draft from /portal/me (B16 csrfToken keeps writes working)', async ({
       page,
     }) => {
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await fillStep1(page, newApplicant('resume'));
       await page.getByRole('button', { name: 'Next — academic details' }).click();
       await expect(page.getByRole('heading', { name: /Step 2/ })).toBeVisible();
       await page.reload();
       await page.waitForLoadState('networkidle');
+      await waitForHydration(page);
       await expect(page.getByRole('heading', { name: /Step 2/ })).toBeVisible();
       const patch = page.waitForResponse(
         (r) => /\/portal\/application(\?|$)/.test(r.url()) && r.request().method() === 'PATCH',
@@ -240,9 +236,66 @@ test.describe('apply flow', () => {
       expect((await patch).status()).toBe(200);
     });
 
+    test('validation mirrors the API: Arabic-Indic phone digits pass, a dotted name is stopped (W14)', async ({
+      page,
+    }) => {
+      const applicant = newApplicant('digits');
+      // +9665XXXXXXXX → the local form ٠٥XXXXXXXX typed on an Arabic keyboard.
+      const local = `0${applicant.phone.slice(4)}`.replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)]);
+      await gotoHydrated(page, '/ar/apply');
+      let posts = 0;
+      page.on('request', (r) => /\/api\/v1\/applications(\?|$)/.test(r.url()) && posts++);
+      const next = page.getByRole('button', { name: /التالي/ });
+
+      await page.locator('input[autocomplete="given-name"]').fill('Dr. Sara');
+      await page.locator('input[autocomplete="family-name"]').fill('علي');
+      await page.locator('input[type="date"]').fill('2001-05-06');
+      await page.locator('input[type="tel"]').fill(local);
+      const nationality = page.locator('[autocomplete="country"]');
+      if ((await nationality.evaluate((el) => el.tagName)) === 'SELECT') {
+        await nationality.selectOption('SA');
+      } else {
+        await nationality.fill('SA');
+      }
+      await page.locator('input[type="email"]').fill(applicant.email);
+      await page.getByRole('radio').first().check();
+      await next.click();
+      const first = page.locator('input[autocomplete="given-name"]');
+      await expect(first).toHaveAttribute('aria-invalid', 'true');
+      await expect(first).toBeFocused();
+      expect(posts).toBe(0);
+
+      await first.fill('سارة');
+      const created = page.waitForResponse(
+        (r) => /\/api\/v1\/applications(\?|$)/.test(r.url()) && r.request().method() === 'POST',
+      );
+      await next.click();
+      expect((await created).status()).toBe(201);
+    });
+
+    test('signing out removes the offline copy from the device (W10)', async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await gotoHydrated(page, '/en/apply');
+      await fillStep1(page, newApplicant('signout'));
+      await page.getByRole('button', { name: 'Next — academic details' }).click();
+      await expect(page.getByRole('heading', { name: /Step 2/ })).toBeVisible();
+      await page.route(/\/api\/v1\/portal\/application(\?|$)/, (route) =>
+        route.abort('internetdisconnected'),
+      );
+      await page.getByRole('textbox', { name: 'University' }).fill('[Offline university]');
+      await expect(page.getByTestId('autosave')).toContainText('saved on this device');
+      const draft = () => page.evaluate(() => sessionStorage.getItem('safeer.apply.draft'));
+      expect(await draft()).toContain('[Offline university]');
+      await page.unroute(/\/api\/v1\/portal\/application(\?|$)/);
+
+      await page.goto('/en/portal');
+      await page.getByRole('button', { name: 'Sign out' }).click();
+      await expect(page).toHaveURL(/\/en\/portal\/login$/);
+      expect(await draft()).toBeNull();
+    });
+
     test('keyboard-only step 1', async ({ page }) => {
-      await page.goto('/en/apply');
-      await page.waitForLoadState('networkidle');
+      await gotoHydrated(page, '/en/apply');
       await page.getByRole('textbox', { name: 'First', exact: true }).focus();
       await page.keyboard.type('Sara');
       await page.keyboard.press('Tab');

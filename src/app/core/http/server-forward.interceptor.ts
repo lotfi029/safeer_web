@@ -2,7 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject, PLATFORM_ID, REQUEST_CONTEXT } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { timeout } from 'rxjs';
-import { API_BASE_URL } from '../config/api-base-url';
+import { isApiUrl } from './api-urls';
 import type { SsrRequestContext } from './ssr-context';
 
 /** SSR-side API calls never hang a render (review F8). */
@@ -16,8 +16,7 @@ export const serverForwardInterceptor: HttpInterceptorFn = (req, next) => {
   if (!isPlatformServer(inject(PLATFORM_ID))) {
     return next(req);
   }
-  const base = inject(API_BASE_URL);
-  if (!req.url.startsWith(base)) {
+  if (!isApiUrl(req.url)) {
     return next(req);
   }
   const context = inject(REQUEST_CONTEXT, { optional: true }) as SsrRequestContext | null;

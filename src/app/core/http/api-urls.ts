@@ -31,3 +31,8 @@ export function apiArea(url: string): ApiArea | null {
   }
   return 'public';
 }
+
+/** A same-origin API URL (`/api/v1`, `/api/v1/…` or `/api/v1?…`), before any server rewrite. */
+export function isApiUrl(url: string): boolean {
+  return url === API_PREFIX || url.startsWith(`${API_PREFIX}/`) || url.startsWith(`${API_PREFIX}?`);
+}

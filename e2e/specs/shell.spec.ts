@@ -185,3 +185,43 @@ test.describe('touch targets (W8)', () => {
     });
   }
 });
+
+test.describe('fonts (W13)', () => {
+  const EXPECTED = {
+    ar: ['ibm-plex-sans-arabic-arabic-400-normal', 'ibm-plex-sans-arabic-arabic-700-normal'],
+    en: ['ibm-plex-sans-latin-400-normal', 'ibm-plex-sans-latin-700-normal'],
+  } as const;
+
+  for (const lang of ['ar', 'en'] as const) {
+    test(`SSR preloads only the 2 above-the-fold faces, and the fonts load (${lang})`, async ({
+      page,
+      request,
+    }) => {
+      const html = await (await request.get(`/${lang}`)).text();
+      const preloads = [...html.matchAll(/<link[^>]*rel="preload"[^>]*as="font"[^>]*>/g)].map(
+        (m) => /href="\/fonts\/([^"]+)\.woff2"/.exec(m[0])?.[1],
+      );
+      expect(preloads).toEqual([...EXPECTED[lang]]);
+      expect(html).toContain('href="/fonts/fonts.css"');
+
+      const violations: string[] = [];
+      page.on(
+        'console',
+        (m) => /Content.Security.Policy/i.test(m.text()) && violations.push(m.text()),
+      );
+      await page.goto(`/${lang}`);
+      await page.waitForLoadState('networkidle');
+      const [family, sample] =
+        lang === 'ar' ? ['IBM Plex Sans Arabic', 'جمعية'] : ['IBM Plex Sans', 'Safeer'];
+      // load() resolves with the faces it loaded: an empty list means no @font-face matched.
+      const loaded = await page.evaluate(
+        async ([f, text]) =>
+          (await document.fonts.load(`700 16px "${f}"`, text)).map((face) => face.status),
+        [family, sample] as const,
+      );
+      expect(loaded.length).toBeGreaterThan(0);
+      expect(loaded.every((s) => s === 'loaded')).toBe(true);
+      expect(violations).toEqual([]);
+    });
+  }
+});

@@ -13,9 +13,9 @@ import {
   form,
   FormField,
   maxLength,
-  pattern,
   required,
   submit,
+  validate,
 } from '@angular/forms/signals';
 import { DomSanitizer } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -28,6 +28,7 @@ import type { Loaded } from '../../../core/data/loaded';
 import { PageState } from '../../../core/data/page-state';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { SiteStore } from '../../../core/site/site.store';
+import { isPersonName } from '../../../core/validation/person-name';
 import { problemToTreeErrors } from '../../../shared/forms/server-errors';
 import { mapSearchUrl, safeMapEmbedUrl } from '../../../shared/map/map-embed';
 import { Button } from '../../../shared/ui/button/button';
@@ -43,9 +44,6 @@ export const CONTACT_SUBJECTS: readonly ContactSubject[] = [
   'feedback',
   'other',
 ];
-
-/** Names: letters (any script), marks, spaces, apostrophes, dots and hyphens (backend C16). */
-export const NAME_PATTERN = /^[\p{L}\p{M}\s'.-]+$/u;
 
 export { contactResolver } from './contact.resolver';
 
@@ -349,7 +347,12 @@ export class ContactPage {
   protected readonly model = form(this.value, (p) => {
     required(p.name);
     maxLength(p.name, 191);
-    pattern(p.name, NAME_PATTERN, { message: this.t.translate('pages.contact.nameInvalid') });
+    // W14: the API's C16 rule (core/validation).
+    validate(p.name, ({ value }) =>
+      value() && !isPersonName(value())
+        ? { kind: 'personName', message: this.t.translate('pages.contact.nameInvalid') }
+        : undefined,
+    );
     maxLength(p.phone, 40);
     required(p.email);
     email(p.email);

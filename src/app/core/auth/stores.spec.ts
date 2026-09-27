@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { csrfInterceptor, problemDetailsInterceptor } from '../http/interceptors';
 import { ApplicantSessionStore } from './applicant-session.store';
+import { APPLY_DRAFT_KEY } from './apply-draft-key';
 import { CsrfTokens } from './csrf-tokens';
 import { ROLE_MATRIX } from './role-matrix';
 import { StaffSessionStore } from './staff-session.store';
@@ -110,6 +111,43 @@ describe('ApplicantSessionStore', () => {
     await loaded;
     expect(store.isAuthenticated()).toBe(true);
     expect(store.canWrite()).toBe(false);
+  });
+
+  it('keeps a signed-in student signed in when /portal/me fails with a 502 (W11)', async () => {
+    const { ctrl } = setup();
+    const store = TestBed.inject(ApplicantSessionStore);
+    const listener = vi.fn();
+    store.onClear(listener);
+    store.startSession('t');
+    const refreshed = store.refresh();
+    ctrl.expectOne('/api/v1/portal/me').flush({}, { status: 502, statusText: 'Bad Gateway' });
+    expect(await refreshed).toBe(true);
+    expect(store.status()).toBe('authenticated');
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('leaves an unknown session unknown on a network error, so the next call retries (W11)', async () => {
+    const { ctrl } = setup();
+    const store = TestBed.inject(ApplicantSessionStore);
+    const first = store.ensureLoaded();
+    ctrl.expectOne('/api/v1/portal/me').error(new ProgressEvent('error'));
+    expect(await first).toBe(false);
+    expect(store.status()).toBe('unknown');
+    const second = store.ensureLoaded();
+    ctrl.expectOne('/api/v1/portal/me').flush({ reference: 'SA-2026-00001', status: 'draft' });
+    expect(await second).toBe(true);
+  });
+
+  it('ends the session on a 401 and clears the apply draft (W10, W11)', async () => {
+    const { ctrl } = setup();
+    const store = TestBed.inject(ApplicantSessionStore);
+    store.startSession('t');
+    sessionStorage.setItem(APPLY_DRAFT_KEY, JSON.stringify({ savedAt: 0, value: {} }));
+    const refreshed = store.refresh();
+    ctrl.expectOne('/api/v1/portal/me').flush({}, { status: 401, statusText: 'x' });
+    expect(await refreshed).toBe(false);
+    expect(store.status()).toBe('anonymous');
+    expect(sessionStorage.getItem(APPLY_DRAFT_KEY)).toBeNull();
   });
 
   it('notifies clear listeners on logout', async () => {

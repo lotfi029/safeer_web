@@ -3,6 +3,7 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import sharp from 'sharp';
+import { waitForHydration } from './hydration';
 
 export type Locale = 'ar' | 'en';
 export interface Viewport {
@@ -119,6 +120,7 @@ export async function openAt(
   await page.goto(`/${locale}${path === '/' ? '' : path}`);
   await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
   await page.waitForLoadState('networkidle');
+  await waitForHydration(page);
 }
 
 /** The standard per-screen check: no horizontal scroll + axe (serious/critical fail) + screenshot. */

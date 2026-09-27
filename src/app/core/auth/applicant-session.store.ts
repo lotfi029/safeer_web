@@ -2,6 +2,9 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type { PortalMe } from '../api/models';
 import { PortalApi } from '../api/portal-api';
+import { ApiError } from '../api/problem';
+import { safeStorage } from '../platform/browser-storage';
+import { APPLY_DRAFT_KEY } from './apply-draft-key';
 import { CsrfTokens } from './csrf-tokens';
 import { SessionExpiry } from './session-expiry';
 import type { SessionStatus } from './staff-session.store';
@@ -26,6 +29,8 @@ export class ApplicantSessionStore {
 
   constructor() {
     inject(SessionExpiry).onExpired((area) => area === 'portal' && this.clear());
+    // W10: the apply form's offline copy never outlives the session it was typed in.
+    this.onClear(() => safeStorage.remove('session', APPLY_DRAFT_KEY));
   }
 
   ensureLoaded(): Promise<boolean> {
@@ -38,7 +43,11 @@ export class ApplicantSessionStore {
     return (this.inflight ??= this.refresh().finally(() => (this.inflight = null)));
   }
 
-  /** Re-reads `/portal/me` (status, timeline, action needed). Resolves `true` if signed in. */
+  /**
+   * Re-reads `/portal/me` (status, timeline, action needed). Resolves `true` if signed in. Only a
+   * 401 ends the session (W11): a 502, a timeout or a network error keeps a signed-in student signed
+   * in (with the last data), and leaves an unknown session unknown so the next call retries.
+   */
   async refresh(): Promise<boolean> {
     if (this.status() !== 'authenticated') {
       this.status.set('loading');
@@ -51,9 +60,15 @@ export class ApplicantSessionStore {
       }
       this.status.set('authenticated');
       return true;
-    } catch {
-      this.clear();
-      return false;
+    } catch (error) {
+      if (error instanceof ApiError && error.problem.status === 401) {
+        this.clear();
+        return false;
+      }
+      if (this.status() !== 'authenticated') {
+        this.status.set('unknown');
+      }
+      return this.status() === 'authenticated';
     }
   }
 

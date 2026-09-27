@@ -4,6 +4,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { Cookies } from '../platform/cookies';
+import { applyFontPreloads } from './font-preloads';
 import { DEFAULT_LANG, dirFor, Lang, LANG_COOKIE } from './lang';
 
 /**
@@ -35,6 +36,7 @@ export class LocaleService {
     root.setAttribute('lang', lang);
     root.setAttribute('dir', dirFor(lang));
     this.directionality.valueSignal.set(dirFor(lang));
+    applyFontPreloads(this.document, lang);
     if (this.cookies.get(LANG_COOKIE) !== lang) {
       this.cookies.set(LANG_COOKIE, lang);
     }
