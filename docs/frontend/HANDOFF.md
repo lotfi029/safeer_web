@@ -8,13 +8,13 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
   - Stage 2 branches are **stacked**: `feat/phase-7` on `fix/session-1-review` (what `main` gets once #9 merges), `feat/phase-8` on `feat/phase-7`, and so on.
   - Each phase has a draft PR whose base is the previous phase's branch.
 - **Backend:** built and tested against the real `safeer_api` at **`v1.0.0-rc1`** (`SAFEER_API_REF`). Real-API e2e is required, and nothing is mocked by default (CLAUDE.md).
-- **Test totals (end of Phase 7):**
+- **Test totals (end of Phase 8):**
   - lint clean
-  - unit tests: 51 files, 202 tests
-  - server + script tests: 82
-  - e2e against the mock: **242/242**
-  - e2e against the real API: **229/229**; 13 tests are `@mock-only` (§0.3)
-  - initial bundle: **138.3 KB gzip** (limit 150)
+  - unit tests: 52 files, 215 tests
+  - server + script tests: 97
+  - e2e against the mock: **257/257**
+  - e2e against the real API: **249/249**; 8 tests are `@mock-only` (§0.3)
+  - initial bundle: **138.9 KB gzip** (limit 150)
 
 ---
 
@@ -24,9 +24,9 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 
 | Phase | Branch (PR base) | Scope | State |
 |---|---|---|---|
-| 7 | `feat/phase-7` (`fix/session-1-review`) | real-API test support, admin shell, login/forgot, overview, applications list + review, messages | done |
-| 8 | `feat/phase-8` (`feat/phase-7`) | content CRUD kit, pages and news editors, media | next |
-| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | — |
+| 7 | `feat/phase-7` (`fix/session-1-review`) | real-API test support, admin shell, login/forgot, overview, applications list + review, messages | done (#10) |
+| 8 | `feat/phase-8` (`feat/phase-7`) | content CRUD kit, pages and news editors, media | done |
+| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | next |
 | 10 | `feat/phase-10` (`feat/phase-9`) | hardening, full matrix, axe, Lighthouse, CSP, deployment docs | — |
 
 ### 0.2 Real-API e2e (every spec runs on both backends)
@@ -66,17 +66,16 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 - `scripts/record-admin-shapes.mjs` records the rc1 response *shapes* (never values) into `mocks/fixtures/admin-shapes.json`; `mocks/admin-shapes.test.mjs` fails on drift.
 - Re-record after an API bump: `DB_PORT=3307 node --no-warnings scripts/record-admin-shapes.mjs`. It seeds and then removes its own admin.
 
-### 0.3 `@mock-only` (54 before Stage 2 → 13 after Phase 7)
+### 0.3 `@mock-only` (54 before Stage 2 → 13 after Phase 7 → 8 after Phase 8)
 
 | Test | Reason | Plan |
 |---|---|---|
 | contact map embed ×3 | sets the map through `__site` | stays (allowed) |
 | footer socials (W20) | sets socials through `__site` | stays (allowed) |
 | proxy ×3 (R3) | `__echo` / `__log` | stays (allowed) |
-| news pagination | the dev seed has 3 posts, one page | Phase 8 creates posts through `/admin/news` |
-| news unpublished/preview ×3 | needs a draft post + preview token | Phase 8 (`/admin/news`, `/admin/preview-token`) |
-| testimonials quote layout | the seed publishes no quote | Phase 8 (publish a testimonial through the admin API) |
 | redirect table 301 | needs a registered redirect | Phase 9 (`/admin/redirects`) |
+
+Phase 8 moved the news pagination, the unpublished/preview ×3 and the testimonial quote layout onto the real API (`e2e/support/content.ts`: `ensureNewsPages`, `draftWithPreview` with a real cover and a preview token, `ensurePublishedTestimonial`; everything created is deleted in `afterAll`).
 
 Mocked admin endpoints: **none**.
 
@@ -111,6 +110,15 @@ Mocked admin endpoints: **none**.
 **Shared components**
 - `shared/confirm-dialog.ts` (`confirmAction`)
 - `applications/application-dialogs.ts`
+
+**Content area (Phase 8)**
+- **CRUD kit** (`features/admin/content/crud/`): `collections.ts` declares each collection (endpoint, area, publish mode `route`/`field`/`status`, sortable, searchable, tabs, fields, row title/subtitle/thumb, child collection, per-row link). `CrudPage` (route data `collections`, `title`, `note`) → `CrudList` (ordered list, CDK drag + move up/down buttons → `POST reorder` with the whole list renumbered, publish switch, edit/delete) → `CrudForm` dialog → `CrudFields` (bilingual pairs, Markdown, selects incl. from another collection, media, checkboxes). Helpers `toBody`/`validate`/`modelFromRow` mirror the DTOs.
+- Configured: work areas (+ items with their own visibility, nested), board (group tabs), testimonials (status tabs, publish/hide) + themes, partners (category tabs), documents + sections, stats, about items (kind tabs), news categories; pages use the kit for the list and the sections (`/admin/pages/:id`).
+- **News** is hand-built: `news/news-list.ts` (filters all/published/draft/legacy in the URL, search, legacy banner + `DELETE admin/news/legacy`) and `news/news-editor.ts` (Markdown with preview, cover, slug with the API's rules incl. the 12 reserved words, `SLUG_TAKEN` on the field, `COVER_MISSING` as a notice, preview through `GET admin/preview-token` → `/news/<slug>?preview=`).
+- **Markdown**: `marked` (same library and config as the API), rendered to the API's tag allow-list (`markdown/render-markdown.ts`), then Angular's sanitizer. Toolbar inserts only syntax the API keeps.
+- **Media**: `media/media-store.ts` (the library cached; rows only carry asset ids), `media-uploader.ts` (type/size checks like the API; images ask for Arabic alt text at once because the API refuses to attach an image without it, ALT_TEXT_REQUIRED), `media-picker.ts`, `media-library.ts` (`ASSET_IN_USE` lists the usages). URLs: `mediaUrl()` → `/files/:publicId[/thumb|card|full]`.
+- API rules worth knowing: the kernel's column filters compare as strings (send booleans as `1`/`0`); a bad FK id is a 500, so selects only offer existing rows; admin responses are never collapsed (raw `xAr`/`xEn`).
+- Mock: `mocks/admin-content.mjs` (the kernel for every collection + news/testimonials/pages/media specifics), seeded from rows recorded from the API (`mocks/fixtures/adminContent.json`, `record-admin-shapes.mjs --content`, e2e rows filtered out). Admin content state is separate from the public fixtures.
 
 **Tokens**
 - `--sidebar-*`: the sidebar is dark in both themes.
@@ -466,7 +474,7 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 
 ---
 
-## As-built routes (Phases 0–7)
+## As-built routes (Phases 0–8)
 
 | Route | Mode | Notes |
 |---|---|---|
@@ -482,6 +490,10 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | `/:lang/admin`, `/admin/forbidden` | CSR | Overview (role-aware), no-access page |
 | `/:lang/admin/applications`, `/admin/applications/:id` | CSR | `?status&q&reviewer&page`; area `applications` |
 | `/:lang/admin/messages`, `/admin/messages/:id` | CSR | `?status&page`; area `inbox` |
+| `/:lang/admin/pages`, `/admin/pages/:id` | CSR | area `content`; sections editor |
+| `/:lang/admin/news`, `/admin/news/new`, `/admin/news/:id`, `/admin/news/categories` | CSR | `?filter&q&page`; area `content` |
+| `/:lang/admin/work-areas`, `/board`, `/partners`, `/documents`, `/stats`, `/about-items`, `/media` | CSR | area `content`; `?tab=` where the collection has tabs |
+| `/:lang/admin/testimonials` | CSR | area `inbox`; themes + testimonials |
 | `/:lang/admin/accept/:token`, `/:lang/admin/reset/:token` | CSR | Public; set a password from the mailed link (W16) |
 | `/:lang/_kit` | SSR | dev and e2e builds only |
 | `/:lang/**` | SSR | 404 page, status 404 |
@@ -518,3 +530,12 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | Applications | `/:lang/admin/applications` | `GET /admin/applications`, `/counts`, `/assignees`, `/export.csv`, `POST /bulk` | `admin-applications.spec.ts` | Done (Phase 7) |
 | Application review | `/:lang/admin/applications/:id` | `GET/PATCH /admin/applications/:id`, `POST …/request-documents`, `PATCH …/documents/:docId`, `GET …/file`, `POST …/notes` | `admin-applications.spec.ts` | Done (Phase 7) |
 | Messages | `/:lang/admin/messages[/:id]` | `GET /admin/messages[/:id]`, `POST …/reply`, `PATCH`, `POST …/convert-to-testimonial`, `DELETE` | `admin-messages.spec.ts` | Done (Phase 7) |
+| Admin pages + page editor | `/:lang/admin/pages[/:id]` | `admin/pages`, `admin/page-sections` (list, create, `PATCH`, `/publish`, `/reorder`, delete) | `admin-content.spec.ts` | Done (Phase 8) |
+| Admin news list / editor | `/:lang/admin/news`, `/new`, `/:id` | `admin/news` (+ `/publish`, `DELETE /legacy`), `admin/news-categories`, `admin/preview-token`, `admin/media` | `admin-content.spec.ts`, `news.spec.ts` | Done (Phase 8) |
+| Admin work areas | `/:lang/admin/work-areas` | `admin/work-areas`, `admin/work-area-items` | `admin-content.spec.ts` | Done (Phase 8) |
+| Admin board | `/:lang/admin/board` | `admin/board` | `admin-content.spec.ts` | Done (Phase 8) |
+| Admin testimonials | `/:lang/admin/testimonials` | `admin/testimonials` (+ `/status`, `/feature`), `admin/testimonial-themes` | `admin-content.spec.ts`, `pages-b.spec.ts` | Done (Phase 8) |
+| Admin partners | `/:lang/admin/partners` | `admin/partners` | `admin-content.spec.ts` | Done (Phase 8) |
+| Admin documents | `/:lang/admin/documents` | `admin/documents`, `admin/doc-categories`, `admin/media` | `admin-content.spec.ts` | Done (Phase 8) |
+| Admin figures / about items | `/:lang/admin/stats`, `/about-items` | `admin/stats`, `admin/about-items` | `admin-content.spec.ts` | Done (Phase 8) |
+| Media library | `/:lang/admin/media` | `GET/POST admin/media`, `PATCH` (alt), `DELETE` | `admin-content.spec.ts` | Done (Phase 8) |

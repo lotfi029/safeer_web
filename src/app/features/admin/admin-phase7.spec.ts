@@ -42,13 +42,25 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       .flatMap((g) => g.items.map((i) => i.label));
 
   it('shows each role only the areas the matrix gives it', () => {
-    expect(labels('admin')).toEqual(['overview', 'applications', 'messages']);
+    const content = [
+      'pages',
+      'news',
+      'workAreas',
+      'board',
+      'partners',
+      'documents',
+      'stats',
+      'aboutItems',
+      'media',
+    ];
+    const withTestimonials = [...content.slice(0, 4), 'testimonials', ...content.slice(4)];
+    expect(labels('admin')).toEqual(['overview', 'applications', 'messages', ...withTestimonials]);
     TestBed.resetTestingModule();
     expect(labels('reviewer')).toEqual(['overview', 'applications']);
     TestBed.resetTestingModule();
-    expect(labels('support')).toEqual(['overview', 'messages']);
+    expect(labels('support')).toEqual(['overview', 'messages', 'testimonials']);
     TestBed.resetTestingModule();
-    expect(labels('editor')).toEqual(['overview']);
+    expect(labels('editor')).toEqual(['overview', ...content]);
   });
 
   it('links carry the locale and badges come from the overview counts', () => {
