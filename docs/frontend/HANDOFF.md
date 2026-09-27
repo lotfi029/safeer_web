@@ -1,16 +1,120 @@
-# safeer_web — Session 1 handoff
+# safeer_web — handoff
 
-Session 1 (Phases 0–6) is done, plus the fix pass after the delivery review (W1–W24, `docs/safeer-delivery-review.md` §4). It covers the public site, the apply flow, the student portal, and the staff invitation/reset pages. The rest of the admin area has only its auth plumbing. Session 2 should read this file first, then `docs/safeer-frontend-sessions-plan.md` Part B.
+Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the apply flow, the student portal and the staff invitation/reset pages. **Stage 2** (Phases 7–10, `docs/safeer-web-session-2-combined-plan.md`) builds the admin dashboard and moves the e2e suite onto the real API. Read §0 first, then the rest.
 
-- **PRs:** phases #1–#8 are merged into `main`. The fix pass is lotfi029/safeer_web#9 (`fix/session-1-review`).
-- **Backend:** everything here is built and tested against the real `safeer_api` at **`v1.0.0-rc1`** (the `SAFEER_API_REF` repository variable). Nothing is mocked because it's missing; the mock exists for speed and for states the dev seed lacks.
-- **Test totals at exit (fix pass):**
+- **PRs:**
+  - Phases #1–#8 are merged.
+  - The fix pass is lotfi029/safeer_web#9 (`fix/session-1-review`). It was still an open draft when Stage 2 started.
+  - Stage 2 branches are **stacked**: `feat/phase-7` on `fix/session-1-review` (what `main` gets once #9 merges), `feat/phase-8` on `feat/phase-7`, and so on.
+  - Each phase has a draft PR whose base is the previous phase's branch.
+- **Backend:** built and tested against the real `safeer_api` at **`v1.0.0-rc1`** (`SAFEER_API_REF`). Real-API e2e is required, and nothing is mocked by default (CLAUDE.md).
+- **Test totals (end of Phase 7):**
   - lint clean
-  - unit tests: 50 files, 190 tests
-  - server + script tests: 62
-  - e2e against the mock: **195/195** (390/1440 × ar/en)
-  - e2e against the real API (`e2e-real`): **141/141**; the other 54 specs are `@mock-only` (§5)
-  - initial bundle: **136.5 KB gzip** (limit 150)
+  - unit tests: 51 files, 202 tests
+  - server + script tests: 82
+  - e2e against the mock: **242/242**
+  - e2e against the real API: **229/229**; 13 tests are `@mock-only` (§0.3)
+  - initial bundle: **138.3 KB gzip** (limit 150)
+
+---
+
+## 0. Stage 2 status
+
+### 0.1 Phases
+
+| Phase | Branch (PR base) | Scope | State |
+|---|---|---|---|
+| 7 | `feat/phase-7` (`fix/session-1-review`) | real-API test support, admin shell, login/forgot, overview, applications list + review, messages | done |
+| 8 | `feat/phase-8` (`feat/phase-7`) | content CRUD kit, pages and news editors, media | next |
+| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | — |
+| 10 | `feat/phase-10` (`feat/phase-9`) | hardening, full matrix, axe, Lighthouse, CSP, deployment docs | — |
+
+### 0.2 Real-API e2e (every spec runs on both backends)
+
+**`e2e/support/real-db.ts`**
+- Active only with `E2E_API_URL`.
+- Loads mysql2 and argon2 from the API checkout: `SAFEER_API_DIR`, default `../safeer_api` (CI uses `safeer_api`).
+- Uses the same DB env as `scripts/real-api.mjs`, via `scripts/api-env.mjs`.
+- `seedStaff(role, {status, locked})` returns `{id, name, email, password, role}`:
+  - emails end in `@e2e.invalid`; names are `E2E <role> <rand>`
+  - datetimes use `UTC_TIMESTAMP(3)`
+  - a lock is `locked_until = +1 h`, `lock_count = 1`
+- `insertAuthToken(userId, invite|reset)` returns the raw token; the sha256 hex is stored, with a 48 h (invite) or 60 min (reset) expiry.
+- Also: `expireLock(userId)`, `staffRow(userId)`, per-file cleanup (`useRealDb(test)`), and a global teardown that sweeps `email LIKE '%@e2e.invalid'` only.
+- Drift tests (`real-db.test.ts`) check the argon2 cost and the token hash against `docs/api/src/auth/*`.
+
+**`e2e/support/real-api.ts`** (both backends)
+- `staffAccount(role, opts)`: a seeded user on the real API; the mock fixture account or a mock `/__staff` user on the mock.
+- `authToken`, `unlockNow`.
+- `staffClient` / `setupAdmin`: an API client that carries the CSRF token.
+- `applicationIn(status, tag)`: real API = the public apply API plus a seeded admin moving it to `status`; mock = `/__clone` of the seeded fixture.
+- `otpFor`: `GET /__dev/otp/:id` on the real API, `123456` on the mock.
+- `openInterviewSlots`, `postContact` / `findMessage`, `postNewsletter` / `findSubscriber`.
+- `lettersOnly`: the API's person-name rule allows no digits.
+
+**`e2e/support/newsletter-token.ts`** signs confirm/unsubscribe tokens the way the API does (drift-tested against the snapshot's util).
+
+**Test rules**
+- **Fast-submit rule.** The API compares *its own* clock with `formRenderedAt`.
+  - UI specs call `page.clock.install({ time: Date.now() - 5000 })` before `goto`; API calls post `formRenderedAt = Date.now() - 5000`.
+  - Then they assert the stored row through the admin API, because a dropped submit also answers `{ ok: true }`.
+- **Login limiter.** 5/min per email still applies under `NODE_ENV=test`. Every login spec seeds its own user; the 429 test makes 6 attempts on one.
+- `E2E_INCLUDE_MOCK_ONLY=1` runs the `@mock-only` tests against the real API too, to find ones that could move.
+
+**Admin fixtures**
+- The mock builds admin responses from its own state (`mocks/admin.mjs`).
+- `scripts/record-admin-shapes.mjs` records the rc1 response *shapes* (never values) into `mocks/fixtures/admin-shapes.json`; `mocks/admin-shapes.test.mjs` fails on drift.
+- Re-record after an API bump: `DB_PORT=3307 node --no-warnings scripts/record-admin-shapes.mjs`. It seeds and then removes its own admin.
+
+### 0.3 `@mock-only` (54 before Stage 2 → 13 after Phase 7)
+
+| Test | Reason | Plan |
+|---|---|---|
+| contact map embed ×3 | sets the map through `__site` | stays (allowed) |
+| footer socials (W20) | sets socials through `__site` | stays (allowed) |
+| proxy ×3 (R3) | `__echo` / `__log` | stays (allowed) |
+| news pagination | the dev seed has 3 posts, one page | Phase 8 creates posts through `/admin/news` |
+| news unpublished/preview ×3 | needs a draft post + preview token | Phase 8 (`/admin/news`, `/admin/preview-token`) |
+| testimonials quote layout | the seed publishes no quote | Phase 8 (publish a testimonial through the admin API) |
+| redirect table 301 | needs a registered redirect | Phase 9 (`/admin/redirects`) |
+
+Mocked admin endpoints: **none**.
+
+### 0.4 Backend follow-ups (found in Stage 2; not fixed here)
+
+- **BF-1** `POST /newsletter` answers a bare `{ ok: true }` in rc1, but `CONTRACT-NOTES.md` documents `{ ok: true, pendingConfirmation: true }`. The form now treats any `ok` as "check your email" (it is always double opt-in), and the mock matches rc1.
+
+### 0.5 Admin area (as built)
+
+**Routes** (`features/admin/admin.routes.ts`)
+- Signed-out pages (login, forgot, accept/reset) sit beside the shell.
+- Every dashboard page is a shell child with `roleGuard` + `data.area`.
+- `adminStringsGuard` lazy-loads `core/i18n/translations/admin/{ar,en}.ts` and merges them under `admin.*`, so the public locale chunk never carries them.
+
+**Shell** (`layout/admin-shell.ts`)
+- Full sidebar at xl+; an icon rail at lg (names as `title` plus sr-only text); a drawer below lg.
+- Menu from `AdminNav`: `ADMIN_NAV` filtered by `StaffSessionStore.can(area)`.
+- Badges from `AdminBadges` (`GET /admin/overview`).
+- Page titles use `AdminPageHead`.
+
+**API** (`core/api/admin/admin-api.ts` + `admin-models.ts`, shapes from the snapshot)
+- `documentUrl(doc)` is the only way to link a document file. A null `downloadPath` means no link.
+
+**Transitions** (`features/admin/applications/transitions.ts`)
+- Drift-tested against the snapshot in `transitions.node.test.ts`, which runs under `test:server`.
+
+**Login**
+- One message for every 401: a wrong password, a disabled account and a locked account look the same, because the API doesn't tell them apart.
+- A separate message for 429.
+- Account state appears on the Phase 9 users screen instead.
+
+**Shared components**
+- `shared/confirm-dialog.ts` (`confirmAction`)
+- `applications/application-dialogs.ts`
+
+**Tokens**
+- `--sidebar-*`: the sidebar is dark in both themes.
+- `text-secondary-text`: for secondary-coloured text on `app-bg`, where plain `--secondary` is only 4.41:1.
 
 ---
 
@@ -182,6 +286,8 @@ The e2e mock has these test-only routes:
 - `POST /__site` merges into the site settings (send nulls to restore)
 - `POST /__auth-token` `{purpose: accept|reset}` mints a single-use staff link token (W16)
 - `POST /__reset`, with `?reference=SA-…` to restore a single seeded application
+- `POST /__clone?reference=SA-…&tag=…`: a fresh copy of a seeded application (Stage 2)
+- `POST /__staff` `{role, status?, locked?}`: a staff user with a known password; `POST /__staff/:id/expire-lock` (Stage 2, the mock twin of `real-db.ts`)
 
 ---
 
@@ -205,7 +311,7 @@ The e2e mock has these test-only routes:
 - Transloco dictionaries in `core/i18n/translations/ar.ts` (source of truth) and `en.ts` (typed as `Translation`).
 - Key scheme `area.screen.key`.
 - Large page dictionaries live in `translations/pages/<page>.ts` (`export const ar = {…}; export const en: typeof ar`) and mount at `pages.<page>`. The portal mounts at `portal`.
-- Admin strings live under `admin.*`; Session 2 should add `translations/admin/*.ts` the same way.
+- Admin strings: the small signed-out set (`admin.login`, `admin.setPassword`, `admin.forbidden`) is in the base dictionaries; everything else is in `translations/admin/{ar,en}.ts`, lazy-loaded by `adminStringsGuard` and merged under `admin.*` (§0.5).
 - `LocaleService`:
   - `lang()`, `dir()`, `intlLocale()`
   - `link(path)` builds a `/:lang` path
@@ -260,7 +366,7 @@ The e2e mock has these test-only routes:
 ## 5. Test tooling
 
 - **Unit:** `npm run test:ci`. Vitest on jsdom via `ng test`, specs are `src/**/*.spec.ts`.
-- **Server and scripts:** `npm run test:server`. Vitest on node (`vitest.server.config.mts`), specs are `src/server/*.test.ts` and `scripts/*.test.mjs`.
+- **Server and scripts:** `npm run test:server`. Vitest on node (`vitest.server.config.mts`), specs are `src/server/*.test.ts`, `scripts/*.test.mjs`, `mocks/*.test.mjs`, `e2e/support/*.test.ts` and `src/app/**/*.node.test.ts` (drift tests against `docs/api`).
 - **e2e:** `npx playwright test` (set `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium` in this container).
   - `webServer` starts the mock API (3100), the SSR build from `dist/safeer_web-e2e` (4100), and a second SSR server pointed at a dead API (4101).
   - Build first with `npm run build:e2e`: production optimisations, CSP enforced, `/_kit` included.
@@ -281,7 +387,7 @@ The e2e mock has these test-only routes:
   - Seeded applications `SA-2026-00101…00107`, one per status.
   - Tokens: newsletter `mock-token`, article preview `mock-preview`, staff links `mock-invite` (`/:lang/admin/accept/mock-invite`) and `mock-reset`, single-use per mock process.
   - Public fixtures are recorded from the API (`scripts/record-fixtures.mjs`, §3).
-  - Portal specs run serially and restore their application with `__reset?reference=`.
+  - Specs that change an application get their own copy (`applicationIn()`: mock `/__clone`, real API a new application), so no two specs share one.
 - **Prod artifact:** `scripts/check-prod-artifact.mjs` fails if the production build contains the mock registry or the `/_kit` route.
 
 ---
@@ -318,11 +424,10 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Accordion headings:** `app-accordion-item` puts its heading inside `<summary>`, so work-area titles on mobile aren't headings in the accessibility tree.
 - **Filter-bar chips on phones:** in `linkMode` the chips move into a bottom sheet below 480px. The partners page uses plain chip links instead. News keeps the sheet; revisit if SEO reviewers want the links visible.
 - **SSR forms and hydration:** see the hydration gotcha in §4.
-- **Admin area:** stub login, forbidden page, guarded placeholders, and the working invitation/reset pages (`features/admin/auth/set-password.ts`, W16). The whole dashboard, the designed login and a "forgot password" page (`POST /admin/auth/forgot`) are Session 2.
+- **Admin area:** see §0.5.
 - **Lighthouse:** not run in Session 1. It's a Session 2 exit criterion.
 - **Types:** F11 generated types are not done (see §1).
 - **Dev-seed images:** the API's dev seed stores flat-colour JPEGs for its sample assets (hero, news covers), so those render as plain grey-teal boxes. They are real images with their alt, not missing placeholders (W7); sections with no asset show the labelled `[صورة: …]` placeholder.
-- **Testimonials against the real API:** the dev seed publishes themes but no quotes, so the quote layout is only covered by the mock.
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
 
 ### Still needed from the client
@@ -361,7 +466,7 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 
 ---
 
-## As-built routes (Phases 0–6 + fix pass)
+## As-built routes (Phases 0–7)
 
 | Route | Mode | Notes |
 |---|---|---|
@@ -373,7 +478,10 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | `/:lang/apply` | SSR | Apply flow |
 | `/:lang/portal/login` | CSR | `?returnUrl=` |
 | `/:lang/portal`, `/:lang/portal/documents` | CSR | `applicantGuard` |
-| `/:lang/admin/login`, `/admin`, `/admin/forbidden`, `/admin/system/users` | CSR | Auth plumbing only |
+| `/:lang/admin/login`, `/admin/forgot` | CSR | Staff sign-in, forgot password |
+| `/:lang/admin`, `/admin/forbidden` | CSR | Overview (role-aware), no-access page |
+| `/:lang/admin/applications`, `/admin/applications/:id` | CSR | `?status&q&reviewer&page`; area `applications` |
+| `/:lang/admin/messages`, `/admin/messages/:id` | CSR | `?status&page`; area `inbox` |
 | `/:lang/admin/accept/:token`, `/:lang/admin/reset/:token` | CSR | Public; set a password from the mailed link (W16) |
 | `/:lang/_kit` | SSR | dev and e2e builds only |
 | `/:lang/**` | SSR | 404 page, status 404 |
@@ -405,3 +513,8 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | My documents | `/:lang/portal/documents` | `GET/POST /portal/documents`, `/portal/documents/:id/file` | `portal.spec.ts`, `portal-rules.spec.ts` | Done (B3 rules) |
 | 404 / 500 / 503 | any | n/a | `shell.spec.ts`, `server-routing.spec.ts` | Done |
 | Staff invitation / reset | `/:lang/admin/{accept,reset}/:token` | `POST /admin/auth/accept/:token`, `/admin/auth/reset/:token` | `admin-set-password.spec.ts` | Done (W16) |
+| Admin login / forgot | `/:lang/admin/login`, `/admin/forgot` | `POST /admin/auth/login`, `/admin/auth/forgot`, `GET /admin/me`, `/admin/roles` | `admin-auth.spec.ts` | Done (Phase 7) |
+| Admin shell + overview | `/:lang/admin` | `GET /admin/overview` | `admin-shell.spec.ts` | Done (Phase 7) |
+| Applications | `/:lang/admin/applications` | `GET /admin/applications`, `/counts`, `/assignees`, `/export.csv`, `POST /bulk` | `admin-applications.spec.ts` | Done (Phase 7) |
+| Application review | `/:lang/admin/applications/:id` | `GET/PATCH /admin/applications/:id`, `POST …/request-documents`, `PATCH …/documents/:docId`, `GET …/file`, `POST …/notes` | `admin-applications.spec.ts` | Done (Phase 7) |
+| Messages | `/:lang/admin/messages[/:id]` | `GET /admin/messages[/:id]`, `POST …/reply`, `PATCH`, `POST …/convert-to-testimonial`, `DELETE` | `admin-messages.spec.ts` | Done (Phase 7) |
