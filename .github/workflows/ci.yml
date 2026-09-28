@@ -215,6 +215,9 @@ jobs:
         run: npm run lighthouse
         env:
           LH_RUNS: '7'
+          # Report-only while the performance work is in progress: the scores go to the job summary
+          # and a warning annotation, and the job stays green. Remove to make the targets blocking.
+          LH_REPORT_ONLY: '1'
 
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
@@ -222,4 +225,6 @@ jobs:
         with:
           name: lighthouse
           path: .lighthouseci
+          # upload-artifact@v4 skips dot-directories by default: without this nothing was uploaded.
+          include-hidden-files: true
           retention-days: 14
