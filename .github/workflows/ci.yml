@@ -215,6 +215,7 @@ jobs:
         run: npm run lighthouse
         env:
           LH_RUNS: '7'
+          # Blocking. Set LH_REPORT_ONLY: '1' to turn below-target scores into a warning instead.
 
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
@@ -222,4 +223,6 @@ jobs:
         with:
           name: lighthouse
           path: .lighthouseci
+          # upload-artifact@v4 skips dot-directories by default: without this nothing was uploaded.
+          include-hidden-files: true
           retention-days: 14

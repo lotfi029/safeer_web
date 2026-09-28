@@ -12,7 +12,12 @@ import { join } from 'node:path';
 import type { SsrRequestContext } from './app/core/http/ssr-context';
 import { staticCacheControl } from './server/cache-headers';
 import { loadDotEnv, parseEnv } from './server/env';
-import { compactCss, finalizeAngularResponse, type InlineStylesheet } from './server/html';
+import {
+  bodyFontFaces,
+  compactCss,
+  finalizeAngularResponse,
+  type InlineStylesheet,
+} from './server/html';
 import { serverErrorHandler } from './server/error-page';
 import { apiRedirectResolver, legacyRedirects } from './server/legacy';
 import { apiProxy } from './server/proxy';
@@ -37,12 +42,13 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 
 /**
  * The @font-face sheet (W13) is ~10 KB of rules and no fonts: inlined into every HTML response instead
- * of costing a render-blocking request (Phase 10, Lighthouse). Absent under `ng serve`.
+ * of costing a render-blocking request (Phase 10, Lighthouse). Public pages inline only the body-text
+ * faces and load the rest after the first paint. Absent under `ng serve`.
  */
 const fontFaces: InlineStylesheet | null = (() => {
   try {
-    const css = readFileSync(join(browserDistFolder, 'fonts/fonts.css'), 'utf8');
-    return { href: '/fonts/fonts.css', css: compactCss(css) };
+    const css = compactCss(readFileSync(join(browserDistFolder, 'fonts/fonts.css'), 'utf8'));
+    return { href: '/fonts/fonts.css', css, firstPaintCss: bodyFontFaces(css) };
   } catch {
     return null;
   }

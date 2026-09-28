@@ -215,9 +215,14 @@ test.describe('fonts (W13)', () => {
         (m) => /href="\/fonts\/([^"]+)\.woff2"/.exec(m[0])?.[1],
       );
       expect(preloads).toEqual([...EXPECTED[lang]]);
-      // Phase 10: the @font-face sheet is inlined (nonce'd), not a render-blocking request.
-      expect(html).not.toContain('href="/fonts/fonts.css"');
+      // Phase 10: the body-text @font-face rules are inlined (nonce'd), not a render-blocking request;
+      // the full sheet is added after the first paint (and kept in <noscript> for no-JS visitors).
+      const outsideNoscript = html.replace(/<noscript>[\s\S]*?<\/noscript>/g, '');
+      expect(outsideNoscript).not.toMatch(/<link[^>]*href="\/fonts\/fonts\.css"/);
       expect(html).toMatch(/<style nonce="[^"]+">@font-face/);
+      expect(html).toContain(
+        '<noscript><link rel="stylesheet" href="/fonts/fonts.css"></noscript>',
+      );
 
       const violations: string[] = [];
       page.on(
