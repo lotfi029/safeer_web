@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compactCss, finalizeAngularResponse, inlineStylesheet } from './html';
+import { compactCss, deferMainScript, finalizeAngularResponse, inlineStylesheet } from './html';
 
 const page =
   '<html><body><app-root ngcspnonce="__CSP_NONCE__"></app-root><script nonce="__CSP_NONCE__"></script></body></html>';
@@ -90,5 +90,37 @@ describe('inlineStylesheet (Phase 10: the @font-face sheet)', () => {
       sheet,
     );
     expect(await res.text()).toContain('<style nonce="N">@font-face');
+  });
+});
+
+describe('deferMainScript (public pages paint before the bundle loads)', () => {
+  const page =
+    '<head><link rel="modulepreload" href="chunk-A.js"></head><body><app-root></app-root>' +
+    '<script src="main-ABC123.js" type="module" nonce="N"></script></body>';
+
+  it('replaces the module script with a nonce’d loader and drops the route preloads', () => {
+    const html = deferMainScript(page, 'N');
+    expect(html).not.toContain('<script src="main-ABC123.js"');
+    expect(html).not.toContain('modulepreload');
+    expect(html).toContain('<script nonce="N">');
+    expect(html).toContain('s.src="main-ABC123.js"');
+    expect(html).toContain('requestAnimationFrame');
+  });
+
+  it('leaves HTML without a main script alone', () => {
+    expect(deferMainScript('<body></body>', 'N')).toBe('<body></body>');
+  });
+
+  it('finalizeAngularResponse defers on public pages only', async () => {
+    const render = (url: string) =>
+      finalizeAngularResponse(
+        new Response(page, { headers: { 'content-type': 'text/html' } }),
+        url,
+        'N',
+        true,
+      ).then((r) => r.text());
+    expect(await render('/ar/news')).not.toContain('<script src="main-');
+    expect(await render('/ar/admin/applications')).toContain('<script src="main-ABC123.js"');
+    expect(await render('/en/portal?x=1')).toContain('<script src="main-ABC123.js"');
   });
 });
