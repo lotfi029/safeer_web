@@ -12,14 +12,20 @@ must never be published or copied.
 
 ## 1. Logo (done in this repo)
 
+The client supplied the **official SVG** (`شعار_سفير.svg`), kept unchanged as
+`docs/brand/safeer-logo-official.svg`. It is the full lockup on a 2000×2000 canvas: the mark, then the calligraphic
+wordmark "جمعية سفير الدعوية / لطلاب المنح الدوليين".
+
+`node scripts/build-brand.mjs` derives the app's assets from it. Nothing is traced or redrawn: the official paths are
+only cropped, and the file's `<style>` classes are turned into `fill` attributes, so the SVGs need no stylesheet.
+
 | File | What |
 |---|---|
-| `docs/brand/safeer-logo-site-original.png` | The site's PNG as downloaded (410×519, transparent padding): `wp-content/uploads/2024/05/لوجو-الجمعية-png2.png` |
-| `public/brand/safeer-logo.png` | Trimmed, 253×387, 14 KB. Used by the intro animation and the JSON-LD `logo` |
-| `public/brand/safeer-logo-sm.png` | 73×112 (2× the largest in-app logo, 56 px), 4 KB. Used by `<app-logo>` |
-
-It is the same mark as the stand-in (`docs/safeer-logo.png`, 150×228) at about 1.7× the resolution. The site has
-no SVG, so **the official vector file is still owed by the client** (spec §6.1).
+| `public/brand/safeer-mark.svg` | The mark alone, vector, 10 KB. Used by `<app-logo>` and the intro |
+| `public/brand/safeer-lockup.svg` | Mark + wordmark, vector. Available for print, footer or social use |
+| `public/brand/safeer-logo.png` | The mark, 512 px tall. The JSON-LD `logo` |
+| `public/brand/apple-touch-icon.png`, `public/favicon.ico` | The mark on white, 180 px / 16-32-48 px. The favicon used to be Angular's default |
+| `docs/brand/safeer-logo-site-original.png` | The PNG from safeer-sa.org, kept for reference (superseded) |
 
 ## 2. Figures (admin → Figures, `/admin/stats`)
 

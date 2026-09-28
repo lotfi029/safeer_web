@@ -14,15 +14,15 @@ describe('Logo / Brand', () => {
     });
   });
 
-  it('renders the temporary PNG in a chip with the org name as alt', async () => {
+  it('renders the official mark in a chip with the org name as alt', async () => {
     const fixture = TestBed.createComponent(Logo);
     await fixture.whenStable();
     const host = fixture.nativeElement as HTMLElement;
     const img = host.querySelector('img')!;
-    expect(img.getAttribute('src')).toContain('/brand/safeer-logo-sm.png');
+    expect(img.getAttribute('src')).toContain('/brand/safeer-mark.svg');
     expect(img.getAttribute('alt')).toBe('جمعية سفير الدعوية');
-    expect(img.getAttribute('width')).toBe('73');
-    expect(img.getAttribute('height')).toBe('112');
+    expect(img.getAttribute('width')).toBe('642');
+    expect(img.getAttribute('height')).toBe('974');
     expect(img.classList.contains('h-full')).toBe(true);
     expect(host.style.blockSize).toBe('48px');
   });

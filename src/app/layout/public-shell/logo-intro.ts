@@ -61,12 +61,11 @@ const INTRO_COOKIE = 'intro';
         aria-hidden="true"
       >
         <div class="flex flex-col items-center gap-4">
-          <!-- TODO(logo): replace with the official SVG (spec §6.1); never ship a traced SVG. -->
           <img
             class="mark h-33 w-auto"
-            src="/brand/safeer-logo.png"
-            width="253"
-            height="387"
+            src="/brand/safeer-mark.svg"
+            width="642"
+            height="974"
             alt=""
           />
           <span class="rule block h-0.5 rounded-sm bg-secondary"></span>

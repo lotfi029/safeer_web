@@ -159,7 +159,7 @@ Mocked admin endpoints: **none**.
   1. **Compression** (`compression`, br/gzip) for everything the SSR server produces itself, mounted after the proxy. Until then HTML and JS went out raw.
   2. **The @font-face sheet is inlined**, with the nonce, into every HTML response (`inlineStylesheet` in `src/server/html.ts`) instead of a render-blocking `<link>`.
   3. **`index.preloadInitial: false`** (angular.json): no `modulepreload` for the initial chunks. SSR paints without JS, and the preloads competed with the document for bandwidth before first paint.
-  4. **Smaller preloads:** only the body-text face (400) is preloaded, which is the LCP text. The logo uses a 74×112 copy (`public/brand/safeer-logo-sm.png`, 3 KB instead of 16 KB); the original stays for the intro and JSON-LD.
+  4. **Smaller preloads:** only the body-text face (400) is preloaded, which is the LCP text. The logo was a 74×112 PNG copy then; it is now the official vector mark (`public/brand/safeer-mark.svg`).
 - **`app.cjs`:** a CommonJS start file for Hostinger's `lsnode.js`, which `require()`s the entry. It sets `SAFEER_SSR_LISTEN=1`, which `server.ts` checks, and imports the ESM bundle. Verified locally with `require('./app.cjs')`: `/healthz` = 200.
 - **Gzip budget script:** with `preloadInitial` off, the CSR index no longer lists the initial chunks, so `check-gzip-budget.mjs` follows the static imports of the entry scripts instead. It reports 139.8 KB, the same set as before.
 - **CI:** `ci.yml` now also runs nightly (the full matrix on **both** backends) and has a `lighthouse` job. `nightly.yml` (mock only) is gone.
@@ -480,7 +480,7 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
 
 ### Still needed from the client
-- **Logo:** the official SVG (spec §6.1). The app now uses the association's own PNG from safeer-sa.org, trimmed to 253×387, plus a 73×112 copy. See `docs/frontend/client-content.md` §1.
+- **Logo:** received. The official SVG is `docs/brand/safeer-logo-official.svg`, and the app's mark, lockup, PNG and favicons are built from it by `scripts/build-brand.mjs` (`docs/frontend/client-content.md` §1).
 - **Content collected from the current site:** figures, registration number and date, contact details, board. See `docs/frontend/client-content.md` for where each goes (admin screens) and what is still open.
 - **Content:** all real copy, figures and photos. Every `[…]` placeholder comes from fixtures or the translation files. That covers impact numbers, board bios and photos, partner logos, the governance documents, the office hours and reply time on the contact page, and the map embed.
 - **Hosting:** the Node versions offered by the Hostinger plan (see `deployment.md`).
