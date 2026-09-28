@@ -155,11 +155,11 @@ Mocked admin endpoints: **none**.
   - the 404 page
   - signed-in admin screens: overview, applications, news editor, media, settings, mail templates
   - `frame-src`: iframes to the two map hosts load with no violation; any other host is blocked
-- **Lighthouse (mobile):** `npm run lighthouse` (`scripts/lighthouse.mjs`) audits the production build over the mock API. Playwright's Chromium is attached over CDP, because `lhci`/chrome-launcher crashes on Windows on its temp-profile cleanup (EPERM). It takes the median of `LH_RUNS` (CI: 5) and writes reports to `.lighthouseci/`. Getting to target took four changes:
+- **Lighthouse (mobile):** `npm run lighthouse` (`scripts/lighthouse.mjs`) audits the production build over the mock API. Playwright's Chromium is attached over CDP, because `lhci`/chrome-launcher crashes on Windows on its temp-profile cleanup (EPERM). It takes the median of `LH_RUNS` (CI: 7) and writes reports to `.lighthouseci/`. Getting to target took four changes:
   1. **Compression** (`compression`, br/gzip) for everything the SSR server produces itself, mounted after the proxy. Until then HTML and JS went out raw.
   2. **The @font-face sheet is inlined**, with the nonce, into every HTML response (`inlineStylesheet` in `src/server/html.ts`) instead of a render-blocking `<link>`.
   3. **`index.preloadInitial: false`** (angular.json): no `modulepreload` for the initial chunks. SSR paints without JS, and the preloads competed with the document for bandwidth before first paint.
-  4. **Smaller preloads:** only the body-text face (400) is preloaded, which is the LCP text. The logo uses a 74×112 copy (`public/brand/safeer-logo-sm.png`, 3 KB instead of 16 KB); the original stays for the intro and JSON-LD.
+  4. **Smaller preloads:** only the body-text face (400) is preloaded, which is the LCP text. The logo was a 74×112 PNG copy then; it is now the official vector mark (`public/brand/safeer-mark.svg`).
 - **`app.cjs`:** a CommonJS start file for Hostinger's `lsnode.js`, which `require()`s the entry. It sets `SAFEER_SSR_LISTEN=1`, which `server.ts` checks, and imports the ESM bundle. Verified locally with `require('./app.cjs')`: `/healthz` = 200.
 - **Gzip budget script:** with `preloadInitial` off, the CSR index no longer lists the initial chunks, so `check-gzip-budget.mjs` follows the static imports of the entry scripts instead. It reports 139.8 KB, the same set as before.
 - **CI:** `ci.yml` now also runs nightly (the full matrix on **both** backends) and has a `lighthouse` job. `nightly.yml` (mock only) is gone.
@@ -474,13 +474,14 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Filter-bar chips on phones:** in `linkMode` the chips move into a bottom sheet below 480px. The partners page uses plain chip links instead. News keeps the sheet; revisit if SEO reviewers want the links visible.
 - **SSR forms and hydration:** see the hydration gotcha in §4.
 - **Admin area:** see §0.5.
-- **Lighthouse:** see §0.6. The performance score depends on the machine: the median of 5 runs passes, but single runs spread by ±4 points.
+- **Lighthouse:** see §0.6. The performance score depends on the machine: on the dev machine the median of 5 runs still ranged 85–97 per page across passes of the same build, so CI takes the median of 7 (`LH_RUNS=7`).
 - **Types:** F11 generated types are not done (see §1).
 - **Dev-seed images:** the API's dev seed stores flat-colour JPEGs for its sample assets (hero, news covers), so those render as plain grey-teal boxes. They are real images with their alt, not missing placeholders (W7); sections with no asset show the labelled `[صورة: …]` placeholder.
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
 
 ### Still needed from the client
-- **Logo:** the official SVG. `docs/safeer-logo.png` is a temporary stand-in and a launch blocker (spec §6.1).
+- **Logo:** received. The official SVG is `docs/brand/safeer-logo-official.svg`, and the app's mark, lockup, PNG and favicons are built from it by `scripts/build-brand.mjs` (`docs/frontend/client-content.md` §1).
+- **Content collected from the current site:** figures, registration number and date, contact details, board. See `docs/frontend/client-content.md` for where each goes (admin screens) and what is still open.
 - **Content:** all real copy, figures and photos. Every `[…]` placeholder comes from fixtures or the translation files. That covers impact numbers, board bios and photos, partner logos, the governance documents, the office hours and reply time on the contact page, and the map embed.
 - **Hosting:** the Node versions offered by the Hostinger plan (see `deployment.md`).
 
@@ -512,7 +513,7 @@ npm run mock-api             # standalone mock API on :3100
 
 To run the real-API suite locally, see the README ("Run e2e against the real API locally"). `node scripts/record-fixtures.mjs` re-records the public fixtures from that API.
 
-- `lighthouse`: production build → `npm run lighthouse` (`LH_RUNS=5`) → upload `.lighthouseci/`.
+- `lighthouse`: production build → `npm run lighthouse` (`LH_RUNS=7`) → upload `.lighthouseci/`.
 
 **Nightly** (cron `30 1 * * *` in `ci.yml`) and the `full-matrix` PR label set `E2E_FULL_MATRIX=1` for both e2e jobs: 6 viewports × 2 locales, each in light and dark.
 

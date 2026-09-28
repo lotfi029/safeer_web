@@ -69,7 +69,7 @@ See [`docs/frontend/deployment.md`](docs/frontend/deployment.md) §4 for the val
 |---|---|
 | **build-test** | lint → unit (app + server) → build + budgets → e2e against the mock API |
 | **e2e-real** | The same e2e suite against the real `safeer_api` at the `SAFEER_API_REF` repository variable (default `v1.0.0-rc1`), on MySQL 8 with the API's dev seed. `e2e/support/real-db.ts` seeds per-role staff and auth tokens |
-| **lighthouse** | `npm run lighthouse`, median of 5 runs. Performance ≥ 90; Accessibility, Best practices and SEO ≥ 95 |
+| **lighthouse** | `npm run lighthouse`, median of 7 runs. Performance ≥ 90; Accessibility, Best practices and SEO ≥ 95 |
 
 The full matrix (6 viewports × 2 locales × light/dark) runs on both backends nightly, and on PRs labelled
 `full-matrix`.

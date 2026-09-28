@@ -2,11 +2,13 @@ import { NgOptimizedImage } from '@angular/common';
 import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-// TODO(logo): replace with the official SVG (spec §6.1); never ship a traced SVG.
-/** A 2× copy of docs/safeer-logo.png for the largest in-app logo (56 px): 3 KB instead of 16 KB. */
-const LOGO_SRC = '/brand/safeer-logo-sm.png';
-const LOGO_WIDTH = 74;
-const LOGO_HEIGHT = 112;
+/**
+ * The official mark, vector (public/brand/safeer-mark.svg, cropped from docs/brand/safeer-logo-official.svg
+ * by scripts/build-brand.mjs). Width/height are its viewBox, for the aspect ratio only.
+ */
+const LOGO_SRC = '/brand/safeer-mark.svg';
+const LOGO_WIDTH = 642;
+const LOGO_HEIGHT = 974;
 
 /**
  * Association logo on its white "logo chip" (the ink is deep teal, so it needs a light tile on
