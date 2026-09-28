@@ -6,6 +6,51 @@ export interface InlineStylesheet {
   /** The exact `href` of the `<link rel="stylesheet">` in index.html. */
   href: string;
   css: string;
+  /**
+   * On public pages, only this part is inlined and the full sheet (`href`) loads after the first
+   * paint (`deferStylesheet`). For the @font-face sheet: the body-text faces (`bodyFontFaces`).
+   */
+  firstPaintCss?: string;
+}
+
+/** A nonce'd script running `body` after the first frame (at once in a background tab, where frames don't run). */
+function afterFirstPaint(body: string, nonce: string): string {
+  return (
+    `<script nonce="${nonce}">(()=>{let d=0;const go=()=>{if(d)return;d=1;${body}};` +
+    `document.visibilityState==='hidden'?go():requestAnimationFrame(()=>setTimeout(go,0))})()</script>`
+  );
+}
+
+/**
+ * The regular (400) @font-face rules: body text in both scripts. Headings and other weights render
+ * in the 400 face with synthetic bold until the full sheet arrives, then swap (`font-display: swap`).
+ */
+export function bodyFontFaces(css: string): string {
+  return (css.match(/@font-face\s*\{[^}]*\}/g) ?? [])
+    .filter((rule) => /font-weight:\s*400\b/.test(rule))
+    .join('');
+}
+
+/**
+ * Public pages: inlines `firstPaintCss` and loads the full sheet after the first paint, so the
+ * other ~250 KB of font faces don't compete with the first paint for bandwidth (Phase 10,
+ * Lighthouse). `<noscript>` keeps the full sheet for visitors without JavaScript.
+ */
+export function deferStylesheet(html: string, sheet: InlineStylesheet, nonce: string): string {
+  if (sheet.firstPaintCss === undefined) return inlineStylesheet(html, sheet, nonce);
+  const start = html.indexOf(`<link rel="stylesheet" href="${sheet.href}"`);
+  if (start < 0) return html;
+  const end = html.indexOf('>', start);
+  const css = sheet.firstPaintCss.split('</').join('<\\/');
+  const href = JSON.stringify(sheet.href);
+  const load = afterFirstPaint(
+    `const l=document.createElement('link');l.rel='stylesheet';l.href=${href};document.head.append(l)`,
+    nonce,
+  );
+  return (
+    `${html.slice(0, start)}<style nonce="${nonce}">${css}</style>` +
+    `<noscript><link rel="stylesheet" href="${sheet.href}"></noscript>${load}${html.slice(end + 1)}`
+  );
 }
 
 /**
@@ -44,10 +89,10 @@ export function deferMainScript(html: string, nonce: string): string {
   const match = MAIN_SCRIPT.exec(html);
   if (!match) return html;
   const src = JSON.stringify(match[1]);
-  const loader =
-    `<script nonce="${nonce}">(()=>{let d=0;const go=()=>{if(d)return;d=1;` +
-    `const s=document.createElement('script');s.type='module';s.src=${src};document.body.append(s)};` +
-    `document.visibilityState==='hidden'?go():requestAnimationFrame(()=>setTimeout(go,0))})()</script>`;
+  const loader = afterFirstPaint(
+    `const s=document.createElement('script');s.type='module';s.src=${src};document.body.append(s)`,
+    nonce,
+  );
   const deferred = html.slice(0, match.index) + loader + html.slice(match.index + match[0].length);
   // The route's lazy chunks, which Angular SSR preloads: the deferred bundle imports them itself.
   return deferred.replace(/<link rel="modulepreload" href="[^"]+\.js"[^>]*>/g, '');
@@ -56,7 +101,8 @@ export function deferMainScript(html: string, nonce: string): string {
 /**
  * Post-processes a response from the Angular engine. For HTML (SSR output and the CSR shell served to
  * RenderMode.Client routes alike) it swaps the nonce placeholder, inlines `inline` (the @font-face
- * sheet, Phase 10), defers the app bundle on public pages (`deferMainScript`), and adds CSP + cache
+ * sheet, Phase 10: all of it on admin/portal, only `firstPaintCss` on public pages with the rest after
+ * the first paint), defers the app bundle on public pages (`deferMainScript`), and adds CSP + cache
  * headers.
  */
 export async function finalizeAngularResponse(
@@ -72,8 +118,11 @@ export async function finalizeAngularResponse(
     return response;
   }
   let html = injectNonce(await response.text(), nonce);
-  if (inline) html = inlineStylesheet(html, inline, nonce);
-  if (!isPrivateArea(url.split('?')[0])) html = deferMainScript(html, nonce);
+  const isPublic = !isPrivateArea(url.split('?')[0]);
+  if (inline) {
+    html = isPublic ? deferStylesheet(html, inline, nonce) : inlineStylesheet(html, inline, nonce);
+  }
+  if (isPublic) html = deferMainScript(html, nonce);
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.set(cspHeaderName(isProduction), buildCsp(nonce));

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { compactCss, deferMainScript, finalizeAngularResponse, inlineStylesheet } from './html';
+import {
+  bodyFontFaces,
+  compactCss,
+  deferMainScript,
+  deferStylesheet,
+  finalizeAngularResponse,
+  inlineStylesheet,
+} from './html';
 
 const page =
   '<html><body><app-root ngcspnonce="__CSP_NONCE__"></app-root><script nonce="__CSP_NONCE__"></script></body></html>';
@@ -122,5 +129,49 @@ describe('deferMainScript (public pages paint before the bundle loads)', () => {
     expect(await render('/ar/news')).not.toContain('<script src="main-');
     expect(await render('/ar/admin/applications')).toContain('<script src="main-ABC123.js"');
     expect(await render('/en/portal?x=1')).toContain('<script src="main-ABC123.js"');
+  });
+});
+
+describe('font faces on public pages (body faces first, the rest after the first paint)', () => {
+  const css = compactCss(
+    [400, 700]
+      .map(
+        (w) =>
+          `@font-face {\n  font-family: 'X';\n  font-weight: ${w};\n  src: url('/fonts/x-${w}.woff2');\n}`,
+      )
+      .join('\n'),
+  );
+  const sheet = { href: '/fonts/fonts.css', css, firstPaintCss: bodyFontFaces(css) };
+  const page =
+    '<head><link rel="stylesheet" href="/fonts/fonts.css" data-beasties-skip=""></head><body>' +
+    '<script src="main-A.js" type="module" nonce="N"></script></body>';
+
+  it('keeps only the 400 rules for the first paint', () => {
+    expect(sheet.firstPaintCss).toContain('x-400');
+    expect(sheet.firstPaintCss).not.toContain('x-700');
+  });
+
+  it('inlines the body faces, loads the full sheet after the first paint, keeps a noscript fallback', () => {
+    const html = deferStylesheet(page, sheet, 'N');
+    expect(html).toContain('<style nonce="N">@font-face');
+    expect(html).not.toMatch(/<style nonce="N">[^<]*x-700/);
+    expect(html).toContain('<noscript><link rel="stylesheet" href="/fonts/fonts.css"></noscript>');
+    expect(html).toContain('l.href="/fonts/fonts.css"');
+    expect(html).not.toContain('data-beasties-skip');
+  });
+
+  it('admin/portal still get every face inline; public pages only the body faces', async () => {
+    const render = (url: string) =>
+      finalizeAngularResponse(
+        new Response(page, { headers: { 'content-type': 'text/html' } }),
+        url,
+        'N',
+        true,
+        sheet,
+      ).then((r) => r.text());
+    expect(await render('/ar/admin')).toContain('x-700');
+    const pub = await render('/ar');
+    expect(pub).not.toMatch(/<style nonce="N">[^<]*x-700/);
+    expect(pub).toContain('<noscript>');
   });
 });
