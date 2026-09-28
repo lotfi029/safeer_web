@@ -476,7 +476,7 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Filter-bar chips on phones:** in `linkMode` the chips move into a bottom sheet below 480px. The partners page uses plain chip links instead. News keeps the sheet; revisit if SEO reviewers want the links visible.
 - **SSR forms and hydration:** see the hydration gotcha in §4.
 - **Admin area:** see §0.5.
-- **Lighthouse:** see §0.6. CI takes the median of 7 (`LH_RUNS=7`) and is **report-only** for now (`LH_REPORT_ONLY=1`): below-target scores are a warning annotation and a table in the job summary, and the reports are uploaded as the `lighthouse` artifact. Remove `LH_REPORT_ONLY` from `ci.yml` once CI is at target.
+- **Lighthouse:** see §0.6. CI takes the median of 7 (`LH_RUNS=7`) and is **blocking**. Scores and timings go to the job summary, and the reports are uploaded as the `lighthouse` artifact. CI scores after PR #15: 99/99/99 (performance), FCP ~1.2–1.4 s, LCP ~1.8–2.0 s, CLS ≤ 0.016. `LH_REPORT_ONLY=1` turns failures into a warning if ever needed.
 - **Types:** F11 generated types are not done (see §1).
 - **Dev-seed images:** the API's dev seed stores flat-colour JPEGs for its sample assets (hero, news covers), so those render as plain grey-teal boxes. They are real images with their alt, not missing placeholders (W7); sections with no asset show the labelled `[صورة: …]` placeholder.
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
