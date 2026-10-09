@@ -1,4 +1,5 @@
 /**
+ * Non-Docker option (production runs the Docker image; docs/frontend/deployment.md).
  * PM2 process file for the Hostinger Node.js app (sessions plan R11).
  *   pm2 start ecosystem.config.cjs --env production
  * One instance in fork mode: the SSR server is stateless but light, and Hostinger plans cap memory.

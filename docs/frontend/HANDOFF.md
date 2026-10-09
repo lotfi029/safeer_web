@@ -13,6 +13,7 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
   - unit tests: 53 files, 225 tests
   - server + script tests: 113
   - e2e PR matrix (390/1440 × ar/en, + dark at 1440): mock **283/283**, real API **276/276**
+  - after the VPS deploy fixes (§0.7): unit 230, server + script 141, e2e mock **287/287**, real API **280/280** (local run against safeer_api `chore/vps-deploy` on mysql 8.4)
   - e2e full matrix (6 viewports × 2 locales × light/dark): mock **483/483**, real API **476/476**
   - 7 tests are `@mock-only` (§0.3)
   - initial bundle: **139.8 KB gzip** (limit 150; `check-gzip-budget.mjs` now follows static imports, §0.6)
@@ -85,9 +86,9 @@ Mocked admin endpoints: **none**.
 ### 0.4 Backend follow-ups (found in Stage 2; not fixed here)
 
 - **BF-1** `POST /newsletter` answers a bare `{ ok: true }` in rc1, but `CONTRACT-NOTES.md` documents `{ ok: true, pendingConfirmation: true }`. The form now treats any `ok` as "check your email" (it is always double opt-in), and the mock matches rc1.
-- **BF-2** Two `POST /applications` at the same moment can deadlock in MySQL ("Deadlock found when trying to get lock", seen in CI with 2 workers): the duplicate-check locking read and the yearly reference counter take locks in different orders, and rc1 answers the loser with a 500 "Database error" instead of retrying the transaction. Suggested fix in the API: retry the create transaction on ER_LOCK_DEADLOCK. The e2e setup (`applicationIn`) retries a 500 meanwhile.
+- **BF-2** **Fixed in the API on `chore/vps-deploy` (lotfi029/safeer_api#7, S1):** it locks the counter row first and retries a deadlock victim's transaction. Until the frontend pins a tag that has it, the note below still describes rc1. Two `POST /applications` at the same moment can deadlock in MySQL ("Deadlock found when trying to get lock", seen in CI with 2 workers): the duplicate-check locking read and the yearly reference counter take locks in different orders, and rc1 answers the loser with a 500 "Database error" instead of retrying the transaction. Suggested fix in the API: retry the create transaction on ER_LOCK_DEADLOCK. The e2e setup (`applicationIn`) retries a 500 meanwhile.
 - **BF-3** (docs only) `CONTRACT-NOTES.md` lists 10 reserved post slugs; the API's `RESERVED_POST_SLUGS` has 12 (`categories`, `category` too). The editor uses all 12.
-- **BF-4** `main.ts` calls `app.listen(PORT)` with no host, so the API listens on every interface. The deployment needs it on loopback only: it trusts one proxy hop and rate-limits by `X-Forwarded-For`, which a client could spoof if it reached the API directly. Suggested fix: a `HOST` env variable defaulting to `127.0.0.1`. Until then, `docs/frontend/deployment.md` §1 says to firewall the port or keep the API off any public domain.
+- **BF-4** **Fixed in the API on `chore/vps-deploy` (lotfi029/safeer_api#7):** `HOST` defaults to `127.0.0.1` (and `TRUST_PROXY` is configurable). In the Docker stack the API publishes no port at all. History: `main.ts` called `app.listen(PORT)` with no host, so the API listens on every interface. The deployment needs it on loopback only: it trusts one proxy hop and rate-limits by `X-Forwarded-For`, which a client could spoof if it reached the API directly. Suggested fix: a `HOST` env variable defaulting to `127.0.0.1`. The firewall workaround this note used to point to is no longer needed.
 - **BF-5** (docs only) `UNSUPPORTED_PROVIDER` is listed as an error code but rc1 never throws it: `provider` is a DTO enum, so a wrong value is a plain 400 `VALIDATION_FAILED`. The UI keeps a message for it anyway.
 
 ### 0.5 Admin area (as built)
@@ -165,11 +166,24 @@ Mocked admin endpoints: **none**.
 - **`app.cjs`:** a CommonJS start file for Hostinger's `lsnode.js`, which `require()`s the entry. It sets `SAFEER_SSR_LISTEN=1`, which `server.ts` checks, and imports the ESM bundle. Verified locally with `require('./app.cjs')`: `/healthz` = 200.
 - **Gzip budget script:** with `preloadInitial` off, the CSR index no longer lists the initial chunks, so `check-gzip-budget.mjs` follows the static imports of the entry scripts instead. It reports 139.8 KB, the same set as before.
 - **CI:** `ci.yml` now also runs nightly (the full matrix on **both** backends) and has a `lighthouse` job. `nightly.yml` (mock only) is gone.
-- **Deployment runbook:** `docs/frontend/deployment.md` (topology, env and the values that must match the API's, `app.cjs` vs PM2, deploy order, rollback, verification, backups, monitoring, client-owed items).
+- **Deployment runbook:** `docs/frontend/deployment.md`. Since §0.7 it covers the VPS Docker topology; the stack itself lives in safeer_api `deploy/` and `docs/backend/DEPLOYMENT-VPS.md`, and `app.cjs` / PM2 are a non-Docker appendix.
 
 ---
 
-## 1. As-built architecture
+### 0.7 VPS deploy fixes (`fix/vps-deploy`, `docs/safeer-vps-deploy-review.md`)
+
+| Item | Fix | Test |
+|---|---|---|
+| B2 | SSR called the API through its own public domain (Angular made the URLs absolute, and `InternalApiBackend` only rewrote relative ones): staging 503, a hairpin after cutover. Absolute URLs on the site's own hosts now go to `API_INTERNAL_URL` too. | unit `interceptors.spec` (internalApiUrl); e2e `internal-api.spec` (Host `safeer.test` / `www.safeer.test`, 503 before), `transfer-cache.spec` (W9 unchanged) |
+| S2 | `HOST` (default `127.0.0.1`, validated) passed to `app.listen`; the log prints the real address | server `env.test`; e2e `bind-host.spec` |
+| S5 | `API_INTERNAL_URL` defaults and `.env.example` use the API's port 3900; `.env.example` documents `HOST` | server `env.test` |
+| S3 | `npm audit fix`; sharp 0.35.5; leftovers under *Known issues* | full checks |
+| S8 | The proxy set `timeout` as well as `proxyTimeout`. httpxy applies `timeout` on the visitor's socket per request, so keep-alive connections leaked a `timeout` listener per request (and the socket died before the 504). Only `proxyTimeout` remains. | server `proxy-sockets.test` (501 listeners → ≤ 1; 504 kept); `scripts/proxy-load.mjs` (9,000 requests: warning + RSS +28 MB before, none + +3 MB after) |
+| Docker | `Dockerfile` (dist only, no `node_modules`, `USER node`, `HOST=0.0.0.0`), `.dockerignore`, CI `image` job (`.github/scripts/check-image.sh`), `image.yml` → `ghcr.io/lotfi029/safeer-web` on `v*` tags | the CI image check; locally the whole safeer_api `deploy/` stack + this image behind caddy:2 |
+| Docs | `deployment.md` → VPS Docker topology | — |
+
+Not done here: `SAFEER_API_REF` → `v1.0.0` and the `docs/api/` refresh wait for the API tag (Prompt 2 item 8). CI's `e2e-real` still runs rc1 on mysql:8.0; move it to 8.4 with that bump.
+
 
 **Stack**
 - Angular 22.2: standalone, zoneless, OnPush everywhere, signal inputs.
@@ -303,7 +317,7 @@ Everything is in `src/app/shared/ui/`. Each component is standalone and OnPush, 
 | mock (dev only) | Answers from the in-app mock backend |
 | `serverForward` (SSR only) | XFF + Accept-Language from the request, 5 s timeout |
 
-**Server-side API base (W9).** Requests stay relative (`/api/v1/…`) through every interceptor. On the server, `InternalApiBackend` (`core/http/internal-api.backend.ts`, provided as `HttpBackend` in `app.config.server.ts`) rewrites them to `API_INTERNAL_URL` *below* Angular's HTTP transfer cache. So the server and the browser key the cache on the same URL: the browser reuses the SSR responses (no `/api/v1` request after hydration), and the internal origin never reaches the page. Don't reintroduce a URL-rewriting interceptor; `e2e/specs/transfer-cache.spec.ts` guards this.
+**Server-side API base (W9).** Requests stay relative (`/api/v1/…`) through every interceptor. On the server, `InternalApiBackend` (`core/http/internal-api.backend.ts`, provided as `HttpBackend` in `app.config.server.ts`) rewrites them to `API_INTERNAL_URL` *below* Angular's HTTP transfer cache. So the server and the browser key the cache on the same URL: the browser reuses the SSR responses (no `/api/v1` request after hydration), and the internal origin never reaches the page. Don't reintroduce a URL-rewriting interceptor; `e2e/specs/transfer-cache.spec.ts` guards this. **B2:** Angular's server platform makes the URL absolute on the request's host (`relativeUrlsTransformerInterceptorFn`, a root interceptor that runs after the app's interceptors and the transfer cache), so the backend gets `https://<host>/api/v1/…`. `InternalApiBackend` rewrites that too when the host is one of `SSR_PUBLIC_HOSTS` (`allowedHostsFor(PUBLIC_SITE_URL)`). `e2e/specs/internal-api.spec.ts` guards it with a third SSR server whose `PUBLIC_SITE_URL` is `https://safeer.test` (no DNS), calling the API through a recorder (`e2e/support/recording-api.mjs`).
 
 The HTTP transfer cache carries only anonymous public GETs.
 
@@ -488,7 +502,7 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Logo:** received. The official SVG is `docs/brand/safeer-logo-official.svg`, and the app's mark, lockup, PNG and favicons are built from it by `scripts/build-brand.mjs` (`docs/frontend/client-content.md` §1).
 - **Content collected from the current site:** figures, registration number and date, contact details, board. See `docs/frontend/client-content.md` for where each goes (admin screens) and what is still open.
 - **Content:** all real copy, figures and photos. Every `[…]` placeholder comes from fixtures or the translation files. That covers impact numbers, board bios and photos, partner logos, the governance documents, the office hours and reply time on the contact page, and the map embed.
-- **Hosting:** the Node versions offered by the Hostinger plan (see `deployment.md`).
+- **Hosting:** the VPS (Docker behind the edge Caddy) is chosen. Still owed: DNS for `safeer-sa.org` (staging name first, then apex + `www`), SMTP credentials, the real first admin email (see safeer_api `docs/safeer-vps-deploy-review.md` B4).
 
 ---
 
