@@ -1,3 +1,5 @@
+import { isIP } from 'node:net';
+
 /**
  * Server environment: loads `.env` (if present) and validates the variables the SSR server needs.
  * Production fails fast (and fails closed for host validation); development falls back to local defaults.
@@ -9,6 +11,8 @@ export interface ServerEnv {
   /** Public origin of this site, e.g. `https://safeer-sa.org`. */
   readonly publicSiteUrl: string;
   readonly port: number;
+  /** Address `app.listen` binds (S2): `127.0.0.1` by default, `0.0.0.0` in the Docker image. */
+  readonly host: string;
   /** Express `trust proxy` hop count (number of reverse proxies in front of this server). */
   readonly trustProxy: number;
   /** Hostnames Angular SSR accepts in `Host` / `X-Forwarded-Host`. */
@@ -19,6 +23,7 @@ const DEV_DEFAULTS = {
   API_INTERNAL_URL: 'http://127.0.0.1:3000',
   PUBLIC_SITE_URL: 'http://localhost:4000',
   PORT: '4000',
+  HOST: '127.0.0.1',
   TRUST_PROXY: '1',
 } as const;
 
@@ -55,6 +60,24 @@ function parseIntInRange(name: string, value: string, min: number, max: number):
     throw new EnvError(`${name} must be between ${min} and ${max}, got ${n}`);
   }
   return n;
+}
+
+const HOSTNAME =
+  /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+
+/** A bind address: an IPv4/IPv6 literal or a hostname. No scheme, port or brackets. */
+function parseHost(name: string, value: string): string {
+  if (isIP(value) || HOSTNAME.test(value)) {
+    return value;
+  }
+  throw new EnvError(
+    `${name} must be an IP address or a hostname (no scheme or port), got "${value}"`,
+  );
+}
+
+/** `http://host:port` for log lines; IPv6 literals in brackets. */
+export function listenUrl(host: string, port: number): string {
+  return `http://${isIP(host) === 6 ? `[${host}]` : host}:${port}`;
 }
 
 /** Apex + `www` of the public host, plus localhost outside production. */
@@ -96,6 +119,7 @@ export function parseEnv(raw: NodeJS.ProcessEnv, strict: boolean): ServerEnv {
     apiInternalUrl,
     publicSiteUrl,
     port: parseIntInRange('PORT', read('PORT', false), 1, 65535),
+    host: parseHost('HOST', read('HOST', false)),
     trustProxy: parseIntInRange('TRUST_PROXY', read('TRUST_PROXY', false), 0, 10),
     allowedHosts: allowedHostsFor(publicSiteUrl, isProduction),
   };

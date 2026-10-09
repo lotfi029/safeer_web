@@ -18,6 +18,7 @@ const executablePath = process.env['PW_CHROMIUM_PATH'] || undefined;
 const ssrEnv = (port: number, api: string, publicSiteUrl = `http://localhost:${port}`) => ({
   NODE_ENV: 'production',
   PORT: String(port),
+  HOST: '127.0.0.1',
   API_INTERNAL_URL: api,
   PUBLIC_SITE_URL: publicSiteUrl,
   TRUST_PROXY: '1',

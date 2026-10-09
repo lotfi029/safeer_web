@@ -11,7 +11,7 @@ import type { Server } from 'node:http';
 import { join } from 'node:path';
 import type { SsrRequestContext } from './app/core/http/ssr-context';
 import { staticCacheControl } from './server/cache-headers';
-import { loadDotEnv, parseEnv } from './server/env';
+import { listenUrl, loadDotEnv, parseEnv } from './server/env';
 import {
   bodyFontFaces,
   compactCss,
@@ -132,11 +132,12 @@ app.use(serverErrorHandler(env.isProduction));
 
 /** Start the server when run directly or under PM2; shut down gracefully on SIGTERM (R11). */
 if (isEntryPoint) {
-  const server: Server = app.listen(env.port, (error) => {
+  // S2: HOST (default 127.0.0.1) keeps a bare-host server behind its proxy; Docker sets 0.0.0.0.
+  const server: Server = app.listen(env.port, env.host, (error) => {
     if (error) {
       throw error;
     }
-    console.log(`safeer_web SSR listening on http://localhost:${env.port}`);
+    console.log(`safeer_web SSR listening on ${listenUrl(env.host, env.port)}`);
   });
 
   const shutdown = (signal: string) => {

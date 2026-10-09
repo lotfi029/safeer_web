@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allowedHostsFor, EnvError, parseEnv } from './env';
+import { allowedHostsFor, EnvError, listenUrl, parseEnv } from './env';
 
 describe('parseEnv', () => {
   it('uses local defaults in development', () => {
@@ -8,6 +8,7 @@ describe('parseEnv', () => {
     expect(env.apiInternalUrl).toBe('http://127.0.0.1:3000');
     expect(env.port).toBe(4000);
     expect(env.trustProxy).toBe(1);
+    expect(env.host).toBe('127.0.0.1');
     expect(env.allowedHosts).toContain('localhost');
   });
 
@@ -40,6 +41,33 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ PORT: 'abc' }, true)).toThrow(/PORT/);
     expect(() => parseEnv({ API_INTERNAL_URL: 'ftp://x' }, true)).toThrow(/http or https/);
     expect(() => parseEnv({ TRUST_PROXY: '99' }, true)).toThrow(/TRUST_PROXY/);
+  });
+});
+
+describe('HOST (S2)', () => {
+  it('defaults to loopback, also when empty', () => {
+    expect(parseEnv({}, true).host).toBe('127.0.0.1');
+    expect(parseEnv({ HOST: '  ' }, true).host).toBe('127.0.0.1');
+  });
+
+  it.each(['0.0.0.0', '127.0.0.1', '::', '::1', 'localhost', 'safeer-web', 'web.internal'])(
+    'accepts %s',
+    (host) => {
+      expect(parseEnv({ HOST: host }, true).host).toBe(host);
+    },
+  );
+
+  it.each(['http://0.0.0.0', '0.0.0.0:4000', '[::]', 'bad host', '-web', 'a..b'])(
+    'refuses %s',
+    (host) => {
+      expect(() => parseEnv({ HOST: host }, true)).toThrow(/HOST/);
+    },
+  );
+
+  it('formats the listen URL, bracketing IPv6', () => {
+    expect(listenUrl('0.0.0.0', 4000)).toBe('http://0.0.0.0:4000');
+    expect(listenUrl('::', 4000)).toBe('http://[::]:4000');
+    expect(listenUrl('localhost', 4000)).toBe('http://localhost:4000');
   });
 });
 
