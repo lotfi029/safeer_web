@@ -72,4 +72,57 @@ describe('internalApiUrl (W9: the rewrite below the transfer cache)', () => {
     expect(internalApiUrl('/api/v10/x', base)).toBe('/api/v10/x');
     expect(internalApiUrl('/api/v1/site', '/api/v1')).toBe('/api/v1/site');
   });
+
+  describe("absolute URLs on the site's own host (B2)", () => {
+    const hosts = ['safeer-sa.org', 'www.safeer-sa.org'];
+
+    it('rewrites them, keeping the path and query', () => {
+      expect(internalApiUrl('https://safeer-sa.org/api/v1/site?lang=ar', base, hosts)).toBe(
+        'http://127.0.0.1:3000/api/v1/site?lang=ar',
+      );
+      expect(internalApiUrl('https://www.safeer-sa.org/api/v1/news/x', base, hosts)).toBe(
+        'http://127.0.0.1:3000/api/v1/news/x',
+      );
+      expect(internalApiUrl('https://safeer-sa.org/api/v1?x=1', base, hosts)).toBe(
+        'http://127.0.0.1:3000/api/v1?x=1',
+      );
+    });
+
+    it('matches the host case-insensitively and ignores the port and scheme', () => {
+      expect(internalApiUrl('http://SAFEER-SA.org:8443/api/v1/home', base, hosts)).toBe(
+        'http://127.0.0.1:3000/api/v1/home',
+      );
+    });
+
+    it('leaves foreign hosts, non-API paths and look-alikes unchanged', () => {
+      for (const url of [
+        'https://evil.example/api/v1/site',
+        'https://safeer-sa.org.evil.example/api/v1/site',
+        'https://safeer-sa.org/api/v10/site',
+        'https://safeer-sa.org/files/abc',
+        'https://safeer-sa.org/ar',
+        'ftp://safeer-sa.org/api/v1/site',
+      ]) {
+        expect(internalApiUrl(url, base, hosts), url).toBe(url);
+      }
+    });
+
+    it('rewrites nothing without public hosts, or in the browser', () => {
+      expect(internalApiUrl('https://safeer-sa.org/api/v1/site', base)).toBe(
+        'https://safeer-sa.org/api/v1/site',
+      );
+      expect(internalApiUrl('https://safeer-sa.org/api/v1/site', '/api/v1', hosts)).toBe(
+        'https://safeer-sa.org/api/v1/site',
+      );
+    });
+
+    it('localhost counts only when it is an allowed host (outside production)', () => {
+      expect(internalApiUrl('http://localhost:4100/api/v1/site', base, ['localhost'])).toBe(
+        'http://127.0.0.1:3000/api/v1/site',
+      );
+      expect(internalApiUrl('http://localhost:4100/api/v1/site', base, hosts)).toBe(
+        'http://localhost:4100/api/v1/site',
+      );
+    });
+  });
 });
