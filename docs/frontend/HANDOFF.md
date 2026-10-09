@@ -480,6 +480,9 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Types:** F11 generated types are not done (see §1).
 - **Dev-seed images:** the API's dev seed stores flat-colour JPEGs for its sample assets (hero, news covers), so those render as plain grey-teal boxes. They are real images with their alt, not missing placeholders (W7); sections with no asset show the labelled `[صورة: …]` placeholder.
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
+- **`npm audit` (S3, 2026-10-09):** `npm audit fix` (no `--force`) plus sharp 0.35.4 → **0.35.5** (pinned; the librsvg CVE). What remains, and why it stays:
+  - *Runtime, accepted:* `braces` (high, stack exhaustion through deeply nested patterns) via `http-proxy-middleware` → `micromatch`. No fixed `braces` exists; npm's only "fix" is `http-proxy-middleware@0.2.0`. It isn't reachable here: the only patterns are the static `PROXIED_PATHS` (`/api/**`, `/files/**`, `src/server/proxy.ts`), never request input. It's bundled into `server.mjs`, so it ships in the image. Re-check when a fixed `braces` or `micromatch` lands.
+  - *Dev only:* `basic-ftp` and `extract-zip` via `lighthouse` → `puppeteer-core` (high). The fix is `lighthouse` 13 (major); leave it until after launch. Nothing from it is in the image.
 
 ### Still needed from the client
 - **Logo:** received. The official SVG is `docs/brand/safeer-logo-official.svg`, and the app's mark, lockup, PNG and favicons are built from it by `scripts/build-brand.mjs` (`docs/frontend/client-content.md` §1).
