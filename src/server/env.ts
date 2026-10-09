@@ -6,7 +6,7 @@ import { isIP } from 'node:net';
  */
 export interface ServerEnv {
   readonly isProduction: boolean;
-  /** Origin of the NestJS API, e.g. `http://127.0.0.1:3000` (no trailing slash, no `/api/v1`). */
+  /** Origin of the NestJS API, e.g. `http://127.0.0.1:3900` (no trailing slash, no `/api/v1`). */
   readonly apiInternalUrl: string;
   /** Public origin of this site, e.g. `https://safeer-sa.org`. */
   readonly publicSiteUrl: string;
@@ -20,7 +20,7 @@ export interface ServerEnv {
 }
 
 const DEV_DEFAULTS = {
-  API_INTERNAL_URL: 'http://127.0.0.1:3000',
+  API_INTERNAL_URL: 'http://127.0.0.1:3900',
   PUBLIC_SITE_URL: 'http://localhost:4000',
   PORT: '4000',
   HOST: '127.0.0.1',

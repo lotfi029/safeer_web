@@ -58,13 +58,13 @@ describe('API interceptors', () => {
 });
 
 describe('internalApiUrl (W9: the rewrite below the transfer cache)', () => {
-  const base = 'http://127.0.0.1:3000/api/v1';
+  const base = 'http://127.0.0.1:3900/api/v1';
 
   it('sends API URLs to the internal base on the server', () => {
     expect(internalApiUrl('/api/v1/site?lang=ar', base)).toBe(
-      'http://127.0.0.1:3000/api/v1/site?lang=ar',
+      'http://127.0.0.1:3900/api/v1/site?lang=ar',
     );
-    expect(internalApiUrl('/api/v1?x=1', base)).toBe('http://127.0.0.1:3000/api/v1?x=1');
+    expect(internalApiUrl('/api/v1?x=1', base)).toBe('http://127.0.0.1:3900/api/v1?x=1');
   });
 
   it('leaves other URLs, and everything in the browser, unchanged', () => {
@@ -78,19 +78,19 @@ describe('internalApiUrl (W9: the rewrite below the transfer cache)', () => {
 
     it('rewrites them, keeping the path and query', () => {
       expect(internalApiUrl('https://safeer-sa.org/api/v1/site?lang=ar', base, hosts)).toBe(
-        'http://127.0.0.1:3000/api/v1/site?lang=ar',
+        'http://127.0.0.1:3900/api/v1/site?lang=ar',
       );
       expect(internalApiUrl('https://www.safeer-sa.org/api/v1/news/x', base, hosts)).toBe(
-        'http://127.0.0.1:3000/api/v1/news/x',
+        'http://127.0.0.1:3900/api/v1/news/x',
       );
       expect(internalApiUrl('https://safeer-sa.org/api/v1?x=1', base, hosts)).toBe(
-        'http://127.0.0.1:3000/api/v1?x=1',
+        'http://127.0.0.1:3900/api/v1?x=1',
       );
     });
 
     it('matches the host case-insensitively and ignores the port and scheme', () => {
       expect(internalApiUrl('http://SAFEER-SA.org:8443/api/v1/home', base, hosts)).toBe(
-        'http://127.0.0.1:3000/api/v1/home',
+        'http://127.0.0.1:3900/api/v1/home',
       );
     });
 
@@ -118,7 +118,7 @@ describe('internalApiUrl (W9: the rewrite below the transfer cache)', () => {
 
     it('localhost counts only when it is an allowed host (outside production)', () => {
       expect(internalApiUrl('http://localhost:4100/api/v1/site', base, ['localhost'])).toBe(
-        'http://127.0.0.1:3000/api/v1/site',
+        'http://127.0.0.1:3900/api/v1/site',
       );
       expect(internalApiUrl('http://localhost:4100/api/v1/site', base, hosts)).toBe(
         'http://localhost:4100/api/v1/site',

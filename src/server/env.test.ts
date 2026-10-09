@@ -5,7 +5,7 @@ describe('parseEnv', () => {
   it('uses local defaults in development', () => {
     const env = parseEnv({}, true);
     expect(env.isProduction).toBe(false);
-    expect(env.apiInternalUrl).toBe('http://127.0.0.1:3000');
+    expect(env.apiInternalUrl).toBe('http://127.0.0.1:3900');
     expect(env.port).toBe(4000);
     expect(env.trustProxy).toBe(1);
     expect(env.host).toBe('127.0.0.1');
@@ -15,7 +15,7 @@ describe('parseEnv', () => {
   it('fails fast in production when required variables are missing (R5 fail closed)', () => {
     expect(() => parseEnv({ NODE_ENV: 'production' }, true)).toThrow(EnvError);
     expect(() =>
-      parseEnv({ NODE_ENV: 'production', API_INTERNAL_URL: 'http://127.0.0.1:3000' }, true),
+      parseEnv({ NODE_ENV: 'production', API_INTERNAL_URL: 'http://127.0.0.1:3900' }, true),
     ).toThrow(/PUBLIC_SITE_URL/);
   });
 
@@ -27,14 +27,14 @@ describe('parseEnv', () => {
     const env = parseEnv(
       {
         NODE_ENV: 'production',
-        API_INTERNAL_URL: 'http://127.0.0.1:3000/',
+        API_INTERNAL_URL: 'http://127.0.0.1:3900/',
         PUBLIC_SITE_URL: 'https://safeer-sa.org/ar',
         PORT: '8080',
         TRUST_PROXY: '2',
       },
       true,
     );
-    expect(env.apiInternalUrl).toBe('http://127.0.0.1:3000');
+    expect(env.apiInternalUrl).toBe('http://127.0.0.1:3900');
     expect(env.publicSiteUrl).toBe('https://safeer-sa.org');
     expect(env.port).toBe(8080);
     expect(env.trustProxy).toBe(2);

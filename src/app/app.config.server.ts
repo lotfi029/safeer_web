@@ -10,7 +10,7 @@ import { allowedHostsFor } from '../server/env';
 
 /** SSR calls the API directly on the internal network, not through the public proxy. */
 function internalApiBase(): string {
-  const origin = (process.env['API_INTERNAL_URL'] ?? 'http://127.0.0.1:3000').replace(/\/+$/, '');
+  const origin = (process.env['API_INTERNAL_URL'] ?? 'http://127.0.0.1:3900').replace(/\/+$/, '');
   return `${origin}${API_PREFIX}`;
 }
 
