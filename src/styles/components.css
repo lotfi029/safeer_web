@@ -120,7 +120,8 @@
     min-block-size: 44px;
     padding-inline: 4px;
     background: transparent;
-    color: var(--secondary);
+    /* AA on card, surface and raise (plain --secondary is 4.2–4.4:1 on the tinted ones). */
+    color: var(--secondary-text);
   }
 
   .btn-link:hover {

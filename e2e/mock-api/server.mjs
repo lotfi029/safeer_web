@@ -21,9 +21,9 @@ const port = Number(process.env.MOCK_API_PORT ?? 3100);
 const log = [];
 let backend = createMockBackend(fixtures);
 
-// 1×1 transparent PNG for /files/* requests.
+// A small, valid PNG (4×3, the band-soft tint) for /files/* requests.
 const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWM4+ewJHDHg5AAAWV8e5TUzCGkAAAAASUVORK5CYII=',
   'base64',
 );
 

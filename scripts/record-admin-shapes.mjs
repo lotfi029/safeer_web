@@ -28,7 +28,54 @@ export const ADMIN_SHAPES = {
   messages: '/admin/messages?limit=5',
   message: '/admin/messages/{message}',
   newsletter: '/admin/newsletter?limit=5',
+  // Phase 8: content (every CRUD list shares the kernel's paged shape).
+  workAreas: '/admin/work-areas?limit=5',
+  workAreaItems: '/admin/work-area-items?limit=5',
+  board: '/admin/board?limit=5',
+  testimonials: '/admin/testimonials?limit=5',
+  themes: '/admin/testimonial-themes?limit=5',
+  partners: '/admin/partners?limit=5',
+  docCategories: '/admin/doc-categories?limit=5',
+  documents: '/admin/documents?limit=5',
+  stats: '/admin/stats?limit=5',
+  aboutItems: '/admin/about-items?limit=5',
+  pages: '/admin/pages?limit=5',
+  pageSections: '/admin/page-sections?limit=5',
+  news: '/admin/news?limit=5',
+  newsCategories: '/admin/news-categories?limit=5',
+  media: '/admin/media?limit=5',
 };
+
+/**
+ * Content collections whose rows (values, not just shapes) seed the mock's admin content state
+ * (`--content` → mocks/fixtures/adminContent.json). Rows made by e2e runs are left out.
+ */
+export const ADMIN_CONTENT = [
+  'work-areas',
+  'work-area-items',
+  'board',
+  'testimonials',
+  'testimonial-themes',
+  'partners',
+  'doc-categories',
+  'documents',
+  'stats',
+  'about-items',
+  'pages',
+  'page-sections',
+  'news',
+  'news-categories',
+  'media',
+];
+
+/** A row an e2e run created (seeded names/emails, contact-form testimonials). */
+export function isE2eRow(row) {
+  if (row.source === 'contact_form') return true;
+  return Object.values(row).some(
+    (v) =>
+      typeof v === 'string' && /(^E2E |^Sender |@e2e\.invalid|@example\.invalid|^\[E2E)/.test(v),
+  );
+}
 
 /**
  * The shape of a JSON value: objects keep their keys, arrays the union of their elements' shapes
@@ -140,6 +187,23 @@ async function record(api, admin, out, only) {
   }
   writeFileSync(out, `${JSON.stringify(shapes, null, 2)}\n`);
   console.log(`wrote ${out}`);
+
+  if (process.argv.includes('--content')) {
+    const content = {
+      _source: 'Recorded from safeer_api admin lists by scripts/record-admin-shapes.mjs --content',
+    };
+    for (const endpoint of ADMIN_CONTENT) {
+      const rows = [];
+      for (let page = 1; page <= 20; page++) {
+        const res = await get(`/admin/${endpoint}?limit=100&page=${page}`);
+        rows.push(...res.data);
+        if (rows.length >= res.total || !res.data.length) break;
+      }
+      content[endpoint] = rows.filter((r) => !isE2eRow(r));
+      console.log(`recorded ${endpoint}: ${content[endpoint].length}`);
+    }
+    writeFileSync('mocks/fixtures/adminContent.json', `${JSON.stringify(content, null, 2)}\n`);
+  }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

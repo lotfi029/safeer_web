@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { mockOnly, usingMockApi } from '../support/env';
+import { cleanupContent, ensurePublishedTestimonial } from '../support/content';
+import { usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
+import { disposeSetupAdmin } from '../support/real-api';
+import { useRealDb } from '../support/real-db';
+
+useRealDb(test);
+test.afterAll(async () => {
+  await cleanupContent();
+  await disposeSetupAdmin();
+});
 
 const PAGES = ['testimonials', 'partners', 'documents'] as const;
 
@@ -26,15 +35,13 @@ test.describe('public pages: testimonials, partners, documents', () => {
     });
   }
 
-  test(
-    'testimonials: SSR renders quotes as blockquote/figure',
-    mockOnly('the dev seed publishes no testimonial quote, only themes'),
-    async ({ request }) => {
-      const html = await (await request.get('/ar/testimonials')).text();
-      expect(html).toContain('<blockquote');
-      expect(html).toContain('<figcaption');
-    },
-  );
+  test('testimonials: SSR renders quotes as blockquote/figure', async ({ request }) => {
+    // Real API: the dev seed publishes no quote, so publish one through the admin API.
+    await ensurePublishedTestimonial();
+    const html = await (await request.get('/ar/testimonials')).text();
+    expect(html).toContain('<blockquote');
+    expect(html).toContain('<figcaption');
+  });
 
   test('testimonials: the improvement pill marks exactly the flagged themes', async ({
     page,

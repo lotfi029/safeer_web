@@ -12,13 +12,26 @@ import { type StaffRole, useRealDb } from '../support/real-db';
 useRealDb(test);
 test.afterAll(disposeSetupAdmin);
 
+const CONTENT = [
+  'Pages',
+  'News',
+  'Work areas',
+  'Board',
+  'Partners',
+  'Documents',
+  'Figures',
+  'About items',
+  'Media',
+];
+const CONTENT_AND_INBOX = [...CONTENT.slice(0, 4), 'Testimonials', ...CONTENT.slice(4)];
+
 /** The menu and the overview blocks each role gets (GET /admin/roles + GET /admin/overview, A5). */
 const EXPECT: Record<
   StaffRole,
   { menu: string[]; stats: string[]; chart: boolean; latest: boolean; audit: boolean }
 > = {
   admin: {
-    menu: ['Overview', 'Applications', 'Messages'],
+    menu: ['Overview', 'Applications', 'Messages', ...CONTENT_AND_INBOX],
     stats: ['newApplications', 'underReview', 'acceptedThisMonth', 'unreadMessages'],
     chart: true,
     latest: true,
@@ -32,13 +45,13 @@ const EXPECT: Record<
     audit: false,
   },
   support: {
-    menu: ['Overview', 'Messages'],
+    menu: ['Overview', 'Messages', 'Testimonials'],
     stats: ['unreadMessages'],
     chart: false,
     latest: false,
     audit: false,
   },
-  editor: { menu: ['Overview'], stats: [], chart: false, latest: false, audit: false },
+  editor: { menu: ['Overview', ...CONTENT], stats: [], chart: false, latest: false, audit: false },
 };
 
 test.describe('admin shell + overview', () => {

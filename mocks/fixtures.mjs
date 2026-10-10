@@ -20,6 +20,7 @@ import posts from './fixtures/posts.json' with { type: 'json' };
 import countries from './fixtures/countries.json' with { type: 'json' };
 import applications from './fixtures/applications.json' with { type: 'json' };
 import interviewSlots from './fixtures/interviewSlots.json' with { type: 'json' };
+import adminContent from './fixtures/adminContent.json' with { type: 'json' };
 
 export const fixtures = {
   site,
@@ -39,4 +40,5 @@ export const fixtures = {
   countries,
   applications,
   interviewSlots,
+  adminContent,
 };

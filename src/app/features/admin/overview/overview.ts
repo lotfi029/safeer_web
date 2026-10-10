@@ -124,6 +124,26 @@ const STATS: readonly { key: StatKey; icon: IconName }[] = [
             } @else {
               <p class="t-muted m-0">{{ 'admin.overview.alerts.none' | transloco }}</p>
             }
+            @if (canContent()) {
+              <h2 class="t-h4 m-0 mt-2 text-heading">
+                {{ 'admin.overview.quick.title' | transloco }}
+              </h2>
+              <ul class="m-0 flex list-none flex-col gap-2 p-0" data-testid="quick-actions">
+                @for (q of quick; track q.key) {
+                  <li>
+                    <a
+                      class="tile flex min-h-12 items-center gap-3 font-semibold text-heading no-underline"
+                      [routerLink]="locale.link(q.path)"
+                      [queryParams]="q.query"
+                    >
+                      <app-icon name="plus" [size]="18" />{{
+                        'admin.overview.quick.' + q.key | transloco
+                      }}
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
           </section>
         </div>
 
@@ -230,6 +250,13 @@ export class AdminOverviewPage {
   });
 
   protected readonly showAudit = computed(() => this.store.can('audit'));
+  protected readonly canContent = computed(() => this.store.can('content'));
+  /** Prototype "quick actions" (content roles). */
+  protected readonly quick = [
+    { key: 'addNews', path: '/admin/news/new', query: null },
+    { key: 'addDocument', path: '/admin/documents', query: null },
+    { key: 'addPartner', path: '/admin/partners', query: null },
+  ];
 
   constructor() {
     inject(SeoService).noindex('Admin', this.locale.lang());

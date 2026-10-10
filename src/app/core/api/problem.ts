@@ -103,6 +103,17 @@ const KNOWN_CODES = new Set([
   'UPSTREAM_TIMEOUT',
   'CONFLICT',
   'INTERNAL_ERROR',
+  'ASSET_IN_USE',
+  'RESOURCE_IN_USE',
+  'ALT_TEXT_REQUIRED',
+  'LAST_ADMIN',
+  'SLUG_TAKEN',
+  'PUBLISH_BLOCKED',
+  'UNSUPPORTED_PROVIDER',
+  'SOURCE_TYPE_MISMATCH',
+  'UNKNOWN_VARIABLE',
+  'FEATURE_DISABLED',
+  'NOT_IMPLEMENTED',
 ]);
 
 /** Transloco key for a problem code (`errors.codes.X`), or the generic/network message. */
