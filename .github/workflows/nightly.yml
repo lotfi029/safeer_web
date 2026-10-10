@@ -19,7 +19,6 @@ jobs:
     timeout-minutes: 45
     env:
       E2E_FULL_MATRIX: '1'
-      E2E_API_URL: ${{ vars.E2E_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

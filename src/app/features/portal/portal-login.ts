@@ -315,8 +315,9 @@ export class PortalLogin {
         );
       } catch (error) {
         const problem = toApiProblem(error);
+        // A1: every failure (wrong, expired, or locked after too many wrong codes) is one 401.
         this.errorKey.set(
-          problemMessageKey(problem.status === 401 ? { code: 'OTP_INVALID' } : problem),
+          problem.status === 401 ? 'portal.login.invalidCode' : problemMessageKey(problem),
         );
         this.otpValue.set({ code: '' });
       } finally {

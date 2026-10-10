@@ -486,7 +486,13 @@
 }
 
 @layer components {
+  /* W8: a 44px touch target; the column gap shrinks to keep the prototype rhythm. */
   .footer-link {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    min-block-size: 44px;
+    min-inline-size: 44px;
     color: var(--footer-link);
     text-decoration: none;
   }

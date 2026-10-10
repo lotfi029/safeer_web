@@ -38,7 +38,8 @@ import { Control, Field } from '../../shared/ui/field/field';
 import { Icon } from '../../shared/ui/icon/icon';
 import { Progress } from '../../shared/ui/progress/progress';
 import { Stepper } from '../../shared/ui/stepper/stepper';
-import { NAME_PATTERN } from '../public/contact/contact';
+import { isPersonName } from '../../core/validation/person-name';
+import { normalizePhone } from '../../core/validation/phone';
 import { ApplyDocuments } from './apply-documents';
 import { clearDraft, loadDraft, saveDraft, type StoredDraft } from './apply-draft';
 import {
@@ -55,7 +56,6 @@ import {
 
 export const AUTOSAVE_DEBOUNCE_MS = 1500;
 const RETRY_BACKOFF_MS = [2000, 4000, 8000, 16000, 30000, 60000];
-const PHONE_PATTERN = /^\+?[\d\s()-]{5,40}$/;
 
 export { applyResolver } from './apply.resolver';
 
@@ -548,10 +548,10 @@ export class ApplyPage {
     for (const name of [p.firstName, p.lastName]) {
       required(name);
       maxLength(name, 120);
-      pattern(name, NAME_PATTERN, { message: this.t.translate('pages.apply.nameInvalid') });
+      validate(name, ({ value }) => this.nameError(value()));
     }
     maxLength(p.middleName, 120);
-    pattern(p.middleName, NAME_PATTERN, { message: this.t.translate('pages.apply.nameInvalid') });
+    validate(p.middleName, ({ value }) => this.nameError(value()));
     required(p.birthDate);
     validate(p.birthDate, ({ value }) =>
       value() && value() > new Date().toISOString().slice(0, 10)
@@ -561,7 +561,12 @@ export class ApplyPage {
     required(p.phone);
     minLength(p.phone, 5);
     maxLength(p.phone, 40);
-    pattern(p.phone, PHONE_PATTERN, { message: this.t.translate('pages.apply.phoneInvalid') });
+    // W14: the API's own rule (core/validation), Arabic-Indic digits included.
+    validate(p.phone, ({ value }) =>
+      value() && !normalizePhone(value())
+        ? { kind: 'phone', message: this.t.translate('pages.apply.phoneInvalid') }
+        : undefined,
+    );
     required(p.nationality);
     pattern(p.nationality, /^[A-Za-z]{2}$/);
     maxLength(p.idNumber, 40);
@@ -672,12 +677,18 @@ export class ApplyPage {
 
     afterNextRender(() => {
       this.browser = true;
-      const draft = loadDraft();
-      void this.resume(draft);
+      void this.resume();
     });
   }
 
   // ---------- template helpers ----------
+
+  /** W14: the API's C16 name rule; an empty optional name is valid (required() covers the rest). */
+  private nameError(value: string | null): { kind: string; message: string } | undefined {
+    return value && !isPersonName(value)
+      ? { kind: 'personName', message: this.t.translate('pages.apply.nameInvalid') }
+      : undefined;
+  }
 
   protected srv(field: ApplyField): FieldErrorLike[] {
     const s = this.serverErrors();
@@ -704,7 +715,7 @@ export class ApplyPage {
 
   // ---------- resume / draft ----------
 
-  private async resume(draft: { savedAt: number; value: StoredDraft } | null): Promise<void> {
+  private async resume(): Promise<void> {
     if (!(await this.session.ensureLoaded())) {
       return;
     }
@@ -717,6 +728,7 @@ export class ApplyPage {
       this.phase.set('locked');
       return;
     }
+    const draft = loadDraft(me.reference);
     const value = fromMe(me);
     this.synced = value;
     this.value.set(value);
@@ -785,7 +797,10 @@ export class ApplyPage {
 
   private handleSaveError(problem: ApiProblem, value: ApplyFormValue): void {
     if (problem.status === 0 || problem.status >= 500 || problem.code === 'NETWORK') {
-      saveDraft(value);
+      const reference = this.reference();
+      if (reference) {
+        saveDraft(value, reference);
+      }
       this.saveState.set('offline');
       const delay = RETRY_BACKOFF_MS[Math.min(this.retries++, RETRY_BACKOFF_MS.length - 1)];
       clearTimeout(this.timer);

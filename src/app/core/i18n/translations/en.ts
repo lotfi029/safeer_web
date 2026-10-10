@@ -241,6 +241,12 @@ export const en: Translation = {
       SLOT_ALREADY_BOOKED: 'This slot is taken. Please choose another one.',
       INTERVIEW_NOT_AVAILABLE: 'Interview booking is not available right now.',
       INVALID_STATUS_TRANSITION: 'The application cannot move to this status.',
+      QUOTA_EXCEEDED:
+        'The upload limit for this application has been reached. Contact us if you need to send more files.',
+      DOCUMENT_NOT_REVIEWABLE: 'This document can no longer be reviewed.',
+      DOCUMENT_SUPERSEDED: 'This document was replaced, so its file is no longer available.',
+      INVALID_ASSIGNEE: 'This person cannot be assigned to the application.',
+      REDIRECT_CHAIN: 'This redirect would chain through another redirect.',
       UPSTREAM_UNAVAILABLE: 'The service is temporarily unavailable. Please try again shortly.',
       UPSTREAM_TIMEOUT: 'The request took too long. Please try again.',
       CONFLICT: 'This conflicted with another change. Refresh and try again.',
@@ -259,6 +265,28 @@ export const en: Translation = {
     forbidden: {
       title: 'No access',
       body: 'This page is not available to your role.',
+    },
+    setPassword: {
+      accept: {
+        title: 'Accept your invitation',
+        lead: 'Choose a password for your staff account.',
+        submit: 'Set password and activate',
+        done: 'Your account is active. You can now sign in.',
+      },
+      reset: {
+        title: 'Reset your password',
+        lead: 'Choose a new password for your staff account.',
+        submit: 'Set new password',
+        done: 'Your password has been changed. You can now sign in.',
+      },
+      password: 'New password',
+      confirm: 'Confirm password',
+      hint: 'At least {{min}} characters.',
+      tooShort: 'The password must be at least {{min}} characters.',
+      mismatch: 'The passwords do not match.',
+      invalidLink:
+        'This link is invalid or has expired. Ask an administrator to send you a new one.',
+      toLogin: 'Go to sign in',
     },
     home: 'Dashboard',
     logout: 'Sign out',

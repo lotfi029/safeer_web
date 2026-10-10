@@ -1,4 +1,6 @@
-/* Self-hosted fonts (plan §2): woff2 copied to /fonts by angular.json assets. font-display: swap. */
+/* Self-hosted fonts (plan §2), served as a static, non-critical stylesheet (W13): index.html links it with
+   data-beasties-skip so the critical-CSS inliner doesn't preload all 14 faces. The woff2 files are copied
+   to /fonts by angular.json assets. font-display: swap. Per-locale preloads: core/i18n/font-preloads.ts. */
 @font-face {
   font-family: 'IBM Plex Sans Arabic';
   font-style: normal;

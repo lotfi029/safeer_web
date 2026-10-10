@@ -7,6 +7,7 @@ describe('apply draft (review F5)', () => {
   it('stores the draft in sessionStorage without idNumber and birthDate', () => {
     saveDraft(
       { ...emptyApplyValue(), firstName: 'A', idNumber: '123', birthDate: '2000-01-01' },
+      'SA-2026-00001',
       1000,
     );
     expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
@@ -14,29 +15,42 @@ describe('apply draft (review F5)', () => {
     expect(raw).toContain('"firstName":"A"');
     expect(raw).not.toContain('idNumber');
     expect(raw).not.toContain('birthDate');
-    expect(loadDraft(2000)).toEqual({
+    expect(loadDraft('SA-2026-00001', 2000)).toEqual({
       savedAt: 1000,
       value: expect.objectContaining({ firstName: 'A' }),
     });
   });
 
   it('expires after 24h', () => {
-    saveDraft({ ...emptyApplyValue(), firstName: 'A' }, 0);
-    expect(loadDraft(DRAFT_TTL_MS + 1)).toBeNull();
+    saveDraft({ ...emptyApplyValue(), firstName: 'A' }, 'SA-2026-00001', 0);
+    expect(loadDraft('SA-2026-00001', DRAFT_TTL_MS + 1)).toBeNull();
     expect(sessionStorage.getItem(DRAFT_KEY)).toBeNull();
   });
 
   it('never restores sensitive fields even if they were stored by hand', () => {
     sessionStorage.setItem(
       DRAFT_KEY,
-      JSON.stringify({ savedAt: 0, value: { idNumber: 'x', birthDate: 'y', major: 'm' } }),
+      JSON.stringify({
+        savedAt: 0,
+        reference: 'SA-2026-00001',
+        value: { idNumber: 'x', birthDate: 'y', major: 'm' },
+      }),
     );
-    expect(loadDraft(1)?.value).toEqual({ major: 'm' });
+    expect(loadDraft('SA-2026-00001', 1)?.value).toEqual({ major: 'm' });
   });
 
   it('clears', () => {
-    saveDraft(emptyApplyValue(), 0);
+    saveDraft(emptyApplyValue(), 'SA-2026-00001', 0);
     clearDraft();
-    expect(loadDraft(1)).toBeNull();
+    expect(loadDraft('SA-2026-00001', 1)).toBeNull();
+  });
+
+  it('is never offered to another application, and is dropped when found (W10)', () => {
+    saveDraft({ ...emptyApplyValue(), firstName: 'A' }, 'SA-2026-00001', 0);
+    expect(loadDraft('SA-2026-00002', 1)).toBeNull();
+    expect(sessionStorage.getItem(DRAFT_KEY)).toBeNull();
+    // A copy from before W10 (no reference) is dropped too.
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: 0, value: { major: 'm' } }));
+    expect(loadDraft('SA-2026-00001', 1)).toBeNull();
   });
 });

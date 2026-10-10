@@ -124,12 +124,9 @@ export class BoardPage {
   private readonly locale = inject(LocaleService);
   private readonly t = inject(TranslocoService);
 
-  protected readonly board = computed(() =>
-    (this.data().data?.members ?? []).filter((m) => m.grp === 'board'),
-  );
-  protected readonly executive = computed(() =>
-    (this.data().data?.members ?? []).filter((m) => m.grp === 'executive'),
-  );
+  // W1: the API groups members itself ({ board, executive }, each in sortOrder).
+  protected readonly board = computed(() => this.data().data?.members.board ?? []);
+  protected readonly executive = computed(() => this.data().data?.members.executive ?? []);
   protected readonly breadcrumb = computed(() => [
     { label: this.t.translate('pages.breadcrumbHome'), link: this.locale.link('/') },
     { label: this.t.translate('shell.footer.about'), link: this.locale.link('/about') },

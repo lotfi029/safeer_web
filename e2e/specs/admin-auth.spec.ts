@@ -1,10 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
+import { mockOnly } from '../support/env';
 
 /** StaffSessionStore + staffGuard/roleGuard through the stub login (Session 2 builds the real UI). */
-test.describe('staff auth plumbing', () => {
-  test.skip(!usingMockApi, 'uses mock staff accounts');
-
+test.describe('staff auth plumbing', mockOnly('uses mock staff accounts'), () => {
   test('anonymous → login with returnUrl → back to the guarded page → logout', async ({ page }) => {
     await page.goto('/en/admin');
     await expect(page).toHaveURL(/\/en\/admin\/login\?returnUrl=%2Fen%2Fadmin$/);

@@ -1,9 +1,11 @@
+import { HttpBackend } from '@angular/common/http';
 import { ApplicationConfig, mergeApplicationConfig } from '@angular/core';
 import { provideServerRendering, withRoutes } from '@angular/ssr';
 import { appConfig } from './app.config';
 import { serverRoutes } from './app.routes.server';
 import { API_BASE_URL, API_PREFIX } from './core/config/api-base-url';
 import { SITE_ORIGIN } from './core/config/site-origin';
+import { InternalApiBackend } from './core/http/internal-api.backend';
 
 /** SSR calls the API directly on the internal network, not through the public proxy. */
 function internalApiBase(): string {
@@ -24,6 +26,9 @@ const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(withRoutes(serverRoutes)),
     { provide: API_BASE_URL, useFactory: internalApiBase },
+    // W9: the internal rewrite sits below the transfer cache (see InternalApiBackend).
+    InternalApiBackend,
+    { provide: HttpBackend, useExisting: InternalApiBackend },
     { provide: SITE_ORIGIN, useFactory: publicOrigin },
   ],
 };

@@ -58,7 +58,7 @@ export class Logo {
     <app-logo [height]="compact() ? 42 : 48" alt="" [priority]="priority()" />
     <span class="flex min-w-0 flex-col">
       <span
-        class="truncate leading-snug font-bold"
+        class="line-clamp-2 leading-snug font-bold break-words"
         [class]="compact() ? 'text-base' : 'text-[15px] sm:text-base xl:text-[19px]'"
         >{{ name() ?? ('common.orgName' | transloco) }}</span
       >

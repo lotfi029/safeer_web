@@ -49,4 +49,27 @@ describe('SeoService', () => {
     );
     expect(doc.querySelector('#app-jsonld')).toBeNull();
   });
+
+  it('noindex() drops the previous page’s canonical, hreflang, OG, Twitter and JSON-LD (W19)', () => {
+    const seo = TestBed.inject(SeoService);
+    const doc = TestBed.inject(DOCUMENT);
+    seo.set({
+      title: 'News',
+      description: 'desc',
+      path: '/news',
+      lang: 'en',
+      image: '/files/x',
+      jsonLd: [{ '@type': 'NGO' }],
+    });
+    seo.noindex('Student portal', 'en');
+    expect(doc.title).toBe('Student portal | Safeer Association');
+    expect(doc.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
+      'noindex, nofollow',
+    );
+    expect(doc.querySelector('meta[name="description"]')).toBeNull();
+    expect(doc.querySelector('meta[name="twitter:card"]')).toBeNull();
+    expect(doc.querySelectorAll('meta[property^="og:"]')).toHaveLength(0);
+    expect(doc.querySelectorAll('link[rel="canonical"], link[rel="alternate"]')).toHaveLength(0);
+    expect(doc.querySelector('#app-jsonld')).toBeNull();
+  });
 });

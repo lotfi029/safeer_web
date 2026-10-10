@@ -4,17 +4,22 @@ import { Observable } from 'rxjs';
 import { API_PREFIX } from '../config/api-base-url';
 import type {
   ApplicantDocument,
+  ApplicationCorrections,
   ApplicationPatch,
   ApplicationStep1,
+  CorrectApplicationResponse,
   CreateApplicationResponse,
   DocType,
+  InterviewBooking,
   InterviewSlot,
   OkResponse,
   OtpChannel,
+  Paged,
   PatchApplicationResponse,
   PortalDocumentsResponse,
   PortalEvent,
   PortalMe,
+  RequestOtpResponse,
   SubmitApplicationResponse,
 } from './models';
 
@@ -31,8 +36,17 @@ export class PortalApi {
     return this.http.get<PortalMe>(`${API_PREFIX}/portal/me`);
   }
 
+  /** C15: `draft` only; any other status answers 409 `APPLICATION_LOCKED` (use `correct()` in docs_missing). */
   patch(body: ApplicationPatch): Observable<PatchApplicationResponse> {
     return this.http.patch<PatchApplicationResponse>(`${API_PREFIX}/portal/application`, body);
+  }
+
+  /** C15: `docs_missing` only. Records an `APPLICANT_CORRECTED` event. */
+  correct(body: ApplicationCorrections): Observable<CorrectApplicationResponse> {
+    return this.http.patch<CorrectApplicationResponse>(
+      `${API_PREFIX}/portal/application/corrections`,
+      body,
+    );
   }
 
   submit(body: ApplicationPatch): Observable<SubmitApplicationResponse> {
@@ -66,25 +80,30 @@ export class PortalApi {
   }
 
   /** C35 shape: `[{ id, type, createdAt, data }]`. */
-  notifications(): Observable<PortalEvent[]> {
-    return this.http.get<PortalEvent[]>(`${API_PREFIX}/portal/notifications`);
+  /** C35: paged, newest first (`limit` ≤ 50, default 20). */
+  notifications(page = 1, limit = 20): Observable<Paged<PortalEvent>> {
+    return this.http.get<Paged<PortalEvent>>(`${API_PREFIX}/portal/notifications`, {
+      params: { page, limit },
+    });
   }
 
   interviewSlots(): Observable<InterviewSlot[]> {
     return this.http.get<InterviewSlot[]>(`${API_PREFIX}/portal/interview-slots`);
   }
 
-  bookInterview(slotId: string): Observable<OkResponse> {
-    return this.http.post<OkResponse>(`${API_PREFIX}/portal/interview`, { slotId });
+  /** A9: 5 an hour per IP (429 `RATE_LIMITED` past that). Returns the booked slot. */
+  bookInterview(slotId: string): Observable<InterviewBooking> {
+    return this.http.post<InterviewBooking>(`${API_PREFIX}/portal/interview`, { slotId });
   }
 
-  /** C17 (mocked until live). */
-  cancelInterview(): Observable<void> {
-    return this.http.delete<void>(`${API_PREFIX}/portal/interview`);
+  /** C17: `{cancelled: true}`, or 404 when nothing is booked. A9: 5 an hour per IP (429). */
+  cancelInterview(): Observable<{ cancelled: true }> {
+    return this.http.delete<{ cancelled: true }>(`${API_PREFIX}/portal/interview`);
   }
 
-  requestOtp(identifier: string, channel?: OtpChannel): Observable<OkResponse> {
-    return this.http.post<OkResponse>(`${API_PREFIX}/portal/auth/request-otp`, {
+  /** A4: answered before any lookup or send, so it never means a code went out (`RequestOtpResponse`). */
+  requestOtp(identifier: string, channel?: OtpChannel): Observable<RequestOtpResponse> {
+    return this.http.post<RequestOtpResponse>(`${API_PREFIX}/portal/auth/request-otp`, {
       identifier,
       ...(channel ? { channel } : {}),
     });

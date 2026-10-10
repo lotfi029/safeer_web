@@ -21,6 +21,7 @@ import { LocalDatePipe, toArabicDigits } from '../../../shared/pipes/format';
 import { Breadcrumb, type BreadcrumbItem } from '../../../shared/ui/page-head/breadcrumb';
 import { Button, IconButton } from '../../../shared/ui/button/button';
 import { Icon } from '../../../shared/ui/icon/icon';
+import { withFileQuery } from '../../../shared/ui/image/files-image-loader';
 import { Image } from '../../../shared/ui/image/image';
 import { RichText } from '../../../shared/ui/rich-text/rich-text';
 import { ToastService } from '../../../shared/ui/toast/toast';
@@ -79,6 +80,7 @@ export { articleResolver, type ArticleData } from './news.resolvers';
             class="overflow-hidden rounded-[20px]"
             imgClass="block w-full h-auto aspect-video object-cover"
             [asset]="d.post.coverAsset"
+            [fileQuery]="d.post.previewFileQuery"
             [placeholder]="'pages.news.coverImage' | transloco"
             [aspect]="[16, 9]"
             sizes="(min-width: 1280px) 820px, (min-width: 1024px) 60vw, 100vw"
@@ -87,7 +89,7 @@ export { articleResolver, type ArticleData } from './news.resolvers';
           @if (d.post.excerpt; as x) {
             <p class="text-[19px] leading-[1.9] text-heading">{{ x }}</p>
           }
-          <app-rich-text class="t-body" [html]="d.post.body" />
+          <app-rich-text class="t-body" [html]="body()" />
 
           <div class="flex flex-wrap items-center gap-3 border-t border-border pt-6">
             <span class="font-semibold text-heading">{{ 'pages.news.share' | transloco }}</span>
@@ -204,6 +206,11 @@ export class ArticlePage {
 
   private readonly path = computed(() => `/news/${this.data().data?.post.slug ?? ''}`);
   protected readonly url = computed(() => this.seo.url(this.locale.lang(), this.path()));
+  /** C41: in a preview, the body's own `/files/…` images need the preview query too. */
+  protected readonly body = computed(() => {
+    const post = this.data().data?.post;
+    return post ? withFileQuery(post.body, post.previewFileQuery) : null;
+  });
   protected readonly readTime = computed(() => {
     const n = this.data().data?.post.readMinutes ?? 1;
     return n <= 1

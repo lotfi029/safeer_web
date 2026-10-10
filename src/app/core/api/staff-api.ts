@@ -24,7 +24,22 @@ export class StaffApi {
     return this.http.post<OkResponse>(`${API_PREFIX}/admin/auth/logout`, {});
   }
 
-  /** B17 (mocked until live). */
+  /** W16: the invitation link (`/{lang}/admin/accept/{token}`); public, single-use token. */
+  acceptInvite(token: string, password: string): Observable<OkResponse> {
+    return this.http.post<OkResponse>(
+      `${API_PREFIX}/admin/auth/accept/${encodeURIComponent(token)}`,
+      { password },
+    );
+  }
+
+  /** W16: the reset link (`/{lang}/admin/reset/{token}`); public, single-use, 3/h per IP. */
+  resetPassword(token: string, password: string): Observable<OkResponse> {
+    return this.http.post<OkResponse>(
+      `${API_PREFIX}/admin/auth/reset/${encodeURIComponent(token)}`,
+      { password },
+    );
+  }
+
   roles(): Observable<RolesResponse> {
     return this.http.get<RolesResponse>(`${API_PREFIX}/admin/roles`);
   }

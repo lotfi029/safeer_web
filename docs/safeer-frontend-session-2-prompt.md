@@ -1,6 +1,7 @@
 # Prompt — Session 2: Admin dashboard + launch (Phases 7–10)
 
 > Start this only after **every Session 1 PR is merged into `main`** and `docs/frontend/HANDOFF.md` exists.
+> Also start it only after the **Session 1 fix pass** (`docs/safeer-web-fix-prompt.md`, W1–W24) is merged, because it adds the real-API e2e job, the real role-matrix keys (W15) and the accept/reset pages (W16).
 > If the backend contract changed since Session 1, refresh `docs/api/` first.
 > Then run Claude Code on the `safeer_web` repo and paste everything below the line.
 
@@ -50,6 +51,8 @@ Report any gaps in 5 lines or fewer, then start.
   - final README
 
 ## Rules
+
+- **Every phase must pass e2e against the real API** (the `e2e-real` CI job from the fix pass) as well as the mocks. Fixture-bound assertions are tagged `@mock-only`. Admin mock fixtures are recorded from real responses (`scripts/record-fixtures.mjs`), not hand-written.
 
 - Admin screens are `RenderMode.Client`, `no-store` + `noindex`, and must be **fully usable on a 390px phone**, not just viewable:
   - tables become card lists

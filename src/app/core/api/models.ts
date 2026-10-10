@@ -42,11 +42,19 @@ export interface SiteSettings {
   facebookUrl: string | null;
   instagramUrl: string | null;
   xUrl: string | null;
-  /** Planned (fix prompt "Settings/social"); mocked until live. */
-  youtubeUrl?: string | null;
-  linkedinUrl?: string | null;
-  whatsappUrl?: string | null;
-  tiktokUrl?: string | null;
+  youtubeUrl: string | null;
+  linkedinUrl: string | null;
+  whatsappUrl: string | null;
+  tiktokUrl: string | null;
+  /**
+   * A12: an iframe `src` for the contact page's map. The API only accepts https Google Maps embeds
+   * (`https://www.google.com/maps/embed…`) and OpenStreetMap (`https://www.openstreetmap.org/…`); the
+   * CSP `frame-src` allows exactly those two origins.
+   */
+  mapEmbedUrl: string | null;
+  /** A12: the pin (−90…90 / −180…180), used for the "open in maps" link. */
+  mapLat: number | null;
+  mapLng: number | null;
   enEnabled: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -123,7 +131,7 @@ export interface AboutItem {
 export type AboutItemKind =
   'vision' | 'mission' | 'goal' | 'care_pillar' | 'scholarship_step' | 'requirement';
 
-/** B18 (mocked): `GET /about-items?kind=a,b` → grouped by kind. */
+/** B18: `GET /about-items?kind=a,b` → grouped by kind. */
 export type AboutItemsResponse = Partial<Record<AboutItemKind, AboutItem[]>>;
 
 export interface WorkAreaItem {
@@ -147,9 +155,15 @@ export interface BoardMember {
   grp: 'board' | 'executive';
   isLead: boolean;
   photoAsset: Asset | null;
-  /** B12 (mocked until live). */
-  bio?: string | null;
+  /** B12. */
+  bio: string | null;
   sortOrder: number;
+}
+
+/** GET /board: members grouped (board.controller.ts), each group in sortOrder. W1. */
+export interface BoardResponse {
+  board: BoardMember[];
+  executive: BoardMember[];
 }
 
 export interface Testimonial {
@@ -241,13 +255,11 @@ export interface PostDetail extends PostSummary {
   body: string | null;
   readMinutes: number;
   related: PostSummary[];
-}
-
-/** B15 (mocked): `GET /sitemap-index`. */
-export interface SitemapIndex {
-  pages: { slug: string; updatedAt: string }[];
-  posts: { slug: string; updatedAt: string }[];
-  categories: { slug: string }[];
+  /**
+   * C41: only with a valid `?preview=` token — `preview=<token>&post=<id>`. Append it to this post's
+   * `/files/…` URLs so an unpublished cover loads without a session.
+   */
+  previewFileQuery?: string;
 }
 
 // ---------- forms ----------
@@ -274,6 +286,12 @@ export interface OkResponse {
   ok: true;
   /** C27: double opt-in. */
   pendingConfirmation?: boolean;
+}
+
+/** C27: `POST /newsletter/confirm` and `/newsletter/unsubscribe`; both values come from the mailed link. */
+export interface NewsletterTokenRequest {
+  email: string;
+  token: string;
 }
 
 export interface Country {
@@ -344,6 +362,7 @@ export interface PortalEvent {
 }
 
 export interface InterviewBooking {
+  id: Id;
   startsAt: string;
   endsAt: string;
   location: string | null;
@@ -360,10 +379,10 @@ export interface PortalMe {
   timeline: { key: TimelineKey; state: TimelineState }[];
   actionNeeded: ActionNeeded | null;
   recentEvents: PortalEvent[];
-  /** C17 (mocked until live). */
-  interview?: InterviewBooking | null;
-  /** B16 (mocked until live). */
-  csrfToken?: string;
+  /** C17: the booked slot, or null. */
+  interview: InterviewBooking | null;
+  /** B16: the same token verify-otp issued, so it survives a reload. */
+  csrfToken: string;
 }
 
 /** Step-1 fields (`POST /applications`, strict). */
@@ -393,6 +412,27 @@ export type ApplicationPatch = Partial<
     consent: boolean;
   }
 >;
+
+/**
+ * C15: `PATCH /portal/application/corrections` while `docs_missing`. A strict partial of these
+ * fields, at least one of them; never email or phone. `middleName`/`idNumber` may be `null`.
+ */
+export type ApplicationCorrections = Partial<{
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  birthDate: string;
+  nationality: string;
+  idNumber: string | null;
+  university: string;
+  major: string;
+  degreeLevel: DegreeLevel;
+}>;
+
+export interface CorrectApplicationResponse {
+  status: ApplicationStatus;
+  corrected: string[];
+}
 
 export interface CreateApplicationResponse {
   reference: string;
@@ -435,6 +475,16 @@ export interface InterviewSlot {
 
 export type OtpChannel = 'sms' | 'email';
 
+/**
+ * `POST /portal/auth/request-otp` (A4): answered at once, before the identifier is even looked up, and
+ * the same whether or not it matches. It never means a message went out: the code arrives a moment
+ * later (up to ~5 s when SMS falls back to email). `channelHint` is the channel the request would use.
+ */
+export interface RequestOtpResponse {
+  ok: true;
+  channelHint: OtpChannel;
+}
+
 // ---------- staff ----------
 
 export type StaffRole = 'admin' | 'reviewer' | 'editor' | 'support';
@@ -444,18 +494,75 @@ export interface StaffUser {
   name: string;
   email: string;
   role: StaffRole;
+  /** C12: a brute-force lock is running (`lockedUntil` is in the future, at most an hour ahead: A3). */
   isLocked: boolean;
-  /** C3 (planned). */
-  status?: 'active' | 'disabled' | 'invited';
+  lockedUntil: string | null;
+  failedLogins: number;
+  /** C3: only an admin changes it. */
+  status: 'active' | 'disabled' | 'invited';
   lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface StaffMe extends StaffUser {
   csrfToken: string;
 }
 
-/** B17 (mocked): `GET /admin/roles`. */
+/** B17: `GET /admin/roles` (any staff). */
 export interface RolesResponse {
   roles: StaffRole[];
   matrix: Record<string, StaffRole[]>;
+}
+
+/**
+ * `GET /admin/overview` (C20, A5): each block is present only for the roles that own its area.
+ * Application figures (`newApplications`, `underReview`, `acceptedThisMonth`, `series`,
+ * `latestApplications`) are admin + reviewer. `unreadMessages` is admin + support; editors get no
+ * message counts at all. `recentAuditLog` is admin-only (an empty array for other roles).
+ */
+export interface AdminOverview {
+  statCards: {
+    newApplications?: number;
+    underReview?: number;
+    acceptedThisMonth?: number;
+    unreadMessages?: number;
+  };
+  series?: { month: string; received: number; accepted: number }[];
+  latestApplications?: {
+    id: Id;
+    reference: string;
+    name: string;
+    status: ApplicationStatus;
+    submittedAt: string | null;
+  }[];
+  contentAlerts: {
+    noPublishedPartners: boolean;
+    legacyPostsCount: number;
+    pagesNeedingReviewCount: number;
+  };
+  badges: { newApplications?: number; unreadMessages?: number };
+  recentAuditLog: {
+    id: Id;
+    action: string;
+    entityType: string;
+    entityId: string | null;
+    entityLabel: string | null;
+    actorId: Id | null;
+    actorName: string | null;
+    createdAt: string;
+  }[];
+}
+
+/** B19 + A11: a document in `GET /admin/applications/:id` (and the review PATCH response). */
+export interface AdminApplicationDocument extends ApplicantDocument {
+  reviewedBy: Id | null;
+  reviewedAt: string | null;
+  supersededAt: string | null;
+  /**
+   * The file route relative to the API base (`admin/applications/{id}/documents/{docId}/file`), or
+   * `null` for a superseded document, whose file was deleted. Show a download link only when it is
+   * set; the route answers 410 `DOCUMENT_SUPERSEDED` for a superseded document.
+   */
+  downloadPath: string | null;
 }

@@ -21,6 +21,15 @@ export interface SeoData {
 
 const SITE_NAME: Record<Lang, string> = { ar: 'جمعية سفير الدعوية', en: 'Safeer Association' };
 const JSON_LD_ID = 'app-jsonld';
+const OG_KEYS = [
+  'og:title',
+  'og:description',
+  'og:type',
+  'og:url',
+  'og:site_name',
+  'og:locale',
+  'og:image',
+] as const;
 
 /** Title, description, canonical, hreflang ar/en/x-default, OG/Twitter, robots and JSON-LD. */
 @Injectable({ providedIn: 'root' })
@@ -53,10 +62,24 @@ export class SeoService {
     this.setJsonLd(data.jsonLd ?? []);
   }
 
-  /** Private areas (admin, portal) are never indexed. */
+  /**
+   * Private areas (admin, portal) are never indexed. W19: also drops everything a public page set
+   * before a client-side navigation here (description, canonical, hreflang, OG/Twitter, JSON-LD),
+   * so none of it describes the wrong page.
+   */
   noindex(title: string, lang: Lang): void {
     this.title.setTitle(`${title} | ${SITE_NAME[lang]}`);
     this.tag('name', 'robots', 'noindex, nofollow');
+    for (const key of ['description', 'twitter:card']) {
+      this.tag('name', key, null);
+    }
+    for (const key of OG_KEYS) {
+      this.tag('property', key, null);
+    }
+    this.document.head
+      .querySelectorAll('link[rel="canonical"], link[rel="alternate"][hreflang]')
+      .forEach((el) => el.remove());
+    this.setJsonLd([]);
   }
 
   url(lang: Lang, path: string): string {

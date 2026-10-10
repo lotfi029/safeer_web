@@ -19,7 +19,7 @@ test.describe('security headers + CSP (R1, R2)', () => {
       expect(csp).toBeTruthy();
       expect(csp).not.toContain('strict-dynamic');
       expect(csp).toContain("style-src-attr 'unsafe-inline'");
-      expect(csp).toContain("frame-src 'none'");
+      expect(csp).toContain('frame-src https://www.google.com https://www.openstreetmap.org;');
       const nonce = nonceFromCsp(csp);
 
       const html = await res.text();

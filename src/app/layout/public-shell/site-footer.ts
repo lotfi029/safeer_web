@@ -38,7 +38,7 @@ function safeUrl(url: string | null | undefined): string | null {
           </p>
         </div>
 
-        <nav class="flex flex-col gap-3 text-[15px]" [attr.aria-labelledby]="'f-key'">
+        <nav class="flex flex-col text-[15px]" [attr.aria-labelledby]="'f-key'">
           <h2 id="f-key" class="mb-1 text-lg font-semibold !text-(--footer-text)">
             {{ 'shell.footer.keyLinks' | transloco }}
           </h2>
@@ -47,7 +47,7 @@ function safeUrl(url: string | null | undefined): string | null {
           }
         </nav>
 
-        <nav class="flex flex-col gap-3 text-[15px]" [attr.aria-labelledby]="'f-services'">
+        <nav class="flex flex-col text-[15px]" [attr.aria-labelledby]="'f-services'">
           <h2 id="f-services" class="mb-1 text-lg font-semibold !text-(--footer-text)">
             {{ 'shell.footer.services' | transloco }}
           </h2>

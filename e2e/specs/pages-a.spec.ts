@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
+import { mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 /** About, work areas and scholarships (phase 3, prototype `#/about`, `#/work`, `#/scholarships`). */
@@ -22,31 +22,35 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
       });
     }
 
-    test(`${p.name}: SSR renders title, canonical, hreflang and h1 without JS`, async ({
-      request,
-    }) => {
-      test.skip(!usingMockApi, 'asserts mock content');
-      const res = await request.get(`/ar${p.path}`);
-      expect(res.status()).toBe(200);
-      const html = await res.text();
-      expect(html).toMatch(new RegExp(`<title>[^<]*${p.title}[^<]*</title>`));
-      expect(html).toMatch(new RegExp(`<link[^>]+rel="canonical"[^>]+/ar${p.path}"`));
-      expect(html).toMatch(/<link[^>]+hreflang="en"/);
-      expect(html).toMatch(/<link[^>]+hreflang="ar"/);
-      expect(html).toMatch(new RegExp(`<h1[^>]*>\\s*${p.title}\\s*</h1>`));
-    });
+    test(
+      `${p.name}: SSR renders title, canonical, hreflang and h1 without JS`,
+      mockOnly('asserts mock content'),
+      async ({ request }) => {
+        const res = await request.get(`/ar${p.path}`);
+        expect(res.status()).toBe(200);
+        const html = await res.text();
+        expect(html).toMatch(new RegExp(`<title>[^<]*${p.title}[^<]*</title>`));
+        expect(html).toMatch(new RegExp(`<link[^>]+rel="canonical"[^>]+/ar${p.path}"`));
+        expect(html).toMatch(/<link[^>]+hreflang="en"/);
+        expect(html).toMatch(/<link[^>]+hreflang="ar"/);
+        expect(html).toMatch(new RegExp(`<h1[^>]*>\\s*${p.title}\\s*</h1>`));
+      },
+    );
   }
 
-  test('about: the goals list has 5 numbered items', async ({ page }) => {
-    test.skip(!usingMockApi, 'asserts mock content');
-    await openAt(page, '/about', DESKTOP, 'ar');
-    const goals = page.getByTestId('about-goals').locator('> li');
-    await expect(goals).toHaveCount(5);
-    await expect(goals.first()).toContainText('١');
-    await expect(
-      page.locator('a[href="/ar/documents?category=meeting-minutes"]').first(),
-    ).toBeVisible();
-  });
+  test(
+    'about: the goals list has 5 numbered items',
+    mockOnly('asserts mock content'),
+    async ({ page }) => {
+      await openAt(page, '/about', DESKTOP, 'ar');
+      const goals = page.getByTestId('about-goals').locator('> li');
+      await expect(goals).toHaveCount(5);
+      await expect(goals.first()).toContainText('١');
+      await expect(
+        page.locator('a[href="/ar/documents?category=meeting-minutes"]').first(),
+      ).toBeVisible();
+    },
+  );
 
   test('work areas: accordion on mobile (first open, toggles), cards on desktop', async ({
     page,
@@ -69,13 +73,16 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
     await expect(page.getByRole('heading', { level: 3 }).first()).toBeVisible();
   });
 
-  test('work areas: improvement themes carry a pill', async ({ page }) => {
-    test.skip(!usingMockApi, 'asserts mock content');
-    await openAt(page, '/work-areas', DESKTOP, 'ar');
-    const themes = page.locator('#work-themes').locator('xpath=ancestor::section[1]');
-    await expect(themes.locator('ul > li')).toHaveCount(5);
-    await expect(themes.getByText('فرصة تحسين')).toHaveCount(2);
-  });
+  test(
+    'work areas: improvement themes carry a pill',
+    mockOnly('asserts mock content'),
+    async ({ page }) => {
+      await openAt(page, '/work-areas', DESKTOP, 'ar');
+      const themes = page.locator('#work-themes').locator('xpath=ancestor::section[1]');
+      await expect(themes.locator('ul > li')).toHaveCount(5);
+      await expect(themes.getByText('فرصة تحسين')).toHaveCount(2);
+    },
+  );
 
   test('scholarships: sticky apply bar on mobile only', async ({ page }) => {
     await openAt(page, '/scholarships', MOBILE, 'ar');
@@ -98,21 +105,22 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
     await expect(bar).toBeHidden();
   });
 
-  test('scholarships: steps are an ordered list of 5 and the last is highlighted', async ({
-    page,
-  }) => {
-    test.skip(!usingMockApi, 'asserts mock content');
-    await openAt(page, '/scholarships', DESKTOP, 'ar');
-    const steps = page
-      .locator('#scholarships-steps')
-      .locator('xpath=ancestor::section[1]')
-      .locator('ol > li');
-    await expect(steps).toHaveCount(5);
-    const [first, last] = await Promise.all([
-      steps.first().boundingBox(),
-      steps.last().boundingBox(),
-    ]);
-    // xl: one row of 5 columns.
-    expect(Math.abs(first!.y - last!.y)).toBeLessThan(2);
-  });
+  test(
+    'scholarships: steps are an ordered list of 5 and the last is highlighted',
+    mockOnly('asserts mock content'),
+    async ({ page }) => {
+      await openAt(page, '/scholarships', DESKTOP, 'ar');
+      const steps = page
+        .locator('#scholarships-steps')
+        .locator('xpath=ancestor::section[1]')
+        .locator('ol > li');
+      await expect(steps).toHaveCount(5);
+      const [first, last] = await Promise.all([
+        steps.first().boundingBox(),
+        steps.last().boundingBox(),
+      ]);
+      // xl: one row of 5 columns.
+      expect(Math.abs(first!.y - last!.y)).toBeLessThan(2);
+    },
+  );
 });

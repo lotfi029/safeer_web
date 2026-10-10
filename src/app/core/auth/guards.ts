@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { LocaleService } from '../i18n/locale.service';
 import { ApplicantSessionStore } from './applicant-session.store';
+import type { StaffArea } from './role-matrix';
 import { StaffSessionStore } from './staff-session.store';
 
 // Note: every inject() happens before the first await (injection context ends at the await).
@@ -20,7 +21,7 @@ export const staffGuard: CanActivateFn = async (_route, state) => {
 };
 
 /**
- * Role check against the runtime matrix (`GET /admin/roles`, B17). Route data: `{ area: 'news' }`.
+ * Role check against the runtime matrix (`GET /admin/roles`, B17). Route data: `{ area: 'content' }` (`StaffArea`).
  * Not allowed → the "no access" page (403 state), never a silent redirect home.
  */
 export const roleGuard: CanActivateFn = async (route) => {
@@ -28,7 +29,7 @@ export const roleGuard: CanActivateFn = async (route) => {
   const router = inject(Router);
   const locale = inject(LocaleService);
   await store.ensureLoaded();
-  const area = route.data['area'] as string | undefined;
+  const area = route.data['area'] as StaffArea | undefined;
   if (!area || store.can(area)) {
     return true;
   }

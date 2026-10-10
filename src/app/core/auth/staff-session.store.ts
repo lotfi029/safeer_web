@@ -4,7 +4,7 @@ import type { StaffMe, StaffRole } from '../api/models';
 import { ApiError } from '../api/problem';
 import { StaffApi } from '../api/staff-api';
 import { CsrfTokens } from './csrf-tokens';
-import { ROLE_MATRIX } from './role-matrix';
+import { ROLE_MATRIX, type StaffArea } from './role-matrix';
 import { SessionExpiry } from './session-expiry';
 
 export type SessionStatus = 'unknown' | 'loading' | 'authenticated' | 'anonymous';
@@ -57,8 +57,8 @@ export class StaffSessionStore {
     }
   }
 
-  /** Whether the current role may use an area of the matrix (`applications`, `news`, …). */
-  can(area: string): boolean {
+  /** Whether the current role may use an area of the matrix (`applications`, `content`, …). */
+  can(area: StaffArea): boolean {
     const role = this.role();
     return !!role && (this.matrix()[area] ?? []).includes(role);
   }

@@ -21,6 +21,12 @@ describe('HTML cache headers (R2)', () => {
     }
   });
 
+  it('any ?preview= URL is no-store (W18)', () => {
+    expect(htmlCacheHeaders('/en/news/x?preview=abc')).toEqual({ 'Cache-Control': 'no-store' });
+    expect(htmlCacheHeaders('/ar/news/x?a=1&preview=')).toEqual({ 'Cache-Control': 'no-store' });
+    expect(htmlCacheHeaders('/en/news/x?previewed=1')).toEqual({ 'Cache-Control': 'no-cache' });
+  });
+
   it('does not treat look-alike paths as private', () => {
     expect(isPrivateArea('/ar/administration')).toBe(false);
     expect(isPrivateArea('/fr/admin')).toBe(false);
