@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Initial public bundle budget: < 150 KB gzip (brief hard rule 7). Angular budgets count raw bytes,
- * so this sums the gzip size of every initial file referenced by the CSR index (scripts,
- * modulepreloads, stylesheets). Usage: node scripts/check-gzip-budget.mjs [browserDir] [limitKB]
+ * so this sums the gzip size of every initial file: the scripts and stylesheets the CSR index
+ * references, plus everything those scripts import statically. Usage: node scripts/check-gzip-budget.mjs [browserDir] [limitKB]
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,6 +20,23 @@ for (const tag of html.match(/<(script|link)\b[^>]*>/g) ?? []) {
   if (tag.startsWith('<script') && src) refs.add(src);
   if (tag.startsWith('<link') && href && (rel === 'modulepreload' || rel === 'stylesheet'))
     refs.add(href);
+}
+
+/**
+ * Follow the static imports of every initial script, so the total is the real initial set even
+ * without `modulepreload` hints (Phase 10 turned `index.preloadInitial` off). Dynamic `import("…")`
+ * (lazy routes) doesn't match: the quote must directly follow `from` / `import`.
+ */
+const STATIC_IMPORT = /(?:\bfrom|\bimport)\s*"\.\/([^"]+\.js)"/g;
+const queue = [...refs].filter((r) => r.endsWith('.js'));
+while (queue.length) {
+  const file = queue.shift().replace(/^\//, '');
+  for (const [, dep] of readFileSync(join(dist, file), 'utf8').matchAll(STATIC_IMPORT)) {
+    if (!refs.has(dep) && !refs.has(`/${dep}`)) {
+      refs.add(dep);
+      queue.push(dep);
+    }
+  }
 }
 
 let total = 0;

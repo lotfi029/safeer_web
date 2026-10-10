@@ -25,13 +25,15 @@ import { StatusPill } from '../../shared/ui/status-pill/status-pill';
 import { Timeline, type TimelineItem } from '../../shared/ui/timeline/timeline';
 import { ToastService } from '../../shared/ui/toast/toast';
 
+/** Event types the API marks visibleToApplicant (safeer_api @ v1.0.0-rc1); anything else is "other". */
 const KNOWN_EVENTS = new Set([
+  'STARTED',
   'SUBMITTED',
   'STATUS_CHANGED',
-  'DOCUMENT_ACCEPTED',
+  'DOCS_REQUESTED',
+  'DOCS_RECEIVED',
   'DOCUMENT_REJECTED',
-  'DOCUMENTS_REQUESTED',
-  'DOCUMENT_UPLOADED',
+  'APPLICANT_CORRECTED',
   'INTERVIEW_BOOKED',
   'INTERVIEW_CANCELLED',
 ]);
@@ -356,7 +358,9 @@ export class PortalStatus {
     await this.store.refresh();
     const m = this.me();
     const [events, slots] = await Promise.all([
-      firstValueFrom(this.api.notifications()).catch(() => m?.recentEvents ?? []),
+      firstValueFrom(this.api.notifications(1, 8))
+        .then((page) => page.data)
+        .catch(() => m?.recentEvents ?? []),
       m?.status === 'interview' && !m.interview
         ? firstValueFrom(this.api.interviewSlots()).catch(() => [] as InterviewSlot[])
         : Promise.resolve([] as InterviewSlot[]),
@@ -445,7 +449,9 @@ export class PortalStatus {
       await this.load();
     } catch (error) {
       const problem = toApiProblem(error);
-      this.interviewError.set(problemMessageKey(problem));
+      this.interviewError.set(
+        problem.status === 429 ? 'portal.interview.rateLimited' : problemMessageKey(problem),
+      );
       if (problem.code === 'SLOT_ALREADY_BOOKED') {
         void this.load();
       }

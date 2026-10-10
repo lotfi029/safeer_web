@@ -4,13 +4,20 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
+import compression from 'compression';
 import express from 'express';
+import { readFileSync } from 'node:fs';
 import type { Server } from 'node:http';
 import { join } from 'node:path';
 import type { SsrRequestContext } from './app/core/http/ssr-context';
 import { staticCacheControl } from './server/cache-headers';
-import { loadDotEnv, parseEnv } from './server/env';
-import { finalizeAngularResponse } from './server/html';
+import { listenUrl, loadDotEnv, parseEnv } from './server/env';
+import {
+  bodyFontFaces,
+  compactCss,
+  finalizeAngularResponse,
+  type InlineStylesheet,
+} from './server/html';
 import { serverErrorHandler } from './server/error-page';
 import { apiRedirectResolver, legacyRedirects } from './server/legacy';
 import { apiProxy } from './server/proxy';
@@ -18,13 +25,34 @@ import { langRedirects } from './server/redirects';
 import { createNonce, securityHeaders } from './server/security-headers';
 import { apiSitemapIndex, buildRobots, sitemapHandler } from './server/sitemap';
 
-const isEntryPoint = isMainModule(import.meta.url) || Boolean(process.env['pm_id']);
+/**
+ * Serve when run directly, under PM2 (`pm_id`), or through `app.cjs` (`SAFEER_SSR_LISTEN`): the
+ * CommonJS entry for runners that `require()` the start file, like Hostinger's LiteSpeed `lsnode.js`.
+ */
+const isEntryPoint =
+  isMainModule(import.meta.url) ||
+  Boolean(process.env['pm_id']) ||
+  process.env['SAFEER_SSR_LISTEN'] === '1';
 
 loadDotEnv();
 // Strict validation only when this process actually serves traffic (not during `ng serve`/build).
 const env = parseEnv(process.env, isEntryPoint);
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
+
+/**
+ * The @font-face sheet (W13) is ~10 KB of rules and no fonts: inlined into every HTML response instead
+ * of costing a render-blocking request (Phase 10, Lighthouse). Public pages inline only the body-text
+ * faces and load the rest after the first paint. Absent under `ng serve`.
+ */
+const fontFaces: InlineStylesheet | null = (() => {
+  try {
+    const css = compactCss(readFileSync(join(browserDistFolder, 'fonts/fonts.css'), 'utf8'));
+    return { href: '/fonts/fonts.css', css, firstPaintCss: bodyFontFaces(css) };
+  } catch {
+    return null;
+  }
+})();
 
 const app = express();
 app.disable('x-powered-by');
@@ -59,6 +87,15 @@ app.use(legacyRedirects(apiRedirectResolver(env.apiInternalUrl)));
 /** Same-origin API + file proxy. No body parser is mounted anywhere in this app. */
 app.use(apiProxy(env.apiInternalUrl));
 
+/**
+ * gzip/brotli for what this server renders and serves itself (HTML, JS, CSS, fonts), mounted
+ * after the proxy so API and file responses pass through untouched. The edge may compress again;
+ * this keeps the origin fast when it doesn't. HTML carries no secrets an attacker could probe with
+ * compression side channels (BREACH): the nonce changes on every response, and admin/portal HTML is
+ * the CSR shell.
+ */
+app.use(compression());
+
 /** Static files from /browser. HTML is never served statically: it needs a nonce. */
 const serveStatic = express.static(browserDistFolder, {
   index: false,
@@ -78,9 +115,13 @@ app.use((req, res, next) => {
     .handle(req, context)
     .then((response) =>
       response
-        ? finalizeAngularResponse(response, req.path, nonce, env.isProduction).then((final) =>
-            writeResponseToNodeResponse(final, res),
-          )
+        ? finalizeAngularResponse(
+            response,
+            req.originalUrl,
+            nonce,
+            env.isProduction,
+            fontFaces,
+          ).then((final) => writeResponseToNodeResponse(final, res))
         : next(),
     )
     .catch(next);
@@ -91,11 +132,12 @@ app.use(serverErrorHandler(env.isProduction));
 
 /** Start the server when run directly or under PM2; shut down gracefully on SIGTERM (R11). */
 if (isEntryPoint) {
-  const server: Server = app.listen(env.port, (error) => {
+  // S2: HOST (default 127.0.0.1) keeps a bare-host server behind its proxy; Docker sets 0.0.0.0.
+  const server: Server = app.listen(env.port, env.host, (error) => {
     if (error) {
       throw error;
     }
-    console.log(`safeer_web SSR listening on http://localhost:${env.port}`);
+    console.log(`safeer_web SSR listening on ${listenUrl(env.host, env.port)}`);
   });
 
   const shutdown = (signal: string) => {

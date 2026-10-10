@@ -14,6 +14,7 @@ import { Image } from '../../../shared/ui/image/image';
 import { Breadcrumb } from '../../../shared/ui/page-head/breadcrumb';
 import { Reveal } from '../../../shared/ui/reveal/reveal';
 import { SectionHeading } from '../../../shared/ui/section-heading/section-heading';
+import { plainText } from '../../../shared/text/plain-text';
 import { pageSeo } from '../page-meta';
 import type { ScholarshipsPageData } from './scholarships.resolver';
 
@@ -225,15 +226,5 @@ export class ScholarshipsPage {
   }
 
   /** About-item bodies are sanitized HTML (C26); these slots take plain text. */
-  protected plain(html: string | null | undefined): string | null {
-    if (!html) {
-      return null;
-    }
-    return (
-      html
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim() || null
-    );
-  }
+  protected readonly plain = plainText;
 }

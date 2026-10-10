@@ -5,6 +5,9 @@ on:
     types: [opened, synchronize, reopened, labeled]
   push:
     branches: [main]
+  # Nightly full matrix (6 viewports × 2 locales, light + dark) on both backends (Phase 10).
+  schedule:
+    - cron: '30 1 * * *'
   workflow_dispatch:
 
 # Cancel superseded runs of the same branch/PR (sessions plan R10).
@@ -19,12 +22,11 @@ jobs:
   build-test:
     name: lint → unit → build → e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
-      # Full 6×2 matrix on the `full-matrix` label; 390/1440 × ar/en otherwise (review F10).
-      E2E_FULL_MATRIX: ${{ contains(github.event.pull_request.labels.*.name, 'full-matrix') && '1' || '' }}
-      # Set the repository variable E2E_API_URL to run e2e against a real API instead of the mock.
-      E2E_API_URL: ${{ vars.E2E_API_URL }}
+      # Full 6×2 matrix (every viewport also in dark) nightly and on the `full-matrix` label;
+      # 390/1440 × ar/en (+ dark at 1440) otherwise (review F10, Phase 10).
+      E2E_FULL_MATRIX: ${{ (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'full-matrix')) && '1' || '' }}
     # playwright.config.ts starts the SSR server with NODE_ENV=production, so e2e tests the enforcing CSP (R10).
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +69,7 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - name: e2e (mock API unless E2E_API_URL is set)
+      - name: e2e (mock API; the real API runs in e2e-real)
         run: npx playwright test
 
       - name: Upload Playwright report + screenshots
@@ -78,4 +80,173 @@ jobs:
           path: |
             playwright-report
             test-results
+          retention-days: 14
+
+  # VPS deploy (B3): the production image is built on every PR and serves a page for a public host with
+  # no DNS (https://safeer.test), so SSR must reach the API only through API_INTERNAL_URL (B2), as the
+  # Docker stack runs it. image.yml publishes the same Dockerfile.
+  image:
+    name: docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Build
+        run: docker build -t safeer-web:ci .
+
+      - name: Check the image (mock API on the host)
+        run: .github/scripts/check-image.sh safeer-web:ci
+
+      - name: Image size
+        if: always()
+        run: docker image ls safeer-web:ci
+
+  # W24: the same e2e suite against the real safeer_api (pinned by the SAFEER_API_REF repository variable)
+  # on MySQL 8 with its dev seed. `@mock-only` specs are dropped (playwright.config.ts grepInvert).
+  # scripts/real-api.mjs boots the API with NODE_ENV=test: every e2e request reaches it from 127.0.0.1
+  # through the SSR proxy with parallel workers, so the per-IP @Throttle buckets (applications 5/h,
+  # OTP 5/h, contact 3/h, admin login 5/min) can't be met by ordering specs; `test` is the API's own
+  # opt-out for exactly this and otherwise behaves like development (dev seed, dev OTP hook).
+  e2e-real:
+    name: e2e (real API ${{ vars.SAFEER_API_REF || 'v1.0.0-rc1' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: safeer
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      E2E_API_URL: http://127.0.0.1:3900
+      E2E_FULL_MATRIX: ${{ (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'full-matrix')) && '1' || '' }}
+      # e2e/support/real-db.ts seeds per-role staff and auth tokens in the same MySQL, loading mysql2
+      # and argon2 from this checkout (DB_* default to the service above, like scripts/real-api.mjs).
+      SAFEER_API_DIR: safeer_api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out safeer_api
+        uses: actions/checkout@v4
+        with:
+          repository: lotfi029/safeer_api
+          ref: ${{ vars.SAFEER_API_REF || 'v1.0.0-rc1' }}
+          path: safeer_api
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            safeer_api/package-lock.json
+
+      - run: npm ci
+
+      - name: Build safeer_api
+        working-directory: safeer_api
+        run: npm ci && npm run build
+
+      - name: Migrate and boot safeer_api (NODE_ENV=test)
+        run: node scripts/real-api.mjs safeer_api --detach
+
+      - run: npm run build:e2e
+
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: e2e (real API)
+        run: npx playwright test
+
+      - name: Upload Playwright report + API log
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-real-api
+          path: |
+            playwright-report
+            test-results
+            safeer_api/api.log
+          retention-days: 14
+
+  # Phase 10: Lighthouse (mobile) on home, news and an article, served from the production build
+  # against the mock API (scripts/lighthouse.mjs). Median of 7 runs; Performance ≥ 90,
+  # Accessibility / Best practices / SEO ≥ 95.
+  lighthouse:
+    name: Lighthouse (mobile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Lighthouse
+        run: npm run lighthouse
+        env:
+          LH_RUNS: '7'
+          # Blocking. Set LH_REPORT_ONLY: '1' to turn below-target scores into a warning instead.
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          # upload-artifact@v4 skips dot-directories by default: without this nothing was uploaded.
+          include-hidden-files: true
           retention-days: 14

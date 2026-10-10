@@ -120,7 +120,8 @@
     min-block-size: 44px;
     padding-inline: 4px;
     background: transparent;
-    color: var(--secondary);
+    /* AA on card, surface and raise (plain --secondary is 4.2–4.4:1 on the tinted ones). */
+    color: var(--secondary-text);
   }
 
   .btn-link:hover {
@@ -486,7 +487,13 @@
 }
 
 @layer components {
+  /* W8: a 44px touch target; the column gap shrinks to keep the prototype rhythm. */
   .footer-link {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    min-block-size: 44px;
+    min-inline-size: 44px;
     color: var(--footer-link);
     text-decoration: none;
   }

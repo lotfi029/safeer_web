@@ -30,7 +30,7 @@ export interface BreadcrumbItem {
             } @else if (item.link) {
               <a
                 [routerLink]="$any(item.link)"
-                class="underline-offset-4 hover:underline"
+                class="inline-flex min-h-11 min-w-11 items-center underline-offset-4 hover:underline"
                 [class]="tone() === 'band' ? 'text-(--band-dim) hover:text-band-text' : ''"
                 >{{ item.label }}</a
               >

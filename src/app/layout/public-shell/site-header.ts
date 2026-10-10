@@ -68,7 +68,7 @@ import { ThemeToggle } from './theme-toggle';
                 routerLinkActive="!border-secondary !font-semibold !text-heading"
                 [routerLinkActiveOptions]="{ exact: item.exact }"
                 ariaCurrentWhenActive="page"
-                >{{ item.label }}</a
+                >{{ item.shortLabel }}</a
               >
             </li>
           }

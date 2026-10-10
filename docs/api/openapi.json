@@ -402,6 +402,25 @@
         ]
       }
     },
+    "/admin/roles": {
+      "get": {
+        "operationId": "RolesController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "Roles"
+        ]
+      }
+    },
     "/admin/mail/settings": {
       "get": {
         "operationId": "MailSettingsController_get",
@@ -943,6 +962,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "post",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "preview",
+            "required": false,
+            "in": "query",
+            "description": "C41: a post preview token (with `post`), for an asset that post shows.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -971,6 +1007,23 @@
             "name": "variant",
             "required": true,
             "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "post",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "preview",
+            "required": false,
+            "in": "query",
+            "description": "C41: a post preview token (with `post`), for an asset that post shows.",
             "schema": {
               "type": "string"
             }
@@ -1263,6 +1316,33 @@
       }
     },
     "/admin/redirects": {
+      "post": {
+        "operationId": "RedirectsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRedirectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "Redirects"
+        ]
+      },
       "get": {
         "operationId": "RedirectsController_list",
         "parameters": [
@@ -1312,62 +1392,9 @@
         "tags": [
           "Redirects"
         ]
-      },
-      "post": {
-        "operationId": "RedirectsController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/admin_redirectsCreateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "tags": [
-          "Redirects"
-        ]
       }
     },
     "/admin/redirects/{id}": {
-      "get": {
-        "operationId": "RedirectsController_get",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "tags": [
-          "Redirects"
-        ]
-      },
       "patch": {
         "operationId": "RedirectsController_update",
         "parameters": [
@@ -1385,11 +1412,37 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/admin_redirectsUpdateDto"
+                "$ref": "#/components/schemas/UpdateRedirectDto"
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "Redirects"
+        ]
+      },
+      "get": {
+        "operationId": "RedirectsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -2241,6 +2294,28 @@
         ]
       }
     },
+    "/about-items": {
+      "get": {
+        "operationId": "AboutItemsController_list",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated: vision, mission, goal, care_pillar, scholarship_step, requirement",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AboutItems"
+        ]
+      }
+    },
     "/admin/about-items": {
       "get": {
         "operationId": "AdminAboutItemsController_list",
@@ -2912,6 +2987,44 @@
         },
         "responses": {
           "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "AdminWorkAreaItems"
+        ]
+      }
+    },
+    "/admin/work-area-items/{id}/publish": {
+      "patch": {
+        "operationId": "AdminWorkAreaItemsController_publish",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/admin_work_area_itemsPublishDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
             "description": ""
           }
         },
@@ -4953,6 +5066,54 @@
         ]
       }
     },
+    "/newsletter/confirm": {
+      "post": {
+        "operationId": "ContactController_confirm",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewsletterTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Contact"
+        ]
+      }
+    },
+    "/newsletter/unsubscribe": {
+      "post": {
+        "operationId": "ContactController_unsubscribe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewsletterTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Contact"
+        ]
+      }
+    },
     "/admin/newsletter": {
       "get": {
         "operationId": "AdminNewsletterController_list",
@@ -4980,6 +5141,7 @@
             "schema": {
               "enum": [
                 "subscribed",
+                "pending",
                 "unsubscribed"
               ],
               "type": "string"
@@ -5012,6 +5174,7 @@
             "schema": {
               "enum": [
                 "subscribed",
+                "pending",
                 "unsubscribed"
               ],
               "type": "string"
@@ -5397,6 +5560,30 @@
         ]
       }
     },
+    "/portal/application/corrections": {
+      "patch": {
+        "operationId": "PortalApplicationController_correct",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationCorrectionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PortalApplication"
+        ]
+      }
+    },
     "/portal/application/submit": {
       "post": {
         "operationId": "PortalApplicationController_submit",
@@ -5523,6 +5710,18 @@
         },
         "responses": {
           "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PortalInterview"
+        ]
+      },
+      "delete": {
+        "operationId": "PortalInterviewController_cancel",
+        "parameters": [],
+        "responses": {
+          "200": {
             "description": ""
           }
         },
@@ -5672,6 +5871,25 @@
         ]
       }
     },
+    "/admin/applications/assignees": {
+      "get": {
+        "operationId": "AdminApplicationsController_assignees",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "AdminApplications"
+        ]
+      }
+    },
     "/admin/applications/export.csv": {
       "get": {
         "operationId": "AdminApplicationsController_exportCsv",
@@ -5794,6 +6012,32 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "AdminApplications"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminApplicationsController_anonymise",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -5968,6 +6212,42 @@
       }
     },
     "/admin/interview-slots/{id}": {
+      "patch": {
+        "operationId": "AdminInterviewSlotsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/admin_interview_slotsUpdateSlotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "AdminInterviewSlots"
+        ]
+      },
       "delete": {
         "operationId": "AdminInterviewSlotsController_remove",
         "parameters": [
@@ -6006,42 +6286,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "tags": [
-          "AdminInterviewSlots"
-        ]
-      },
-      "patch": {
-        "operationId": "AdminInterviewSlotsController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/admin_interview_slotsUpdateDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": ""
@@ -6152,6 +6396,20 @@
         ],
         "tags": [
           "AdminOverview"
+        ]
+      }
+    },
+    "/sitemap-index": {
+      "get": {
+        "operationId": "SitemapController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Sitemap"
         ]
       }
     }
@@ -6452,8 +6710,18 @@
               "support"
             ]
           },
-          "isLocked": {
-            "type": "boolean"
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          },
+          "unlock": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
           }
         },
         "additionalProperties": false
@@ -6487,7 +6755,8 @@
             "type": "string",
             "enum": [
               "log",
-              "http"
+              "http",
+              "unifonic"
             ]
           },
           "providerUrl": {
@@ -6571,18 +6840,20 @@
         },
         "additionalProperties": false
       },
-      "admin_redirectsCreateDto": {
+      "CreateRedirectDto": {
         "type": "object",
         "properties": {
           "fromPath": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 255
+            "minLength": 2,
+            "maxLength": 255,
+            "pattern": "^\\/(?!\\/)[^\\s\\\\]*$"
           },
           "toPath": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 255
+            "minLength": 2,
+            "maxLength": 255,
+            "pattern": "^\\/(?!\\/)[^\\s\\\\]*$"
           },
           "statusCode": {
             "anyOf": [
@@ -6607,6 +6878,40 @@
         ],
         "additionalProperties": false
       },
+      "UpdateRedirectDto": {
+        "type": "object",
+        "properties": {
+          "fromPath": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255,
+            "pattern": "^\\/(?!\\/)[^\\s\\\\]*$"
+          },
+          "toPath": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255,
+            "pattern": "^\\/(?!\\/)[^\\s\\\\]*$"
+          },
+          "statusCode": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  301
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  302
+                ]
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "admin_redirectsReorderDto": {
         "minItems": 1,
         "type": "array",
@@ -6628,38 +6933,6 @@
             "sortOrder"
           ]
         }
-      },
-      "admin_redirectsUpdateDto": {
-        "type": "object",
-        "properties": {
-          "fromPath": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255
-          },
-          "toPath": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255
-          },
-          "statusCode": {
-            "anyOf": [
-              {
-                "type": "number",
-                "enum": [
-                  301
-                ]
-              },
-              {
-                "type": "number",
-                "enum": [
-                  302
-                ]
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
       },
       "admin_redirectsPublishDto": {
         "type": "object",
@@ -6736,19 +7009,53 @@
           "facebookUrl": {
             "type": "string",
             "maxLength": 255,
-            "format": "uri",
             "nullable": true
           },
           "instagramUrl": {
             "type": "string",
             "maxLength": 255,
-            "format": "uri",
             "nullable": true
           },
           "xUrl": {
             "type": "string",
             "maxLength": 255,
-            "format": "uri",
+            "nullable": true
+          },
+          "youtubeUrl": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "whatsappUrl": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "tiktokUrl": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "mapEmbedUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "mapLat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "nullable": true
+          },
+          "mapLng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
             "nullable": true
           },
           "enEnabled": {
@@ -6795,7 +7102,8 @@
           "slug": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 180,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "titleAr": {
             "type": "string",
@@ -6865,11 +7173,6 @@
       "admin_pagesUpdateDto": {
         "type": "object",
         "properties": {
-          "slug": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 191
-          },
           "titleAr": {
             "type": "string",
             "minLength": 1,
@@ -7475,6 +7778,9 @@
             "maxLength": 255,
             "nullable": true
           },
+          "isPublished": {
+            "type": "boolean"
+          },
           "sortOrder": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -7526,6 +7832,9 @@
             "maxLength": 255,
             "nullable": true
           },
+          "isPublished": {
+            "type": "boolean"
+          },
           "sortOrder": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -7575,6 +7884,17 @@
           },
           "isLead": {
             "type": "boolean"
+          },
+          "bioAr": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "nullable": true
+          },
+          "bioEn": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
           },
           "photoAssetId": {
             "type": "string",
@@ -7650,6 +7970,17 @@
           },
           "isLead": {
             "type": "boolean"
+          },
+          "bioAr": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "nullable": true
+          },
+          "bioEn": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
           },
           "photoAssetId": {
             "type": "string",
@@ -7787,7 +8118,8 @@
           "slug": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 180,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           }
         },
         "additionalProperties": false
@@ -7829,7 +8161,8 @@
           "slug": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 180,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "nameAr": {
             "type": "string",
@@ -7881,7 +8214,8 @@
           "slug": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 180,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "nameAr": {
             "type": "string",
@@ -8309,7 +8643,8 @@
           "slug": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "nameAr": {
             "type": "string",
@@ -8364,7 +8699,8 @@
           "slug": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "nameAr": {
             "type": "string",
@@ -8511,7 +8847,8 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 191,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "email": {
             "type": "string",
@@ -8584,6 +8921,27 @@
         ],
         "additionalProperties": false
       },
+      "NewsletterTokenDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 191,
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "token": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "email",
+          "token"
+        ],
+        "additionalProperties": false
+      },
       "ReplyMessageDto": {
         "type": "object",
         "properties": {
@@ -8648,18 +9006,21 @@
           "firstName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "middleName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$",
             "nullable": true
           },
           "lastName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "birthDate": {
             "type": "string",
@@ -8719,18 +9080,21 @@
           "firstName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "middleName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$",
             "nullable": true
           },
           "lastName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "birthDate": {
             "type": "string",
@@ -8802,24 +9166,86 @@
         },
         "additionalProperties": false
       },
+      "ApplicationCorrectionsDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
+          },
+          "middleName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
+          },
+          "birthDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "nationality": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Za-z]{2}$"
+          },
+          "idNumber": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "nullable": true
+          },
+          "university": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "major": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "degreeLevel": {
+            "type": "string",
+            "enum": [
+              "bachelor",
+              "master",
+              "phd"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "SubmitApplicationDto": {
         "type": "object",
         "properties": {
           "firstName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "middleName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$",
             "nullable": true
           },
           "lastName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120
+            "maxLength": 120,
+            "pattern": "^(?:(?=[\\p{Script=Arabic}\\p{Script=Latin}])\\p{L}|\\p{M}|['’ -])+$"
           },
           "birthDate": {
             "type": "string",
@@ -8927,6 +9353,13 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 191
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "sms",
+              "email"
+            ]
           }
         },
         "required": [
@@ -9100,6 +9533,32 @@
         ],
         "additionalProperties": false
       },
+      "admin_interview_slotsUpdateSlotDto": {
+        "type": "object",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "locationAr": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "locationEn": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "admin_interview_slotsCreateDto": {
         "type": "object",
         "properties": {
@@ -9151,32 +9610,6 @@
             "sortOrder"
           ]
         }
-      },
-      "admin_interview_slotsUpdateDto": {
-        "type": "object",
-        "properties": {
-          "startsAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-          },
-          "endsAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-          },
-          "locationAr": {
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "locationEn": {
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
       },
       "admin_interview_slotsPublishDto": {
         "type": "object",

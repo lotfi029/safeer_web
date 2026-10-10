@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 test.describe('public pages: home, board', () => {
@@ -25,8 +24,28 @@ test.describe('public pages: home, board', () => {
     expect((html.match(/<h1\b/g) ?? []).length).toBe(1);
   });
 
+  test('board: every member of both API groups is rendered in its section (W1)', async ({
+    page,
+    request,
+  }) => {
+    const api = (await (await request.get('/api/v1/board?lang=en')).json()) as Record<
+      'board' | 'executive',
+      { name: string }[]
+    >;
+    expect(api.board.length).toBeGreaterThan(0);
+    const res = await page.goto('/en/board');
+    expect(res?.status()).toBe(200);
+    const names = (id: string) =>
+      page.locator(`section[aria-labelledby="${id}"] li h3`).allTextContents();
+    expect((await names('board-members')).map((n) => n.trim())).toEqual(
+      api.board.map((m) => m.name),
+    );
+    expect((await names('board-exec')).map((n) => n.trim())).toEqual(
+      api.executive.map((m) => m.name),
+    );
+  });
+
   test('board SSR: the chair (isLead) spans two columns', async ({ page }) => {
-    test.skip(!usingMockApi, 'asserts mock board');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/ar/board');
     const lead = page.locator('li.band').first();
@@ -36,6 +55,37 @@ test.describe('public pages: home, board', () => {
       page.locator('section[aria-labelledby=board-members] li:not(.band)').first().boundingBox(),
     ]);
     expect(leadBox!.width).toBeGreaterThan(itemBox!.width * 1.5);
+  });
+
+  test('home: CMS section names never show; images are either the asset or a labelled placeholder (W6, W7)', async ({
+    page,
+    request,
+  }) => {
+    const home = (await (await request.get('/api/v1/home?lang=ar')).json()) as {
+      sections: { sectionKey: string; label: string | null; imageAsset: unknown }[];
+    };
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/ar');
+    await page.waitForLoadState('networkidle');
+    // Load every deferred section.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForLoadState('networkidle');
+    const main = page.locator('main');
+    for (const key of ['hero', 'cta']) {
+      const label = home.sections.find((s) => s.sectionKey === key)?.label;
+      if (label) await expect(main.getByText(label, { exact: true })).toHaveCount(0);
+    }
+    const hero = main.locator('section').first();
+    if (home.sections.find((s) => s.sectionKey === 'hero')?.imageAsset) {
+      await expect(hero.locator('img[src*="/files/"]')).toHaveAttribute('alt', /.+/);
+    }
+    const placeholders = main.locator('.img-placeholder[role="img"]');
+    for (const ph of await placeholders.all()) {
+      const text = (await ph.textContent())?.trim() ?? '';
+      expect(text).toMatch(/^\[صورة: .+\]$/);
+      await expect(ph).toHaveAttribute('aria-label', text);
+    }
   });
 
   test('forward arrows point in the reading direction', async ({ page }) => {

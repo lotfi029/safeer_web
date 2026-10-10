@@ -7,11 +7,17 @@ export function isPrivateArea(path: string): boolean {
 
 /**
  * Cache-Control for HTML (sessions plan R2): a per-request CSP nonce must never sit behind a shared
- * cache, so public SSR HTML is `no-cache` (browser revalidation only). Admin/portal are `no-store`.
+ * cache, so public SSR HTML is `no-cache` (browser revalidation only). Admin/portal are `no-store`,
+ * and so is any `?preview=` URL (W18): an unpublished post must not stay in any cache.
+ * `url` is the request path, optionally with its query string.
  */
-export function htmlCacheHeaders(path: string): Record<string, string> {
-  if (isPrivateArea(path)) {
+export function htmlCacheHeaders(url: string): Record<string, string> {
+  const { pathname, searchParams } = new URL(url, 'http://localhost');
+  if (isPrivateArea(pathname)) {
     return { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' };
+  }
+  if (searchParams.has('preview')) {
+    return { 'Cache-Control': 'no-store' };
   }
   return { 'Cache-Control': 'no-cache' };
 }

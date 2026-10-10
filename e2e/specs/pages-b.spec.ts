@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
+import { cleanupContent, ensurePublishedTestimonial } from '../support/content';
 import { usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
+import { disposeSetupAdmin } from '../support/real-api';
+import { useRealDb } from '../support/real-db';
+
+useRealDb(test);
+test.afterAll(async () => {
+  await cleanupContent();
+  await disposeSetupAdmin();
+});
 
 const PAGES = ['testimonials', 'partners', 'documents'] as const;
 
@@ -27,6 +36,8 @@ test.describe('public pages: testimonials, partners, documents', () => {
   }
 
   test('testimonials: SSR renders quotes as blockquote/figure', async ({ request }) => {
+    // Real API: the dev seed publishes no quote, so publish one through the admin API.
+    await ensurePublishedTestimonial();
     const html = await (await request.get('/ar/testimonials')).text();
     expect(html).toContain('<blockquote');
     expect(html).toContain('<figcaption');
@@ -76,17 +87,17 @@ test.describe('public pages: testimonials, partners, documents', () => {
     );
     expect(categories.length).toBeGreaterThan(0);
     expect(new Set(categories)).toEqual(new Set(['university']));
-    const chip = page.getByRole('link', { name: 'Universities' });
+    const chip = page.getByRole('link', { name: 'Universities', exact: true });
     await expect(chip).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByRole('link', { name: 'All' })).not.toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'All', exact: true })).not.toHaveAttribute(
       'aria-current',
       'page',
     );
 
     // Client-side filter change through the chip links.
-    await page.getByRole('link', { name: 'Government' }).click();
+    await page.getByRole('link', { name: 'Government', exact: true }).click();
     await expect(page).toHaveURL(/category=government/);
-    await expect(page.getByRole('link', { name: 'Government' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Government', exact: true })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -101,13 +112,16 @@ test.describe('public pages: testimonials, partners, documents', () => {
     );
   });
 
-  test('documents: download links point to /files/doc-… and carry download', async ({ page }) => {
+  test('documents: download links point to /files/:publicId and carry download', async ({
+    page,
+  }) => {
     await openAt(page, '/documents', { name: '1440', width: 1440, height: 900 }, 'ar');
     const links = page.locator('a[download]');
     const count = await links.count();
     expect(count).toBeGreaterThan(0);
     for (let i = 0; i < count; i++) {
-      await expect(links.nth(i)).toHaveAttribute('href', /^\/files\/doc-[\w-]+$/);
+      // The asset's publicId (a UUID from the API, `doc-…` in the mock fixtures).
+      await expect(links.nth(i)).toHaveAttribute('href', /^\/files\/[\w-]+$/);
       // Accessible name includes the document title, not just "تحميل".
       const name = (await links.nth(i).textContent())?.replace(/\s+/g, ' ').trim() ?? '';
       expect(name.length).toBeGreaterThan('تحميل'.length + 1);

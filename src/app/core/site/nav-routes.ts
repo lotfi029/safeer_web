@@ -46,3 +46,33 @@ export function appPathForApiUrl(
   }
   return null;
 }
+
+/**
+ * W5: short header-bar labels (the prototype's `NAV`). The API nav carries the full page titles
+ * ("Scholarships for international students in Saudi universities"), which overflow the header;
+ * the drawer keeps those. A slug missing here falls back to the API title.
+ */
+export const NAV_SHORT_LABELS: Readonly<Record<'ar' | 'en', Partial<Record<NavSlug, string>>>> = {
+  ar: {
+    home: 'الرئيسية',
+    about: 'من نحن',
+    work: 'مجالات عملنا',
+    scholarships: 'منح الوافدين',
+    news: 'الأخبار',
+    partners: 'شركاؤنا',
+    contact: 'تواصل معنا',
+  },
+  en: {
+    home: 'Home',
+    about: 'About',
+    work: 'Our work',
+    scholarships: 'Scholarships',
+    news: 'News',
+    partners: 'Partners',
+    contact: 'Contact',
+  },
+};
+
+export function navLabel(slug: string, lang: 'ar' | 'en', apiTitle: string): string {
+  return (NAV_SHORT_LABELS[lang] as Record<string, string | undefined>)[slug] ?? apiTitle;
+}

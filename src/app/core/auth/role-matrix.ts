@@ -1,30 +1,41 @@
 import type { StaffRole } from '../api/models';
 
 /**
- * Typed fallback for the role matrix. The runtime source of truth is `GET /admin/roles` (B17, mocked
- * until live); this copy (docs/api/CONTRACT-NOTES.md "Staff") is used only if that call fails.
- * Never hard-code roles into menus: read `StaffSessionStore.can(area)`.
+ * Area keys of the real role matrix (`GET /admin/roles`, B17; safeer_api `src/auth/role-matrix.ts`,
+ * snapshot in docs/api/src/auth/role-matrix.ts). Route data uses these: `{ area: 'content' }`.
  */
-export const ROLE_MATRIX: Readonly<Record<string, readonly StaffRole[]>> = {
+export type StaffArea =
+  | 'applications'
+  | 'applications.delete'
+  | 'content'
+  | 'redirects.delete'
+  | 'inbox'
+  | 'inbox.delete'
+  | 'users'
+  | 'settings'
+  | 'audit';
+
+/**
+ * Typed fallback for the role matrix, a copy of the API's `AREA_ROLES`. The runtime source of truth
+ * is `GET /admin/roles`; this copy is used only if that call fails. Never hard-code roles into menus:
+ * read `StaffSessionStore.can(area)`.
+ *
+ * - `applications`: applications, their documents/notes, interview slots, CSV export
+ * - `content`: pages/sections, news + categories, work areas, board, stats, about items, partners,
+ *   documents, media, redirects
+ * - `inbox`: contact messages, testimonials + themes, newsletter subscribers (A5: also the overview's
+ *   message counts, so editors never see them)
+ * - `settings`: site settings, mail and SMS settings/templates/logs, cache
+ * - `*.delete`: the destructive actions inside an area, admin-only
+ */
+export const ROLE_MATRIX: Readonly<Record<StaffArea, readonly StaffRole[]>> = {
   applications: ['admin', 'reviewer'],
-  'interview-slots': ['admin', 'reviewer'],
-  pages: ['admin', 'editor'],
-  news: ['admin', 'editor'],
-  'work-areas': ['admin', 'editor'],
-  board: ['admin', 'editor'],
-  stats: ['admin', 'editor'],
-  'about-items': ['admin', 'editor'],
-  partners: ['admin', 'editor'],
-  documents: ['admin', 'editor'],
-  media: ['admin', 'editor'],
-  redirects: ['admin', 'editor'],
-  messages: ['admin', 'support'],
-  testimonials: ['admin', 'support'],
-  newsletter: ['admin', 'support'],
+  'applications.delete': ['admin'],
+  content: ['admin', 'editor'],
+  'redirects.delete': ['admin'],
+  inbox: ['admin', 'support'],
+  'inbox.delete': ['admin'],
   users: ['admin'],
   settings: ['admin'],
-  mail: ['admin'],
-  sms: ['admin'],
   audit: ['admin'],
-  cache: ['admin'],
 };

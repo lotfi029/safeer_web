@@ -21,7 +21,6 @@ import {
 } from '@angular/router';
 import { routes } from './app.routes';
 import { MOCK_INTERCEPTORS } from './core/api/mocks/mock-interceptors';
-import { apiBaseUrlInterceptor } from './core/http/api-base-url.interceptor';
 import {
   credentialsInterceptor,
   csrfInterceptor,
@@ -49,14 +48,14 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       // Order matters: locale → credentials → CSRF → problem normalisation → (dev mocks) →
-      // base URL rewrite → SSR-only forwarding.
+      // SSR-only forwarding. On the server, InternalApiBackend (app.config.server.ts) sends
+      // `/api/v1` to the internal API below all of these and the transfer cache (W9).
       withInterceptors([
         localeInterceptor,
         credentialsInterceptor,
         csrfInterceptor,
         problemDetailsInterceptor,
         ...MOCK_INTERCEPTORS,
-        apiBaseUrlInterceptor,
         serverForwardInterceptor,
       ]),
     ),

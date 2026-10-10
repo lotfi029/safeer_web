@@ -1,0 +1,25 @@
+# The build stage copies the whole context (Dockerfile); keep out what it doesn't read.
+node_modules
+dist
+.angular
+docs
+e2e
+test-results
+playwright-report
+lighthouse-reports
+.lighthouseci
+logs
+tmp
+out-tsc
+coverage
+.git
+.github
+.claude
+.vscode
+.env
+.env.*
+!.env.example
+*.log
+shot-tmp.mjs
+Dockerfile
+.dockerignore

@@ -25,6 +25,14 @@ export interface PublicSiteSettings {
   facebookUrl: string | null;
   instagramUrl: string | null;
   xUrl: string | null;
+  youtubeUrl: string | null;
+  linkedinUrl: string | null;
+  whatsappUrl: string | null;
+  tiktokUrl: string | null;
+  /** A12: the contact page's map — an allow-listed https embed URL for an iframe, and the pin. */
+  mapEmbedUrl: string | null;
+  mapLat: number | null;
+  mapLng: number | null;
   enEnabled: boolean;
   seoTitleAr: string | null;
   seoTitleEn: string | null;
@@ -50,6 +58,13 @@ export function toPublicSiteSettings(settings: SiteSettings): PublicSiteSettings
     facebookUrl: settings.facebookUrl,
     instagramUrl: settings.instagramUrl,
     xUrl: settings.xUrl,
+    youtubeUrl: settings.youtubeUrl,
+    linkedinUrl: settings.linkedinUrl,
+    whatsappUrl: settings.whatsappUrl,
+    tiktokUrl: settings.tiktokUrl,
+    mapEmbedUrl: settings.mapEmbedUrl,
+    mapLat: settings.mapLat,
+    mapLng: settings.mapLng,
     enEnabled: settings.enEnabled,
     seoTitleAr: settings.seoTitleAr,
     seoTitleEn: settings.seoTitleEn,

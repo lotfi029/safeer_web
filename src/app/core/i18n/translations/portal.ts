@@ -24,7 +24,9 @@ export const ar = {
     sending: 'جارٍ الإرسال…',
     codeLabel: 'رمز التحقق',
     codeHint: 'لا نستخدم كلمات مرور — يُرسَل رمز لمرة واحدة إلى هاتفك أو بريدك.',
-    sent: 'إن كانت البيانات مسجّلة لدينا فستصلك رسالة برمز التحقق خلال لحظات.',
+    sent: 'إن كانت البيانات تطابق طلبًا مسجّلًا لدينا فسيصلك رمز التحقق خلال دقيقة تقريبًا. لم يصلك؟ تحقّق من البريد غير المرغوب ثم أعد الإرسال.',
+    invalidCode:
+      'الرمز غير صحيح أو انتهت صلاحيته. بعد عدة محاولات خاطئة يُوقَف الدخول مؤقتًا، فحاول مرة أخرى بعد ساعة.',
     submit: 'دخول',
     verifying: 'جارٍ التحقق…',
     resend: 'إعادة إرسال الرمز',
@@ -68,10 +70,11 @@ export const ar = {
   events: {
     SUBMITTED: 'أُرسل الطلب',
     STATUS_CHANGED: 'تغيّرت حالة الطلب',
-    DOCUMENT_ACCEPTED: 'قُبل مستند',
+    STARTED: 'بدأ الطلب',
+    DOCS_REQUESTED: 'طُلبت مستندات إضافية',
+    DOCS_RECEIVED: 'استُلمت المستندات',
     DOCUMENT_REJECTED: 'رُفض مستند',
-    DOCUMENTS_REQUESTED: 'طُلبت مستندات إضافية',
-    DOCUMENT_UPLOADED: 'رُفع مستند',
+    APPLICANT_CORRECTED: 'صُحّحت بيانات الطلب',
     INTERVIEW_BOOKED: 'حُجز موعد المقابلة',
     INTERVIEW_CANCELLED: 'أُلغي موعد المقابلة',
     other: 'تحديث على الطلب',
@@ -93,6 +96,8 @@ export const ar = {
     keep: 'رجوع',
     bookedToast: 'تم حجز موعد المقابلة.',
     cancelledToast: 'تم إلغاء موعد المقابلة.',
+    rateLimited:
+      'تجاوزت عدد مرات الحجز أو الإلغاء المسموح بها. حاول مرة أخرى بعد ساعة، أو تواصل معنا.',
   },
   documents: {
     title: 'مستنداتي',
@@ -146,7 +151,9 @@ export const en: typeof ar = {
     sending: 'Sending…',
     codeLabel: 'Verification code',
     codeHint: 'No passwords — a one-time code is sent to your phone or email.',
-    sent: 'If these details are registered with us, a verification code is on its way.',
+    sent: 'If these details match an application, a verification code should arrive within a minute or so. Nothing yet? Check your spam folder, then resend.',
+    invalidCode:
+      'The code is wrong or has expired. After several wrong codes, sign-in is paused for a while: try again in an hour.',
     submit: 'Sign in',
     verifying: 'Verifying…',
     resend: 'Resend code',
@@ -190,10 +197,11 @@ export const en: typeof ar = {
   events: {
     SUBMITTED: 'Application submitted',
     STATUS_CHANGED: 'Application status changed',
-    DOCUMENT_ACCEPTED: 'A document was accepted',
+    STARTED: 'Application started',
+    DOCS_REQUESTED: 'More documents were requested',
+    DOCS_RECEIVED: 'Documents received',
     DOCUMENT_REJECTED: 'A document was rejected',
-    DOCUMENTS_REQUESTED: 'More documents were requested',
-    DOCUMENT_UPLOADED: 'A document was uploaded',
+    APPLICANT_CORRECTED: 'Application details corrected',
     INTERVIEW_BOOKED: 'Interview booked',
     INTERVIEW_CANCELLED: 'Interview cancelled',
     other: 'Application update',
@@ -215,6 +223,7 @@ export const en: typeof ar = {
     keep: 'Back',
     bookedToast: 'Your interview is booked.',
     cancelledToast: 'Your interview was cancelled.',
+    rateLimited: 'Too many bookings or cancellations. Try again in an hour, or contact us.',
   },
   documents: {
     title: 'My documents',

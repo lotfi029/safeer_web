@@ -8,11 +8,12 @@ import { verifyPreviewToken } from '../auth/preview-token.util.js';
 import { CacheInterceptor } from '../cache/cache.interceptor.js';
 import { CacheTags } from '../cache/cache-tags.decorator.js';
 import { CacheKeyParams } from '../cache/cache-key-params.decorator.js';
+import { PreviewAware } from '../cache/preview-aware.decorator.js';
 import type { RequestContext } from '../common/request-context.js';
 import { MarkdownService } from '../common/markdown/markdown.service.js';
 import { ProblemException } from '../common/problem-details/problem.exception.js';
 import { ErrorCode } from '../common/problem-details/error-codes.js';
-import { readPageLimit, readString } from '../common/query/list-params.js';
+import { escapeLikeValue, readPageLimit, readString } from '../common/query/list-params.js';
 import { Post } from '../database/entities/post.entity.js';
 import { NewsCategory } from '../database/entities/news-category.entity.js';
 import { ENV } from '../config/env.tokens.js';
@@ -23,13 +24,6 @@ import type { PagedResult } from '../common/crud/crud.factory.js';
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 48;
 const RELATED_LIMIT = 3;
-const WORDS_PER_MINUTE = 200;
-
-function estimateReadMinutes(text: string | null | undefined): number {
-  if (!text) return 1;
-  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(wordCount / WORDS_PER_MINUTE));
-}
 
 /**
  * Public read side of `admin/news` (table `posts`) plus `admin/news-categories`
@@ -67,10 +61,20 @@ export class NewsController {
       .where('p.isPublished = true');
 
     if (categorySlug) {
+      // C42: an unknown category is a 400, not a cached empty page — made-up
+      // values would otherwise each mint their own cache entry.
+      if (!(await this.categoryRepo.exists({ where: { slug: categorySlug } }))) {
+        throw new ProblemException(400, ErrorCode.VALIDATION_FAILED, `Unknown news category: ${categorySlug}`);
+      }
       qb.andWhere('c.slug = :categorySlug', { categorySlug });
     }
     if (q) {
-      qb.andWhere('(p.titleAr LIKE :q OR p.titleEn LIKE :q OR p.excerptAr LIKE :q OR p.excerptEn LIKE :q)', { q: `%${q}%` });
+      // B13 (safeer-backend-fr-review.md): escape LIKE's own '%'/'_' wildcards in the search term itself.
+      const escaped = escapeLikeValue(q);
+      qb.andWhere(
+        "(p.titleAr LIKE :q ESCAPE '\\\\' OR p.titleEn LIKE :q ESCAPE '\\\\' OR p.excerptAr LIKE :q ESCAPE '\\\\' OR p.excerptEn LIKE :q ESCAPE '\\\\')",
+        { q: `%${escaped}%` },
+      );
       // A distinct search term is a cache miss every time regardless — not worth spending eviction budget on.
       req.skipCacheWrite = true;
     }
@@ -116,14 +120,15 @@ export class NewsController {
   @Get('news/:slug')
   @UseInterceptors(CacheInterceptor)
   @CacheTags('news')
-  // `preview` bypasses the cache entirely (see cache.interceptor.ts) — this
-  // route's cache key varies on nothing but the path (the slug).
+  // C24: a verified `preview` token bypasses the cache (see
+  // cache.interceptor.ts); otherwise this route's cache key varies on
+  // nothing but the path (the slug).
   @CacheKeyParams()
-  async bySlug(@Param('slug') slug: string, @Query() query: Record<string, unknown>): Promise<PublicPostDetail> {
+  @PreviewAware()
+  async bySlug(@Param('slug') slug: string, @Query() query: Record<string, unknown>, @Req() req: RequestContext): Promise<PublicPostDetail> {
     const post = await this.repo.findOne({ where: { slug }, relations: { category: true, coverAsset: true } });
-    if (!post || !this.isVisible(post, query)) throw new ProblemException(404, ErrorCode.NOT_FOUND, 'Not found');
+    if (!post || !this.isVisible(post, query, req)) throw new ProblemException(404, ErrorCode.NOT_FOUND, 'Not found');
 
-    const readMinutes = estimateReadMinutes(post.bodyEn && post.bodyEn.trim() ? post.bodyEn : post.bodyAr);
 
     // Fetches one extra so excluding the current post (below) still leaves
     // up to RELATED_LIMIT — `find()` has no "not equal" operator worth
@@ -142,12 +147,19 @@ export class NewsController {
     post.bodyAr = this.markdown.render(post.bodyAr);
     post.bodyEn = post.bodyEn ? this.markdown.render(post.bodyEn) : null;
 
-    return toPublicPostDetail(post, readMinutes, relatedFiltered);
+    const detail = toPublicPostDetail(post, relatedFiltered);
+    if (req.previewVerified) {
+      const token = readString(query, 'preview')!;
+      detail.previewFileQuery = `preview=${encodeURIComponent(token)}&post=${encodeURIComponent(post.id)}`;
+    }
+    return detail;
   }
 
-  private isVisible(post: Post, query: Record<string, unknown>): boolean {
+  private isVisible(post: Post, query: Record<string, unknown>, req: RequestContext): boolean {
     if (post.isPublished) return true;
     const token = readString(query, 'preview');
-    return !!token && verifyPreviewToken(this.env.APP_ENCRYPTION_KEY, 'posts', post.id, token);
+    const verified = !!token && verifyPreviewToken(this.env.APP_ENCRYPTION_KEY, 'posts', post.id, token);
+    if (verified) req.previewVerified = true; // C24: private, never cached
+    return verified;
   }
 }

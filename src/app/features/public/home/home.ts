@@ -16,6 +16,7 @@ import { Image } from '../../../shared/ui/image/image';
 import { Reveal } from '../../../shared/ui/reveal/reveal';
 import { RichText } from '../../../shared/ui/rich-text/rich-text';
 import { SectionHeading } from '../../../shared/ui/section-heading/section-heading';
+import { plainText } from '../../../shared/text/plain-text';
 import { NewsCard } from '../news/news-card';
 import { SectionButton } from '../section-link';
 
@@ -33,6 +34,20 @@ export const HOME_SECTION_KEYS = [
   'partners',
   'cta',
 ] as const;
+
+/**
+ * W6: sections whose CMS `label` the prototype shows as an eyebrow. For the others (hero, cta) the
+ * label is only the section's name in the admin («الواجهة الرئيسية» / "Hero") and never renders.
+ */
+export const EYEBROW_SECTION_KEYS: ReadonlySet<string> = new Set([
+  'about',
+  'impact',
+  'work_areas',
+  'student_care',
+  'news',
+  'testimonials',
+  'partners',
+]);
 
 /**
  * Home (prototype `#/home`). Sections render by `sectionKey` in API order; unpublished sections are
@@ -73,9 +88,6 @@ export const HOME_SECTION_KEYS = [
                 class="wrap relative z-1 grid items-center gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-14"
               >
                 <div class="flex flex-col gap-6">
-                  @if (s.label) {
-                    <p class="pill self-start px-4.5 py-2 text-sm">{{ s.label }}</p>
-                  }
                   <h1 class="t-display whitespace-pre-line" [id]="'s-' + s.id">{{ s.heading }}</h1>
                   @if (s.body) {
                     <app-rich-text class="t-lead max-w-135" [html]="s.body" />
@@ -119,7 +131,7 @@ export const HOME_SECTION_KEYS = [
                   <div class="flex flex-col gap-5">
                     <app-section-heading
                       [headingId]="'s-' + s.id"
-                      [eyebrow]="s.label"
+                      [eyebrow]="eyebrow(s)"
                       [heading]="s.heading ?? ''"
                       [lead]="plain(s.body)"
                     />
@@ -148,8 +160,8 @@ export const HOME_SECTION_KEYS = [
               <section class="band py-14 md:py-16" [attr.aria-labelledby]="'s-' + s.id">
                 <div class="wrap grid items-center gap-10 lg:grid-cols-[280px_minmax(0,1fr)]">
                   <div class="flex flex-col gap-2">
-                    @if (s.label) {
-                      <p class="t-eyebrow">{{ s.label }}</p>
+                    @if (eyebrow(s); as label) {
+                      <p class="t-eyebrow">{{ label }}</p>
                     }
                     <h2 class="t-h3" [id]="'s-' + s.id">{{ s.heading }}</h2>
                     @if (s.body) {
@@ -188,7 +200,7 @@ export const HOME_SECTION_KEYS = [
                 <div class="wrap flex flex-col gap-10">
                   <app-section-heading
                     [headingId]="'s-' + s.id"
-                    [eyebrow]="s.label"
+                    [eyebrow]="eyebrow(s)"
                     [heading]="s.heading ?? ''"
                     [lead]="plain(s.body)"
                   >
@@ -225,7 +237,7 @@ export const HOME_SECTION_KEYS = [
                 <div class="wrap flex flex-col gap-10">
                   <app-section-heading
                     [headingId]="'s-' + s.id"
-                    [eyebrow]="s.label"
+                    [eyebrow]="eyebrow(s)"
                     [heading]="s.heading ?? ''"
                     [lead]="plain(s.body)"
                   />
@@ -261,7 +273,7 @@ export const HOME_SECTION_KEYS = [
                   <div class="wrap flex flex-col gap-10">
                     <app-section-heading
                       [headingId]="'s-' + s.id"
-                      [eyebrow]="s.label"
+                      [eyebrow]="eyebrow(s)"
                       [heading]="s.heading ?? ''"
                       [lead]="plain(s.body)"
                     >
@@ -295,7 +307,7 @@ export const HOME_SECTION_KEYS = [
                   <div class="wrap flex flex-col gap-8">
                     <app-section-heading
                       [headingId]="'s-' + s.id"
-                      [eyebrow]="s.label"
+                      [eyebrow]="eyebrow(s)"
                       [heading]="s.heading ?? ''"
                       [lead]="plain(s.body)"
                     >
@@ -333,7 +345,7 @@ export const HOME_SECTION_KEYS = [
                 <div class="wrap flex flex-col gap-8">
                   <app-section-heading
                     [headingId]="'s-' + s.id"
-                    [eyebrow]="s.label"
+                    [eyebrow]="eyebrow(s)"
                     [heading]="s.heading ?? ''"
                     [lead]="plain(s.body)"
                   />
@@ -410,6 +422,10 @@ export class HomePage {
 
   protected readonly icon = asIcon;
 
+  protected eyebrow(s: PageSection): string | null {
+    return EYEBROW_SECTION_KEYS.has(s.sectionKey) ? s.label : null;
+  }
+
   constructor() {
     effect(() => {
       const home = this.data().data;
@@ -440,9 +456,16 @@ export class HomePage {
                       },
                     }
                   : {}),
-                sameAs: [settings.facebookUrl, settings.instagramUrl, settings.xUrl].filter(
-                  Boolean,
-                ),
+                // W20: every profile the settings carry.
+                sameAs: [
+                  settings.facebookUrl,
+                  settings.instagramUrl,
+                  settings.xUrl,
+                  settings.youtubeUrl,
+                  settings.linkedinUrl,
+                  settings.whatsappUrl,
+                  settings.tiktokUrl,
+                ].filter(Boolean),
               },
             ]
           : [],
@@ -455,15 +478,5 @@ export class HomePage {
   }
 
   /** Section/about-item bodies are sanitized HTML (C26); some slots only take plain text. */
-  protected plain(html: string | null | undefined): string | null {
-    if (!html) {
-      return null;
-    }
-    return (
-      html
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim() || null
-    );
-  }
+  protected readonly plain = plainText;
 }

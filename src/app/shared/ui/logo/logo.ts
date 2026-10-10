@@ -2,10 +2,13 @@ import { NgOptimizedImage } from '@angular/common';
 import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-// TODO(logo): replace with the official SVG (spec §6.1); never ship a traced SVG.
-const LOGO_SRC = '/brand/safeer-logo.png';
-const LOGO_WIDTH = 150;
-const LOGO_HEIGHT = 228;
+/**
+ * The official mark, vector (public/brand/safeer-mark.svg, cropped from docs/brand/safeer-logo-official.svg
+ * by scripts/build-brand.mjs). Width/height are its viewBox, for the aspect ratio only.
+ */
+const LOGO_SRC = '/brand/safeer-mark.svg';
+const LOGO_WIDTH = 642;
+const LOGO_HEIGHT = 974;
 
 /**
  * Association logo on its white "logo chip" (the ink is deep teal, so it needs a light tile on
@@ -58,7 +61,7 @@ export class Logo {
     <app-logo [height]="compact() ? 42 : 48" alt="" [priority]="priority()" />
     <span class="flex min-w-0 flex-col">
       <span
-        class="truncate leading-snug font-bold"
+        class="line-clamp-2 leading-snug font-bold break-words"
         [class]="compact() ? 'text-base' : 'text-[15px] sm:text-base xl:text-[19px]'"
         >{{ name() ?? ('common.orgName' | transloco) }}</span
       >

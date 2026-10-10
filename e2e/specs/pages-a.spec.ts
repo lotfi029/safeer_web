@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
 /** About, work areas and scholarships (phase 3, prototype `#/about`, `#/work`, `#/scholarships`). */
@@ -25,7 +24,6 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
     test(`${p.name}: SSR renders title, canonical, hreflang and h1 without JS`, async ({
       request,
     }) => {
-      test.skip(!usingMockApi, 'asserts mock content');
       const res = await request.get(`/ar${p.path}`);
       expect(res.status()).toBe(200);
       const html = await res.text();
@@ -38,7 +36,6 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
   }
 
   test('about: the goals list has 5 numbered items', async ({ page }) => {
-    test.skip(!usingMockApi, 'asserts mock content');
     await openAt(page, '/about', DESKTOP, 'ar');
     const goals = page.getByTestId('about-goals').locator('> li');
     await expect(goals).toHaveCount(5);
@@ -70,7 +67,6 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
   });
 
   test('work areas: improvement themes carry a pill', async ({ page }) => {
-    test.skip(!usingMockApi, 'asserts mock content');
     await openAt(page, '/work-areas', DESKTOP, 'ar');
     const themes = page.locator('#work-themes').locator('xpath=ancestor::section[1]');
     await expect(themes.locator('ul > li')).toHaveCount(5);
@@ -101,7 +97,6 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
   test('scholarships: steps are an ordered list of 5 and the last is highlighted', async ({
     page,
   }) => {
-    test.skip(!usingMockApi, 'asserts mock content');
     await openAt(page, '/scholarships', DESKTOP, 'ar');
     const steps = page
       .locator('#scholarships-steps')
