@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { randomInt } from 'node:crypto';
 import { MOCK_API_URL, mockOnly } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
+import { disposeSetupAdmin, findMessage, lettersOnly } from '../support/real-api';
+import { useRealDb } from '../support/real-db';
+
+useRealDb(test);
+test.afterAll(disposeSetupAdmin);
 
 test.describe('contact page', () => {
   for (const { viewport, locale } of matrix()) {
@@ -115,27 +121,29 @@ test.describe('contact page', () => {
     await expect(page.getByLabel('Subject')).toHaveValue('partnership');
   });
 
-  test(
-    'a valid message is sent with formRenderedAt and an empty honeypot',
-    mockOnly('real API drops submits under 3s; covered by the mock'),
-    async ({ page }) => {
-      await page.goto('/en/contact');
-      await page.waitForLoadState('networkidle');
-      await page.getByRole('textbox', { name: 'Name' }).fill('Test Person');
-      await page.getByLabel('Email').fill('person@example.invalid');
-      await page.getByRole('textbox', { name: 'Message' }).fill('[...]');
-      const [req] = await Promise.all([
-        page.waitForRequest(
-          (r) => /\/api\/v1\/contact(\?|$)/.test(r.url()) && r.method() === 'POST',
-        ),
-        page.getByRole('button', { name: 'Send' }).click(),
-      ]);
-      const body = req.postDataJSON();
-      expect(body).toMatchObject({ name: 'Test Person', subject: 'scholarship', website: '' });
-      expect(typeof body.formRenderedAt).toBe('number');
-      await expect(page.getByText('your message has arrived')).toBeVisible();
-    },
-  );
+  test('a valid message is stored: formRenderedAt, empty honeypot, then in the admin inbox', async ({
+    page,
+  }) => {
+    const name = `Sender ${lettersOnly(String(randomInt(1e8, 1e9)))}`;
+    // The API silently drops messages sent less than 3 s after the form rendered: start the page
+    // clock 5 s in the past so formRenderedAt is already old enough.
+    await page.clock.install({ time: Date.now() - 5000 });
+    await page.goto('/en/contact');
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('textbox', { name: 'Name' }).fill(name);
+    await page.getByLabel('Email').fill('person@example.invalid');
+    await page.getByRole('textbox', { name: 'Message' }).fill('[...]');
+    const [req] = await Promise.all([
+      page.waitForRequest((r) => /\/api\/v1\/contact(\?|$)/.test(r.url()) && r.method() === 'POST'),
+      page.getByRole('button', { name: 'Send' }).click(),
+    ]);
+    const body = req.postDataJSON();
+    expect(body).toMatchObject({ name, subject: 'scholarship', website: '' });
+    expect(typeof body.formRenderedAt).toBe('number');
+    await expect(page.getByText('your message has arrived')).toBeVisible();
+    // `{ ok: true }` alone proves nothing (a dropped message answers the same): read the inbox.
+    await expect.poll(async () => (await findMessage(name))?.status).toBe('unread');
+  });
 
   test('server field errors from problem+json land on the field', async ({ page }) => {
     await page.route(/\/api\/v1\/contact(\?|$)/, (route) =>

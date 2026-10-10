@@ -103,6 +103,9 @@ jobs:
           --health-retries=10
     env:
       E2E_API_URL: http://127.0.0.1:3900
+      # e2e/support/real-db.ts seeds per-role staff and auth tokens in the same MySQL, loading mysql2
+      # and argon2 from this checkout (DB_* default to the service above, like scripts/real-api.mjs).
+      SAFEER_API_DIR: safeer_api
     steps:
       - uses: actions/checkout@v4
 

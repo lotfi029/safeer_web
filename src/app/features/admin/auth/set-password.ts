@@ -10,6 +10,7 @@ import { SeoService } from '../../../core/seo/seo.service';
 import { problemToTreeErrors } from '../../../shared/forms/server-errors';
 import { Button } from '../../../shared/ui/button/button';
 import { Control, Field } from '../../../shared/ui/field/field';
+import { AdminAuthFrame } from './auth-frame';
 
 /** The API's minimum (AcceptInviteDto / ResetPasswordDto: `z.string().min(8)`). */
 export const MIN_PASSWORD_LENGTH = 8;
@@ -20,27 +21,25 @@ export type SetPasswordMode = 'accept' | 'reset';
  * W16: the pages behind the links the API mails to staff (C2): `/{lang}/admin/accept/{token}` (an
  * invitation) and `/{lang}/admin/reset/{token}` (a password reset). Both set a password with
  * `POST /admin/auth/accept|reset/:token`; the token is single-use, and an unknown, used or expired
- * one is a 400 "invalid or expired". Session 2 restyles these with the rest of the admin screens.
+ * one is a 400 "invalid or expired". Styled with the other signed-out staff pages (AdminAuthFrame).
  */
 @Component({
   selector: 'app-admin-set-password',
-  imports: [FormField, RouterLink, TranslocoPipe, Field, Control, Button],
+  imports: [FormField, RouterLink, TranslocoPipe, Field, Control, Button, AdminAuthFrame],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main
-      id="main"
-      class="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5 py-12"
+    <app-admin-auth-frame
+      [heading]="'admin.setPassword.' + mode() + '.title' | transloco"
+      [lead]="done() ? null : ('admin.setPassword.' + mode() + '.lead' | transloco)"
     >
-      <h1 class="t-h2">{{ 'admin.setPassword.' + mode() + '.title' | transloco }}</h1>
       @if (done()) {
         <div class="card flex flex-col gap-5" role="status" tabindex="-1">
-          <p>{{ 'admin.setPassword.' + mode() + '.done' | transloco }}</p>
+          <p class="m-0">{{ 'admin.setPassword.' + mode() + '.done' | transloco }}</p>
           <a appButton [routerLink]="locale.link('/admin/login')">{{
             'admin.setPassword.toLogin' | transloco
           }}</a>
         </div>
       } @else {
-        <p class="t-muted">{{ 'admin.setPassword.' + mode() + '.lead' | transloco }}</p>
         <form class="card flex flex-col gap-5" novalidate (submit)="onSubmit($event)">
           <app-field
             [label]="'admin.setPassword.password' | transloco"
@@ -77,7 +76,7 @@ export type SetPasswordMode = 'accept' | 'reset';
           </button>
         </form>
       }
-    </main>
+    </app-admin-auth-frame>
   `,
 })
 export class AdminSetPassword {

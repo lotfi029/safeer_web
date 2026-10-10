@@ -6,7 +6,12 @@
  *   DELETE /__log        → clears the log
  *   POST /__reset        → resets mock state (?reference=SA-… restores one seeded application)
  *   POST /__site         → merges a JSON body into the site settings (map specs); send nulls to restore
- *   POST /__auth-token   → {purpose: accept|reset} → a fresh single-use token (W16 specs)
+ *   POST /__auth-token   → {purpose: accept|reset, userId?} → a fresh single-use token (W16 specs)
+ *   POST /__staff        → {role, status?, locked?, fresh?} → a new staff user with a known password
+ *                          (the mock twin of e2e/support/real-db.ts seedStaff)
+ *   POST /__staff/:id/expire-lock → ends that user's lock now
+ *   POST /__clone?reference=SA-…&tag=… → a fresh copy of a seeded application (new id,
+ *                          reference and a `tag-…` email, so a spec can search for its own copies)
  */
 import { createServer } from 'node:http';
 import { createMockBackend } from '../../mocks/backend.mjs';
@@ -75,11 +80,62 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { ok: true });
   }
   if (url.pathname === '/__auth-token' && req.method === 'POST') {
-    const { purpose } = (await readBody(req, url)) ?? {};
+    const { purpose, userId = null } = (await readBody(req, url)) ?? {};
     if (purpose !== 'accept' && purpose !== 'reset') return send(res, 400, { ok: false });
     const token = `e2e-${purpose}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    backend.db.authTokens.add(`${purpose}:${token}`);
+    backend.db.authTokens.set(`${purpose}:${token}`, userId);
     return send(res, 200, { token });
+  }
+  if (url.pathname === '/__staff' && req.method === 'POST') {
+    const { role = 'admin', status = 'active', locked = false } = (await readBody(req, url)) ?? {};
+    const rand = Math.random().toString(36).slice(2, 10);
+    const user = {
+      id: String(1000 + backend.db.fixtures.staff.length),
+      name: `E2E ${role} ${rand}`,
+      email: `e2e-${role}-${rand}@e2e.invalid`,
+      role,
+      status,
+      lockedUntil: locked ? new Date(Date.now() + 3_600_000).toISOString() : null,
+      lastLoginAt: null,
+      password: `e2e-${rand}`,
+    };
+    backend.db.fixtures.staff.push(user);
+    return send(res, 200, {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      role,
+    });
+  }
+  const expire = /^\/__staff\/([^/]+)\/expire-lock$/.exec(url.pathname);
+  if (expire && req.method === 'POST') {
+    const user = backend.db.fixtures.staff.find((u) => u.id === expire[1]);
+    if (user) user.lockedUntil = new Date(Date.now() - 1000).toISOString();
+    return send(res, user ? 200 : 404, { ok: !!user });
+  }
+  if (url.pathname === '/__clone' && req.method === 'POST') {
+    // A fresh copy of a seeded application under a new id/reference, so a spec can change it
+    // without racing other specs (the mock twin of creating one through the real API).
+    const seed = (fixtures.applications ?? []).find(
+      (a) => a.reference === url.searchParams.get('reference'),
+    );
+    if (!seed) return send(res, 404, { ok: false });
+    const id = String(++backend.db.seq);
+    const copy = structuredClone(seed);
+    Object.assign(copy, {
+      id,
+      reference: `SA-2026-${id.padStart(5, '0')}`,
+      email: `${url.searchParams.get('tag') ?? 'copy'}-${id}@mock.invalid`,
+      phone: `+9665${id.padStart(8, '0')}`,
+      interview: null,
+    });
+    for (const d of copy.documents ?? []) {
+      d.id = `${d.id}-${id}`;
+      if (d.supersededBy) d.supersededBy = `${d.supersededBy}-${id}`;
+    }
+    backend.db.applications.set(id, copy);
+    return send(res, 200, { id, reference: copy.reference, email: copy.email });
   }
   if (url.pathname === '/__reset') {
     // `?reference=SA-…` restores just that seeded application (and frees its interview slot) so

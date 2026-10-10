@@ -1,5 +1,8 @@
 # Prompt — Session 2: Admin dashboard + launch (Phases 7–10)
 
+> **Superseded:** use `docs/safeer-web-session-2-combined-prompt.md`, which runs this and the other half in one session.
+
+
 > Start this only after **every Session 1 PR is merged into `main`** and `docs/frontend/HANDOFF.md` exists.
 > Also start it only after the **Session 1 fix pass** (`docs/safeer-web-fix-prompt.md`, W1–W24) is merged, because it adds the real-API e2e job, the real role-matrix keys (W15) and the accept/reset pages (W16).
 > If the backend contract changed since Session 1, refresh `docs/api/` first.

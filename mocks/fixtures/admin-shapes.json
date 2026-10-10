@@ -1,0 +1,229 @@
+{
+  "_source": "Recorded from safeer_api by scripts/record-admin-shapes.mjs (shapes only, no values)",
+  "me": {
+    "id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "string",
+    "status": "string",
+    "isLocked": "boolean",
+    "lockedUntil": null,
+    "failedLogins": "number",
+    "lastLoginAt": "string",
+    "createdAt": "string",
+    "updatedAt": "string",
+    "csrfToken": "string"
+  },
+  "roles": {
+    "roles": ["string"],
+    "matrix": {
+      "applications": ["string"],
+      "applications.delete": ["string"],
+      "content": ["string"],
+      "redirects.delete": ["string"],
+      "inbox": ["string"],
+      "inbox.delete": ["string"],
+      "users": ["string"],
+      "settings": ["string"],
+      "audit": ["string"]
+    }
+  },
+  "overview": {
+    "statCards": {
+      "newApplications": "number",
+      "underReview": "number",
+      "acceptedThisMonth": "number",
+      "unreadMessages": "number"
+    },
+    "series": [
+      {
+        "month": "string",
+        "received": "number",
+        "accepted": "number"
+      }
+    ],
+    "latestApplications": [
+      {
+        "id": "string",
+        "reference": "string",
+        "name": "string",
+        "status": "string",
+        "submittedAt": "string"
+      }
+    ],
+    "contentAlerts": {
+      "noPublishedPartners": "boolean",
+      "legacyPostsCount": "number",
+      "pagesNeedingReviewCount": "number"
+    },
+    "badges": {
+      "newApplications": "number",
+      "unreadMessages": "number"
+    },
+    "recentAuditLog": [
+      {
+        "actorName": "string",
+        "id": "string",
+        "action": "string",
+        "entityType": "string",
+        "entityId": "string",
+        "entityLabel": "string",
+        "createdAt": "string",
+        "actorId": "string"
+      }
+    ]
+  },
+  "applications": {
+    "data": [
+      {
+        "id": "string",
+        "reference": "string",
+        "status": "string",
+        "currentStep": "number",
+        "firstName": "string",
+        "middleName": null,
+        "lastName": "string",
+        "email": "string",
+        "phone": "string",
+        "nationality": "string",
+        "university": "string",
+        "degreeLevel": "string",
+        "submittedAt": "string",
+        "createdAt": "string",
+        "assignedReviewer": {
+          "id": "string",
+          "name": "string"
+        },
+        "hasUnreviewedResubmission": "boolean"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "applicationCounts": {
+    "draft": "number",
+    "new": "number",
+    "under_review": "number",
+    "docs_missing": "number",
+    "interview": "number",
+    "accepted": "number",
+    "rejected": "number",
+    "all": "number"
+  },
+  "assignees": [
+    {
+      "id": "string",
+      "name": "string",
+      "email": "string",
+      "role": "string"
+    }
+  ],
+  "application": {
+    "id": "string",
+    "reference": "string",
+    "status": "string",
+    "currentStep": "number",
+    "personal": {
+      "firstName": "string",
+      "middleName": null,
+      "lastName": "string",
+      "birthDate": "string",
+      "phone": "string",
+      "nationality": "string",
+      "idNumber": null,
+      "email": "string",
+      "currentJob": null,
+      "gender": "string"
+    },
+    "study": {
+      "university": "string",
+      "major": "string",
+      "degreeLevel": "string",
+      "scholarshipNote": null
+    },
+    "consentAt": "string",
+    "submittedAt": "string",
+    "decidedAt": null,
+    "locale": "string",
+    "createdAt": "string",
+    "updatedAt": "string",
+    "assignedReviewer": null,
+    "documents": [
+      {
+        "id": "string",
+        "docType": "string",
+        "originalName": "string",
+        "mime": "string",
+        "sizeBytes": "number",
+        "status": "string",
+        "rejectionReason": null,
+        "createdAt": "string",
+        "reviewedBy": null,
+        "reviewedAt": null,
+        "supersededAt": null,
+        "downloadPath": "string"
+      }
+    ],
+    "notes": [],
+    "events": [
+      {
+        "id": "string",
+        "type": "string",
+        "actorId": null,
+        "actorName": null,
+        "visibleToApplicant": "boolean",
+        "data": "any",
+        "createdAt": "string"
+      }
+    ]
+  },
+  "messages": {
+    "data": [
+      {
+        "id": "string",
+        "name": "string",
+        "email": "string",
+        "subject": "string",
+        "status": "string",
+        "excerpt": "string",
+        "createdAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number",
+    "unreadCount": "number"
+  },
+  "message": {
+    "id": "string",
+    "name": "string",
+    "phone": null,
+    "email": "string",
+    "subject": "string",
+    "body": "string",
+    "status": "string",
+    "locale": "string",
+    "ipHash": "string",
+    "userAgent": "string",
+    "createdAt": "string",
+    "updatedAt": "string",
+    "replies": []
+  },
+  "newsletter": {
+    "data": [
+      {
+        "id": "string",
+        "email": "string",
+        "locale": "string",
+        "confirmedAt": "string",
+        "ipHash": "string",
+        "unsubscribedAt": "string",
+        "createdAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  }
+}

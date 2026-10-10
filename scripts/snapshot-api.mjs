@@ -33,7 +33,12 @@ const KEEP = [
   /^src\/admin-applications\/transitions\.ts$/,
   /^src\/home\/home\.service\.ts$/,
   /^src\/portal\/(portal-application\.service|portal-documents\.util|portal-timeline|required-doc-types)\.ts$/,
-  /^src\/auth\/role-matrix\.ts$/,
+  /^src\/auth\/(role-matrix|argon2-options|session-token\.util)\.ts$/,
+  // Stage 2: services whose return values are the admin response shapes (no public mapper).
+  /^src\/(messages\/messages|users\/users|media\/media|contact\/contact)\.service\.ts$/,
+  /^src\/(mail\/mail|sms\/sms)-(settings|templates)\.service\.ts$/,
+  /^src\/portal\/portal-interview\.service\.ts$/,
+  /^src\/contact\/newsletter-token\.util\.ts$/,
 ];
 const DOCS = ['openapi.json', 'docs/backend/API-CHANGES.md', 'docs/backend/ARCHITECTURE.md'];
 

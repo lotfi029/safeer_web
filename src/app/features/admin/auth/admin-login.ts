@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { email, form, FormField, required, submit } from '@angular/forms/signals';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { problemMessageKey, toApiProblem } from '../../../core/api/problem';
 import { StaffSessionStore } from '../../../core/auth/staff-session.store';
@@ -8,21 +8,29 @@ import { LocaleService } from '../../../core/i18n/locale.service';
 import { SeoService } from '../../../core/seo/seo.service';
 import { Button } from '../../../shared/ui/button/button';
 import { Control, Field } from '../../../shared/ui/field/field';
+import { AdminAuthFrame } from './auth-frame';
 
 /**
- * Stub staff login (Session 1 scope: exercises StaffSessionStore + guards). Session 2 builds the
- * designed login/forgot/reset/accept screens on top of the same store.
+ * Maps a failed sign-in to a message. The API answers a wrong password, an unknown email, a disabled
+ * account and a locked account with the same 401 (A2/C3: nothing reveals which), so the screen has
+ * one message for all of them; only the per-email limiter's 429 differs.
  */
+export function loginErrorKey(status: number, code: string): string {
+  if (status === 401) return 'admin.login.invalid';
+  if (status === 429) return 'admin.login.rateLimited';
+  return problemMessageKey({ code });
+}
+
+/** Staff sign-in (`POST /admin/auth/login`), then back to `returnUrl` or the overview. */
 @Component({
   selector: 'app-admin-login',
-  imports: [FormField, TranslocoPipe, Field, Control, Button],
+  imports: [FormField, RouterLink, TranslocoPipe, Field, Control, Button, AdminAuthFrame],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main
-      id="main"
-      class="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5 py-12"
+    <app-admin-auth-frame
+      [heading]="'admin.login.title' | transloco"
+      [lead]="'admin.login.lead' | transloco"
     >
-      <h1 class="t-h2">{{ 'admin.login.title' | transloco }}</h1>
       <form class="card flex flex-col gap-5" novalidate (submit)="onSubmit($event)">
         <app-field
           [label]="'admin.login.email' | transloco"
@@ -56,15 +64,18 @@ import { Control, Field } from '../../../shared/ui/field/field';
         <button appButton type="submit" [busy]="busy()" [disabled]="busy()">
           {{ 'admin.login.submit' | transloco }}
         </button>
+        <a class="self-start font-semibold" [routerLink]="locale.link('/admin/forgot')">{{
+          'admin.login.forgot' | transloco
+        }}</a>
       </form>
-    </main>
+    </app-admin-auth-frame>
   `,
 })
 export class AdminLogin {
   readonly returnUrl = input<string | undefined>();
   private readonly store = inject(StaffSessionStore);
   private readonly router = inject(Router);
-  private readonly locale = inject(LocaleService);
+  protected readonly locale = inject(LocaleService);
 
   protected readonly credentials = signal({ email: '', password: '' });
   protected readonly model = form(this.credentials, (p) => {
@@ -95,9 +106,7 @@ export class AdminLogin {
         );
       } catch (error) {
         const problem = toApiProblem(error);
-        this.errorKey.set(
-          problem.status === 401 ? 'admin.login.invalid' : problemMessageKey(problem),
-        );
+        this.errorKey.set(loginErrorKey(problem.status, problem.code));
       } finally {
         this.busy.set(false);
       }

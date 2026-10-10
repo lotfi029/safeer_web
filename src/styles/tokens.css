@@ -40,6 +40,12 @@
   --app-bg: #f6faf9;
   --thead: #f6faf9;
   --sidebar: #063333;
+  /* The dashboard sidebar is dark in both themes, so its text tokens don't change with the theme. */
+  --sidebar-text: #d7e8e6;
+  --sidebar-muted: #a2c9c7;
+  --sidebar-hover: rgb(255 255 255 / 0.07);
+  --sidebar-active: #197679;
+  --sidebar-active-text: #ffffff;
   --footer-bg: #063333;
   --footer-text: #ffffff;
   --footer-link: #c9e6e4;
@@ -87,6 +93,8 @@
   --app-bg: #0a1f21;
   --thead: #16373a;
   --sidebar: #041214;
+  --sidebar-active: #6ed3ce;
+  --sidebar-active-text: #052021;
   --footer-bg: #0c2326;
   --footer-text: #e9f4f3;
   --footer-link: #9db7b6;
@@ -131,6 +139,8 @@
     --app-bg: #0a1f21;
     --thead: #16373a;
     --sidebar: #041214;
+    --sidebar-active: #6ed3ce;
+    --sidebar-active-text: #052021;
     --footer-bg: #0c2326;
     --footer-text: #e9f4f3;
     --footer-link: #9db7b6;
