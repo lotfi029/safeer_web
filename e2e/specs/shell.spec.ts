@@ -84,7 +84,9 @@ test.describe('public shell', () => {
     page,
   }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
-    await page.goto('/en');
+    // Hydrated first: public pages load the app bundle after the first paint (PR #15), and under
+    // load the burger could be clicked while it was still inert SSR markup.
+    await gotoHydrated(page, '/en');
     await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
     const burger = page.getByRole('button', { name: 'Open menu' });
     await burger.click();
