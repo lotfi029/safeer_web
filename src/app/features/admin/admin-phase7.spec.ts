@@ -54,13 +54,26 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       'media',
     ];
     const withTestimonials = [...content.slice(0, 4), 'testimonials', ...content.slice(4)];
-    expect(labels('admin')).toEqual(['overview', 'applications', 'messages', ...withTestimonials]);
+    expect(labels('admin')).toEqual([
+      'overview',
+      'applications',
+      'interviewSlots',
+      'messages',
+      'newsletter',
+      ...withTestimonials,
+      'redirects',
+      'users',
+      'settings',
+      'mail',
+      'sms',
+      'audit',
+    ]);
     TestBed.resetTestingModule();
-    expect(labels('reviewer')).toEqual(['overview', 'applications']);
+    expect(labels('reviewer')).toEqual(['overview', 'applications', 'interviewSlots']);
     TestBed.resetTestingModule();
-    expect(labels('support')).toEqual(['overview', 'messages', 'testimonials']);
+    expect(labels('support')).toEqual(['overview', 'messages', 'newsletter', 'testimonials']);
     TestBed.resetTestingModule();
-    expect(labels('editor')).toEqual(['overview', ...content]);
+    expect(labels('editor')).toEqual(['overview', ...content, 'redirects']);
   });
 
   it('links carry the locale and badges come from the overview counts', () => {

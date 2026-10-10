@@ -327,6 +327,75 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       [String(r['sectionKey'] ?? ''), pick(r, 'label', l)].filter(Boolean).join(' · '),
     thumb: 'imageAssetId',
   },
+  /** Redirects (content; delete is admin-only). Chains and duplicates come back as REDIRECT_CHAIN. */
+  redirects: {
+    id: 'redirects',
+    endpoint: 'redirects',
+    area: 'content',
+    deleteArea: 'redirects.delete',
+    searchable: true,
+    fields: [
+      {
+        key: 'fromPath',
+        type: 'url',
+        label: 'fromPath',
+        required: true,
+        max: 255,
+        hint: 'pathHint',
+      },
+      { key: 'toPath', type: 'url', label: 'toPath', required: true, max: 255, hint: 'pathHint' },
+      {
+        key: 'statusCode',
+        type: 'select',
+        label: 'statusCode',
+        options: ['301', '302'],
+        asNumber: true,
+        required: true,
+        defaultValue: '301',
+      },
+    ],
+    primary: (r) => `${String(r['fromPath'])} → ${String(r['toPath'])}`,
+    secondary: (r, _l, t) =>
+      `${String(r['statusCode'])} · ${t('admin.content.redirects.hits')}: ${String(r['hits'] ?? 0)}`,
+    // "A redirect from … already exists" is about the source; a chain is about the target.
+    errorField: (code, title) =>
+      code === 'REDIRECT_CHAIN' ? (/already exists/i.test(title) ? 'fromPath' : 'toPath') : null,
+  },
+  /** Interview slots (applications area). Editing a booked slot notifies the applicant. */
+  interviewSlots: {
+    id: 'interviewSlots',
+    endpoint: 'interview-slots',
+    area: 'applications',
+    fields: [
+      { key: 'startsAt', type: 'datetime', label: 'startsAt', required: true, hint: 'riyadhTime' },
+      {
+        key: 'endsAt',
+        type: 'datetime',
+        label: 'endsAt',
+        required: true,
+        after: 'startsAt',
+        hint: 'riyadhTime',
+      },
+      {
+        key: 'location',
+        type: 'text',
+        label: 'location',
+        bilingual: true,
+        max: 255,
+        nullable: true,
+      },
+    ],
+    primary: (r, l) => slotLabel(String(r['startsAt']), String(r['endsAt']), l),
+    secondary: (r, l, t) =>
+      [
+        pick(r, 'location', l),
+        r['applicationId']
+          ? t('admin.content.interviewSlots.booked')
+          : t('admin.content.interviewSlots.free'),
+      ]
+        .filter(Boolean)
+        .join(' · '),
+  },
   /** Only its fields are used (the news screens are hand-built); slug is edited separately. */
   news: {
     id: 'news',
@@ -378,3 +447,24 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     secondary: (r) => String(r['slug'] ?? ''),
   },
 };
+
+/** `Sun, 12 Oct 2026, 10:00–10:30` in Riyadh time (Gregorian; Arabic-Indic digits in Arabic). */
+export function slotLabel(startsAt: string, endsAt: string, lang: 'ar' | 'en' = 'en'): string {
+  const locale = lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-arab' : 'en-GB';
+  const opts = {
+    timeZone: 'Asia/Riyadh',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  } as const;
+  const day = new Intl.DateTimeFormat(locale, {
+    timeZone: 'Asia/Riyadh',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(startsAt));
+  const from = new Intl.DateTimeFormat(locale, opts).format(new Date(startsAt));
+  const to = new Intl.DateTimeFormat(locale, opts).format(new Date(endsAt));
+  return `${day}, ${from}–${to}`;
+}

@@ -31,27 +31,46 @@ const EXPECT: Record<
   { menu: string[]; stats: string[]; chart: boolean; latest: boolean; audit: boolean }
 > = {
   admin: {
-    menu: ['Overview', 'Applications', 'Messages', ...CONTENT_AND_INBOX],
+    menu: [
+      'Overview',
+      'Applications',
+      'Interview slots',
+      'Messages',
+      'Newsletter',
+      ...CONTENT_AND_INBOX,
+      'Redirects',
+      'Users',
+      'Settings',
+      'Email',
+      'SMS',
+      'Activity log',
+    ],
     stats: ['newApplications', 'underReview', 'acceptedThisMonth', 'unreadMessages'],
     chart: true,
     latest: true,
     audit: true,
   },
   reviewer: {
-    menu: ['Overview', 'Applications'],
+    menu: ['Overview', 'Applications', 'Interview slots'],
     stats: ['newApplications', 'underReview', 'acceptedThisMonth'],
     chart: true,
     latest: true,
     audit: false,
   },
   support: {
-    menu: ['Overview', 'Messages', 'Testimonials'],
+    menu: ['Overview', 'Messages', 'Newsletter', 'Testimonials'],
     stats: ['unreadMessages'],
     chart: false,
     latest: false,
     audit: false,
   },
-  editor: { menu: ['Overview', ...CONTENT], stats: [], chart: false, latest: false, audit: false },
+  editor: {
+    menu: ['Overview', ...CONTENT, 'Redirects'],
+    stats: [],
+    chart: false,
+    latest: false,
+    audit: false,
+  },
 };
 
 test.describe('admin shell + overview', () => {

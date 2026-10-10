@@ -114,7 +114,15 @@ export class CrudForm {
       this.ref.close(saved);
     } catch (error) {
       const problem = toApiProblem(error);
-      this.server.set({ model: this.model(), errors: problem.fieldErrors });
+      const errors = { ...problem.fieldErrors };
+      const onField = this.config.errorField?.(problem.code, problem.title);
+      if (onField) {
+        errors[onField] = [
+          ...(errors[onField] ?? []),
+          this.t.translate(problemMessageKey(problem)),
+        ];
+      }
+      this.server.set({ model: this.model(), errors });
       this.errorKey.set(problemMessageKey(problem));
     } finally {
       this.busy.set(false);

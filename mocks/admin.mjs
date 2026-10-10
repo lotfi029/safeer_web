@@ -8,6 +8,7 @@
  */
 
 import { contentRoutes } from './admin-content.mjs';
+import { systemRoutes } from './admin-system.mjs';
 
 export const STATUS_TRANSITIONS = {
   draft: [],
@@ -59,15 +60,17 @@ export function adminRoutes(ctx) {
     return { staff: s.user };
   }
 
-  function audit(staff, action, entityType, entityId, entityLabel) {
+  /** An audit row as the API stores it (the overview adds `actorName`; the audit list doesn't). */
+  function audit(staff, action, entityType, entityId, entityLabel, diff = null) {
     db.audit.unshift({
       id: String(db.audit.length + 1),
+      actorId: staff?.id ?? null,
       action,
       entityType,
       entityId,
       entityLabel,
-      actorId: staff?.id ?? null,
-      actorName: staff?.name ?? null,
+      diff,
+      ipHash: null,
       createdAt: nowIso(),
     });
   }
@@ -326,7 +329,18 @@ export function adminRoutes(ctx) {
       legacyPostsCount: 0,
       pagesNeedingReviewCount: 0,
     };
-    out.recentAuditLog = can('audit') ? db.audit.slice(0, 10) : [];
+    out.recentAuditLog = can('audit')
+      ? db.audit.slice(0, 10).map((row) => ({
+          id: row.id,
+          action: row.action,
+          entityType: row.entityType,
+          entityId: row.entityId,
+          entityLabel: row.entityLabel,
+          actorId: row.actorId,
+          actorName: staffName(row.actorId),
+          createdAt: row.createdAt,
+        }))
+      : [];
     // Key order as the API builds it.
     return {
       statCards: out.statCards,
@@ -359,6 +373,7 @@ export function adminRoutes(ctx) {
   const findApp = (id) => db.applications.get(id);
 
   return [
+    ...systemRoutes({ db, json, problem, nowIso, token, guard, audit, clone }),
     ...contentRoutes({ db, json, problem, nowIso, guard, fixtures: db.fixtures }),
     [
       'GET',

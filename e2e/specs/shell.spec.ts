@@ -1,9 +1,15 @@
 import { expect, test } from '@playwright/test';
+import { content } from '../support/content';
+import { disposeSetupAdmin } from '../support/real-api';
+import { useRealDb } from '../support/real-db';
 import { MOCK_API_URL, SSR_DEAD_API_URL, mockOnly, usingMockApi } from '../support/env';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 import { measureHeader } from '../support/header';
 import { smallTargets } from '../support/targets';
 import { gotoHydrated } from '../support/hydration';
+
+useRealDb(test);
+test.afterAll(disposeSetupAdmin);
 
 test.describe('public shell', () => {
   for (const { viewport, locale } of matrix()) {
@@ -129,15 +135,21 @@ test.describe('server: legacy URLs, SEO files, failure modes', () => {
     }
   });
 
-  test(
-    'redirect table hits answer 301 (redirects/resolve)',
-    mockOnly('uses the mock redirect fixture'),
-    async ({ request }) => {
-      const res = await request.get('/about-us', { maxRedirects: 0 });
+  test('redirect table hits answer 301 (redirects/resolve)', async ({ request }) => {
+    // A redirect made through the admin API (real API: the dev seed has none).
+    const from = `/e2e-legacy-${Date.now()}`;
+    const row = await content.create<{ id: string }>('redirects', {
+      fromPath: from,
+      toPath: '/ar/about',
+    });
+    try {
+      const res = await request.get(from, { maxRedirects: 0 });
       expect(res.status()).toBe(301);
       expect(res.headers()['location']).toBe('/ar/about');
-    },
-  );
+    } finally {
+      await content.remove('redirects', row.id);
+    }
+  });
 
   test('unknown legacy paths and locale-less paths answer 404', async ({ request }) => {
     expect((await request.get('/some-old-page', { maxRedirects: 0 })).status()).toBe(404);

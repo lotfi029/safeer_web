@@ -99,6 +99,15 @@ export class AdminNavList {
       <nav [attr.aria-label]="'admin.shell.nav' | transloco">
         <app-admin-nav-list />
       </nav>
+      <a
+        drawerActions
+        appButton
+        variant="soft"
+        [block]="true"
+        [routerLink]="locale.link('/admin/account')"
+      >
+        {{ 'admin.shell.items.account' | transloco }}
+      </a>
       <a drawerActions appButton variant="line" [block]="true" [routerLink]="locale.link('/')">
         {{ 'admin.shell.viewSite' | transloco }}
       </a>
@@ -198,9 +207,11 @@ export class AdminNavDrawer {
             >{{ 'admin.shell.viewSite' | transloco }}</a
           >
           @if (me(); as user) {
-            <span
-              class="hidden items-center gap-2 rounded-full bg-secondary-light py-1.5 ps-1.5 pe-4 font-semibold text-heading sm:inline-flex"
+            <a
+              class="hidden items-center gap-2 rounded-full bg-secondary-light py-1.5 ps-1.5 pe-4 font-semibold text-heading no-underline hover:bg-raise sm:inline-flex"
               data-testid="admin-user"
+              [routerLink]="locale.link('/admin/account')"
+              [attr.title]="'admin.shell.items.account' | transloco"
             >
               <span
                 class="grid size-8 place-items-center rounded-full bg-primary text-sm text-on-primary"
@@ -218,7 +229,7 @@ export class AdminNavDrawer {
                   'admin.shell.roles.' + user.role | transloco
                 }}</span>
               </span>
-            </span>
+            </a>
           }
           <button [appIconButton]="'admin.logout' | transloco" type="button" (click)="logout()">
             <app-icon name="log-out" />

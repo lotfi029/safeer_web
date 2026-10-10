@@ -12,7 +12,9 @@ export type CrudFieldType =
   | 'date'
   | 'url'
   | 'slug'
-  | 'media';
+  | 'media'
+  /** Riyadh wall-clock time in the form; an ISO instant with `+03:00` in the body. */
+  | 'datetime';
 
 /**
  * One form field of a collection. `bilingual` expands `key` into `keyAr` (required when `required`)
@@ -41,6 +43,10 @@ export interface CrudField {
   /** Empty values are sent as `null` (nullable columns) instead of being left out. */
   nullable?: boolean;
   defaultValue?: unknown;
+  /** `select`: send the value as a number (`statusCode` 301/302). */
+  asNumber?: boolean;
+  /** Must be later than this other field (`endsAt` after `startsAt`). */
+  after?: string;
 }
 
 export interface CrudTabs {
@@ -74,6 +80,10 @@ export interface CrudConfig {
   link?: { label: string; path: (row: ContentRow) => string };
   /** Child collection shown under each row (work-area items). */
   children?: { config: CrudConfig; parentKey: string };
+  /** Area for delete buttons when it differs from `area` (`redirects.delete`). */
+  deleteArea?: StaffArea;
+  /** A problem code (and title) → the field its message belongs next to. */
+  errorField?: (code: string, title: string) => string | null;
 }
 
 /** `titleAr`/`titleEn` → the value for the UI language, falling back to Arabic. */
@@ -112,7 +122,14 @@ export function modelFromRow(
   for (const f of fields) {
     for (const k of fieldKeys(f)) {
       const v = row[k];
-      model[k] = v === null || v === undefined ? (f.type === 'boolean' ? false : '') : v;
+      model[k] =
+        v === null || v === undefined
+          ? f.type === 'boolean'
+            ? false
+            : ''
+          : f.type === 'datetime'
+            ? toRiyadhInput(String(v))
+            : v;
     }
   }
   return model;
@@ -136,15 +153,20 @@ export function toBody(
         body[k] = !!raw;
         return;
       }
+      if (f.type === 'datetime') {
+        if (typeof raw === 'string' && raw) body[k] = fromRiyadhInput(raw);
+        return;
+      }
       if (f.type === 'number') {
         if (raw !== '' && raw !== null && raw !== undefined) body[k] = Number(raw);
+        else if (f.nullable) body[k] = null;
         return;
       }
       const text =
         typeof raw === 'string' ? raw.trim() : raw === null || raw === undefined ? '' : String(raw);
       const optionalEn = f.bilingual && i === 1;
       if (text) {
-        body[k] = text;
+        body[k] = f.asNumber ? Number(text) : text;
       } else if (f.nullable || optionalEn || (f.type === 'media' && mode === 'update')) {
         body[k] = null;
       }
@@ -173,6 +195,10 @@ export function validate(
       if (f.type === 'digits' && typeof text === 'string' && text && !/^\d+$/.test(text)) {
         (errors[k] ??= []).push('pattern');
       }
+      if (f.after && typeof text === 'string' && text) {
+        const other = model[f.after];
+        if (typeof other === 'string' && other && text <= other) (errors[k] ??= []).push('after');
+      }
       if (
         f.type === 'slug' &&
         typeof text === 'string' &&
@@ -184,4 +210,18 @@ export function validate(
     });
   }
   return errors;
+}
+
+/** Saudi Arabia keeps UTC+3 all year (no DST), so Riyadh time is a fixed offset. */
+const RIYADH_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/** ISO instant → `YYYY-MM-DDTHH:mm` in Riyadh time (a datetime-local value). */
+export function toRiyadhInput(iso: string): string {
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? '' : new Date(t + RIYADH_OFFSET_MS).toISOString().slice(0, 16);
+}
+
+/** `YYYY-MM-DDTHH:mm` (Riyadh) → ISO with offset, as the API's `z.iso.datetime({ offset: true })` wants. */
+export function fromRiyadhInput(value: string): string {
+  return (value.length === 16 ? value + ':00' : value) + '+03:00';
 }

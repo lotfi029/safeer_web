@@ -8,13 +8,13 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
   - Stage 2 branches are **stacked**: `feat/phase-7` on `fix/session-1-review` (what `main` gets once #9 merges), `feat/phase-8` on `feat/phase-7`, and so on.
   - Each phase has a draft PR whose base is the previous phase's branch.
 - **Backend:** built and tested against the real `safeer_api` at **`v1.0.0-rc1`** (`SAFEER_API_REF`). Real-API e2e is required, and nothing is mocked by default (CLAUDE.md).
-- **Test totals (end of Phase 8):**
+- **Test totals (end of Phase 9):**
   - lint clean
-  - unit tests: 52 files, 215 tests
-  - server + script tests: 97
-  - e2e against the mock: **257/257**
-  - e2e against the real API: **249/249**; 8 tests are `@mock-only` (§0.3)
-  - initial bundle: **138.9 KB gzip** (limit 150)
+  - unit tests: 53 files, 225 tests
+  - server + script tests: 110
+  - e2e against the mock: **270/270**
+  - e2e against the real API: **263/263** (one full run had a single apply-flow failure under load that passes 45/45 when repeated: most likely BF-2, §0.4); 7 tests are `@mock-only` (§0.3)
+  - initial bundle: **139.6 KB gzip** (limit 150)
 
 ---
 
@@ -25,9 +25,9 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 | Phase | Branch (PR base) | Scope | State |
 |---|---|---|---|
 | 7 | `feat/phase-7` (`fix/session-1-review`) | real-API test support, admin shell, login/forgot, overview, applications list + review, messages | done (#10) |
-| 8 | `feat/phase-8` (`feat/phase-7`) | content CRUD kit, pages and news editors, media | done |
-| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | next |
-| 10 | `feat/phase-10` (`feat/phase-9`) | hardening, full matrix, axe, Lighthouse, CSP, deployment docs | — |
+| 8 | `feat/phase-8` (`feat/phase-7`) | content CRUD kit, pages and news editors, media | done (#11) |
+| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | done |
+| 10 | `feat/phase-10` (`feat/phase-9`) | hardening, full matrix, axe, Lighthouse, CSP, deployment docs | next |
 
 ### 0.2 Real-API e2e (every spec runs on both backends)
 
@@ -66,14 +66,15 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 - `scripts/record-admin-shapes.mjs` records the rc1 response *shapes* (never values) into `mocks/fixtures/admin-shapes.json`; `mocks/admin-shapes.test.mjs` fails on drift.
 - Re-record after an API bump: `DB_PORT=3307 node --no-warnings scripts/record-admin-shapes.mjs`. It seeds and then removes its own admin.
 
-### 0.3 `@mock-only` (54 before Stage 2 → 13 after Phase 7 → 8 after Phase 8)
+### 0.3 `@mock-only` (54 before Stage 2 → 13 after Phase 7 → 8 after Phase 8 → 7 after Phase 9)
 
-| Test | Reason | Plan |
-|---|---|---|
-| contact map embed ×3 | sets the map through `__site` | stays (allowed) |
-| footer socials (W20) | sets socials through `__site` | stays (allowed) |
-| proxy ×3 (R3) | `__echo` / `__log` | stays (allowed) |
-| redirect table 301 | needs a registered redirect | Phase 9 (`/admin/redirects`) |
+| Test | Reason |
+|---|---|
+| contact map embed ×3 | sets the map through `__site` (allowed); through the admin settings API it would change the real site's map under the parallel public-page tests |
+| footer socials (W20) | sets socials through `__site` (allowed), same reason |
+| proxy ×3 (R3) | `__echo` / `__log` (allowed) |
+
+Phase 9 moved the redirect-table 301 onto the real API (a redirect created through `/admin/redirects` and removed after).
 
 Phase 8 moved the news pagination, the unpublished/preview ×3 and the testimonial quote layout onto the real API (`e2e/support/content.ts`: `ensureNewsPages`, `draftWithPreview` with a real cover and a preview token, `ensurePublishedTestimonial`; everything created is deleted in `afterAll`).
 
@@ -121,6 +122,17 @@ Mocked admin endpoints: **none**.
 - **Media**: `media/media-store.ts` (the library cached; rows only carry asset ids), `media-uploader.ts` (type/size checks like the API; images ask for Arabic alt text at once because the API refuses to attach an image without it, ALT_TEXT_REQUIRED), `media-picker.ts`, `media-library.ts` (`ASSET_IN_USE` lists the usages). URLs: `mediaUrl()` → `/files/:publicId[/thumb|card|full]`.
 - API rules worth knowing: the kernel's column filters compare as strings (send booleans as `1`/`0`); a bad FK id is a 500, so selects only offer existing rows; admin responses are never collapsed (raw `xAr`/`xEn`).
 - Mock: `mocks/admin-content.mjs` (the kernel for every collection + news/testimonials/pages/media specifics), seeded from rows recorded from the API (`mocks/fixtures/adminContent.json`, `record-admin-shapes.mjs --content`, e2e rows filtered out). Admin content state is separate from the public fixtures.
+
+**System area (Phase 9)**
+- `core/api/admin/system-api.ts`: users, invite, settings, cache, mail/SMS (settings, templates, preview, test, log, retry), audit, newsletter (+ CSV), account (password, sessions), anonymise.
+- **Users** (`system/users.ts`): status active/disabled/invited + the brute-force lock (unlock), invite (48 h link), edit (own role locked; the API guards the last active admin: `LAST_ADMIN`), delete (not yourself), and the role matrix from `GET /admin/roles`. There is no "resend invite" in the API.
+- **Settings** (`system/settings.ts`): the whole `PUT admin/settings` DTO in sections (a partial is sent: only changed fields); `mapEmbedAllowed()` mirrors `MAP_EMBED_ALLOW_LIST`; plus cache stats/purge.
+- **Mail/SMS** (`system/channel.ts`, route data `channel`): settings (the password/token is write-only: empty keeps it), test send (`{ ok, error }` is shown, not thrown), templates (variables listed; unknown `{{ x }}` refused client-side and on `UNKNOWN_VARIABLE`; server preview), log with status/template filters in the URL (mail rows with `hasPayload` can be retried; SMS logs never carry the message).
+- **Audit** (`system/audit.ts`): entity/actor filters (the API's only two), changed-field diff per row.
+- **Redirects** and **interview slots** use the CRUD kit (`deleteArea: 'redirects.delete'`, `errorField` puts `REDIRECT_CHAIN` on fromPath or toPath; slots use the `datetime` field type = Riyadh wall-clock ↔ `+03:00` ISO, and `after`).
+- **Account** (`/admin/account`, the user chip): change password (401 = wrong current password; ends other sessions), sessions list and sign-out.
+- **Anonymise**: the review screen's danger card (`applications.delete`).
+- Mock: `mocks/admin-system.mjs` (seeded from `fixtures/adminSystem.json`, recorded); interview slots and redirects share state with the portal booking and `redirects/resolve`.
 
 **Tokens**
 - `--sidebar-*`: the sidebar is dark in both themes.
@@ -476,7 +488,7 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 
 ---
 
-## As-built routes (Phases 0–8)
+## As-built routes (Phases 0–9)
 
 | Route | Mode | Notes |
 |---|---|---|
@@ -496,6 +508,9 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | `/:lang/admin/news`, `/admin/news/new`, `/admin/news/:id`, `/admin/news/categories` | CSR | `?filter&q&page`; area `content` |
 | `/:lang/admin/work-areas`, `/board`, `/partners`, `/documents`, `/stats`, `/about-items`, `/media` | CSR | area `content`; `?tab=` where the collection has tabs |
 | `/:lang/admin/testimonials` | CSR | area `inbox`; themes + testimonials |
+| `/:lang/admin/redirects`, `/admin/interview-slots`, `/admin/newsletter` | CSR | areas `content`, `applications`, `inbox` |
+| `/:lang/admin/system/users`, `/system/settings`, `/system/mail`, `/system/sms`, `/system/audit` | CSR | areas `users`, `settings`, `audit`; mail/SMS `?tab=` settings, templates or log |
+| `/:lang/admin/account` | CSR | any staff member |
 | `/:lang/admin/accept/:token`, `/:lang/admin/reset/:token` | CSR | Public; set a password from the mailed link (W16) |
 | `/:lang/_kit` | SSR | dev and e2e builds only |
 | `/:lang/**` | SSR | 404 page, status 404 |
@@ -541,3 +556,12 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | Admin documents | `/:lang/admin/documents` | `admin/documents`, `admin/doc-categories`, `admin/media` | `admin-content.spec.ts` | Done (Phase 8) |
 | Admin figures / about items | `/:lang/admin/stats`, `/about-items` | `admin/stats`, `admin/about-items` | `admin-content.spec.ts` | Done (Phase 8) |
 | Media library | `/:lang/admin/media` | `GET/POST admin/media`, `PATCH` (alt), `DELETE` | `admin-content.spec.ts` | Done (Phase 8) |
+| Users and permissions | `/:lang/admin/system/users` | `admin/users` (GET, PATCH, DELETE), `POST admin/auth/invite`, `GET admin/roles` | `admin-system.spec.ts` | Done (Phase 9) |
+| Settings | `/:lang/admin/system/settings` | `GET/PUT admin/settings`, `admin/cache/stats`, `DELETE admin/cache` | `admin-system.spec.ts` | Done (Phase 9) |
+| Email / SMS | `/:lang/admin/system/mail`, `/system/sms` | `admin/{mail,sms}/settings`, `/test`, `/templates[/:key[/preview]]`, `/log`, `mail/log/:id/retry` | `admin-system.spec.ts` | Done (Phase 9) |
+| Activity log | `/:lang/admin/system/audit` | `GET admin/audit` | `admin-system.spec.ts` | Done (Phase 9) |
+| Redirects | `/:lang/admin/redirects` | `admin/redirects` | `admin-system.spec.ts`, `shell.spec.ts` | Done (Phase 9) |
+| Newsletter | `/:lang/admin/newsletter` | `GET admin/newsletter`, `/export.csv`, `DELETE` | `admin-system.spec.ts` | Done (Phase 9) |
+| Interview slots | `/:lang/admin/interview-slots` | `admin/interview-slots` | `admin-system.spec.ts`, `portal.spec.ts` | Done (Phase 9) |
+| My account | `/:lang/admin/account` | `PATCH admin/auth/password`, `admin/auth/sessions` | `admin-system.spec.ts` | Done (Phase 9) |
+| Anonymise an application | review screen | `DELETE admin/applications/:id` | `admin-system.spec.ts` | Done (Phase 9) |

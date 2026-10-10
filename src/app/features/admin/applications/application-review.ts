@@ -13,6 +13,8 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { AdminApi, documentUrl } from '../../../core/api/admin/admin-api';
+import { SystemApi } from '../../../core/api/admin/system-api';
+import { StaffSessionStore } from '../../../core/auth/staff-session.store';
 import type {
   AdminApplicationDetail,
   AdminApplicationEvent,
@@ -414,6 +416,26 @@ export function eventLine(
               <p class="t-small m-0 text-text-muted">{{ 'admin.review.log.empty' | transloco }}</p>
             }
           </section>
+
+          @if (canAnonymise()) {
+            <section class="card flex flex-col gap-3 border-alert" aria-labelledby="anon-title">
+              <h2 class="t-h4 m-0 text-alert-text" id="anon-title">
+                {{ 'admin.review.anonymise.title' | transloco }}
+              </h2>
+              <p class="t-small m-0">{{ 'admin.review.anonymise.lead' | transloco }}</p>
+              <button
+                appButton
+                variant="danger"
+                size="sm"
+                type="button"
+                class="self-start"
+                [disabled]="busy()"
+                (click)="anonymise()"
+              >
+                {{ 'admin.review.anonymise.button' | transloco }}
+              </button>
+            </section>
+          }
         </aside>
       </div>
 
@@ -472,6 +494,8 @@ export class ApplicationReview {
   private readonly toasts = inject(ToastService);
   private readonly t = inject(TranslocoService);
   private readonly badges = inject(AdminBadges);
+  private readonly store = inject(StaffSessionStore);
+  private readonly system = inject(SystemApi);
   protected readonly locale = inject(LocaleService);
 
   protected readonly detail = rxResource({
@@ -539,6 +563,7 @@ export class ApplicationReview {
     if (s === 'accepted' || s === 'rejected') return 'admin.review.status.terminal';
     return null;
   });
+  protected readonly canAnonymise = computed(() => this.store.can('applications.delete'));
   protected readonly loadErrorKey = computed(() => {
     const err = this.detail.error();
     return err ? problemMessageKey(toApiProblem(err)) : 'admin.common.loadError';
@@ -696,6 +721,32 @@ export class ApplicationReview {
       if (current) this.detail.set({ ...current, notes: [note, ...current.notes] });
       this.note.set('');
       this.toasts.show({ kind: 'success', message: this.t.translate('admin.review.notes.added') });
+    } catch (error) {
+      this.toastError(error);
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** DELETE admin/applications/:id: removes the personal data and files, keeps reference and dates. */
+  protected async anonymise(): Promise<void> {
+    const a = this.detail.value();
+    if (!a) return;
+    const ok = await confirmAction(this.dialogs, {
+      heading: this.t.translate('admin.review.anonymise.title'),
+      body: this.t.translate('admin.review.anonymise.confirm', { reference: a.reference }),
+      confirm: this.t.translate('admin.review.anonymise.button'),
+      danger: true,
+    });
+    if (!ok) return;
+    this.busy.set(true);
+    try {
+      await firstValueFrom(this.system.anonymise(this.id()));
+      this.toasts.show({
+        kind: 'success',
+        message: this.t.translate('admin.review.anonymise.done', { reference: a.reference }),
+      });
+      this.detail.reload();
     } catch (error) {
       this.toastError(error);
     } finally {

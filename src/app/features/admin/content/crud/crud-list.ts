@@ -333,7 +333,9 @@ export class CrudList {
   protected readonly canReorder = computed(
     () => !!this.config().sortable && !this.q() && (this.total() ?? 0) <= PAGE,
   );
-  protected readonly canDelete = computed(() => this.store.can(this.config().area));
+  protected readonly canDelete = computed(() =>
+    this.store.can(this.config().deleteArea ?? this.config().area),
+  );
   protected readonly reorderNote = computed(() =>
     this.config().sortable && this.rows().length > 1 && !this.child()
       ? this.q()

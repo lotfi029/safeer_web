@@ -141,6 +141,55 @@ export const ADMIN_ROUTES: Routes = [
             loadComponent: () =>
               import('./content/media/media-library').then((m) => m.MediaLibrary),
           },
+          // ---------- system (Phase 9) ----------
+          ...crud('redirects', ['redirects'], 'redirects', 'redirects.note'),
+          ...crud(
+            'interview-slots',
+            ['interviewSlots'],
+            'interviewSlots',
+            'interviewSlots.note',
+            'applications',
+          ),
+          {
+            path: 'newsletter',
+            canActivate: [roleGuard],
+            data: { area: 'inbox' },
+            loadComponent: () => import('./system/newsletter').then((m) => m.AdminNewsletter),
+          },
+          {
+            path: 'system/users',
+            canActivate: [roleGuard],
+            data: { area: 'users' },
+            loadComponent: () => import('./system/users').then((m) => m.AdminUsers),
+          },
+          {
+            path: 'system/settings',
+            canActivate: [roleGuard],
+            data: { area: 'settings' },
+            loadComponent: () => import('./system/settings').then((m) => m.AdminSettings),
+          },
+          {
+            path: 'system/mail',
+            canActivate: [roleGuard],
+            data: { area: 'settings', channel: 'mail' },
+            loadComponent: () => import('./system/channel').then((m) => m.AdminChannel),
+          },
+          {
+            path: 'system/sms',
+            canActivate: [roleGuard],
+            data: { area: 'settings', channel: 'sms' },
+            loadComponent: () => import('./system/channel').then((m) => m.AdminChannel),
+          },
+          {
+            path: 'system/audit',
+            canActivate: [roleGuard],
+            data: { area: 'audit' },
+            loadComponent: () => import('./system/audit').then((m) => m.AdminAudit),
+          },
+          {
+            path: 'account',
+            loadComponent: () => import('./system/account').then((m) => m.AdminAccount),
+          },
           { path: '**', redirectTo: '' },
         ],
       },

@@ -37,12 +37,19 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
         badge: 'newApplications',
       },
       {
+        path: 'interview-slots',
+        label: 'interviewSlots',
+        icon: 'calendar-check',
+        area: 'applications',
+      },
+      {
         path: 'messages',
         label: 'messages',
         icon: 'mail',
         area: 'inbox',
         badge: 'unreadMessages',
       },
+      { path: 'newsletter', label: 'newsletter', icon: 'mail-check', area: 'inbox' },
     ],
   },
   {
@@ -58,6 +65,17 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
       { path: 'stats', label: 'stats', icon: 'chart-column', area: 'content' },
       { path: 'about-items', label: 'aboutItems', icon: 'list-checks', area: 'content' },
       { path: 'media', label: 'media', icon: 'image', area: 'content' },
+      { path: 'redirects', label: 'redirects', icon: 'corner-up-right', area: 'content' },
+    ],
+  },
+  {
+    label: 'system',
+    items: [
+      { path: 'system/users', label: 'users', icon: 'user-cog', area: 'users' },
+      { path: 'system/settings', label: 'settings', icon: 'settings', area: 'settings' },
+      { path: 'system/mail', label: 'mail', icon: 'mail', area: 'settings' },
+      { path: 'system/sms', label: 'sms', icon: 'smartphone', area: 'settings' },
+      { path: 'system/audit', label: 'audit', icon: 'history', area: 'audit' },
     ],
   },
 ];
