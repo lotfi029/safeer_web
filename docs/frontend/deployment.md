@@ -199,7 +199,7 @@ curl -sI https://<domain>/ar/admin | grep -i -E 'cache-control|x-robots'   # no-
 - The domain, and DNS access **[client]**
 - The Hostinger plan details: Node versions, and whether two Node apps can talk over loopback (§1)
   **[confirm]**
-- The official logo SVG (the site uses `docs/safeer-logo.png` as a stand-in), plus photos
+- Photos (the official logo SVG has been received)
 - Impact numbers, partners, board and other content, entered through the admin screens (the seed has
   `[...]` placeholders)
 - The SMS provider account (Unifonic), and SMTP credentials for mail

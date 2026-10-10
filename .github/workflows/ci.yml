@@ -174,7 +174,7 @@ jobs:
           retention-days: 14
 
   # Phase 10: Lighthouse (mobile) on home, news and an article, served from the production build
-  # against the mock API (scripts/lighthouse.mjs). Median of 5 runs; Performance ≥ 90,
+  # against the mock API (scripts/lighthouse.mjs). Median of 7 runs; Performance ≥ 90,
   # Accessibility / Best practices / SEO ≥ 95.
   lighthouse:
     name: Lighthouse (mobile)
@@ -214,7 +214,7 @@ jobs:
       - name: Lighthouse
         run: npm run lighthouse
         env:
-          LH_RUNS: '5'
+          LH_RUNS: '7'
 
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
