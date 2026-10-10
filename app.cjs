@@ -1,4 +1,5 @@
 /**
+ * Non-Docker option (production runs the Docker image; docs/frontend/deployment.md).
  * CommonJS start file for runners that `require()` the entry instead of running it, such as
  * Hostinger's Node.js apps (LiteSpeed `lsnode.js`). `require()` of the ESM server would not count as
  * the main module, so the server would never listen; this sets the flag server.ts checks and loads

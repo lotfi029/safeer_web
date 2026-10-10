@@ -6,17 +6,21 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const SSR_PORT = 4100;
 const SSR_DEAD_API_PORT = 4101;
+// B2: the same build serving a real-looking public domain, calling the API through a recorder.
+const SSR_PUBLIC_DOMAIN_PORT = 4102;
 const MOCK_API_PORT = 3100;
+const RECORDING_API_PORT = 3102;
 const apiUrl = process.env['E2E_API_URL'] || `http://127.0.0.1:${MOCK_API_PORT}`;
 const serverEntry = 'dist/safeer_web-e2e/server/server.mjs';
 // Local sessions use the pre-installed Chromium; CI installs Playwright's own.
 const executablePath = process.env['PW_CHROMIUM_PATH'] || undefined;
 
-const ssrEnv = (port: number, api: string) => ({
+const ssrEnv = (port: number, api: string, publicSiteUrl = `http://localhost:${port}`) => ({
   NODE_ENV: 'production',
   PORT: String(port),
+  HOST: '127.0.0.1',
   API_INTERNAL_URL: api,
-  PUBLIC_SITE_URL: `http://localhost:${port}`,
+  PUBLIC_SITE_URL: publicSiteUrl,
   TRUST_PROXY: '1',
 });
 
@@ -64,6 +68,25 @@ export default defineConfig({
       command: `node ${serverEntry}`,
       url: `http://localhost:${SSR_DEAD_API_PORT}/healthz`,
       env: ssrEnv(SSR_DEAD_API_PORT, 'http://127.0.0.1:9'),
+      reuseExistingServer: !process.env['CI'],
+    },
+    {
+      // B2: records what reaches the API from the safeer.test server below, then forwards it.
+      command: 'node e2e/support/recording-api.mjs',
+      url: `http://127.0.0.1:${RECORDING_API_PORT}/__recorded`,
+      env: { RECORDING_PORT: String(RECORDING_API_PORT), RECORDING_UPSTREAM: apiUrl },
+      reuseExistingServer: !process.env['CI'],
+    },
+    {
+      // B2: PUBLIC_SITE_URL is a real-looking https domain with no DNS, like staging before cutover.
+      // SSR must still reach the API only through API_INTERNAL_URL (e2e/specs/internal-api.spec.ts).
+      command: `node ${serverEntry}`,
+      url: `http://localhost:${SSR_PUBLIC_DOMAIN_PORT}/healthz`,
+      env: ssrEnv(
+        SSR_PUBLIC_DOMAIN_PORT,
+        `http://127.0.0.1:${RECORDING_API_PORT}`,
+        'https://safeer.test',
+      ),
       reuseExistingServer: !process.env['CI'],
     },
   ],

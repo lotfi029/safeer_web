@@ -19,6 +19,7 @@ const children = [
       ...process.env,
       NODE_ENV: 'production',
       PORT: String(SSR_PORT),
+      HOST: '127.0.0.1',
       API_INTERNAL_URL: `http://127.0.0.1:${API_PORT}`,
       PUBLIC_SITE_URL: `http://localhost:${SSR_PORT}`,
     },

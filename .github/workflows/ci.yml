@@ -82,6 +82,30 @@ jobs:
             test-results
           retention-days: 14
 
+  # VPS deploy (B3): the production image is built on every PR and serves a page for a public host with
+  # no DNS (https://safeer.test), so SSR must reach the API only through API_INTERNAL_URL (B2), as the
+  # Docker stack runs it. image.yml publishes the same Dockerfile.
+  image:
+    name: docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Build
+        run: docker build -t safeer-web:ci .
+
+      - name: Check the image (mock API on the host)
+        run: .github/scripts/check-image.sh safeer-web:ci
+
+      - name: Image size
+        if: always()
+        run: docker image ls safeer-web:ci
+
   # W24: the same e2e suite against the real safeer_api (pinned by the SAFEER_API_REF repository variable)
   # on MySQL 8 with its dev seed. `@mock-only` specs are dropped (playwright.config.ts grepInvert).
   # scripts/real-api.mjs boots the API with NODE_ENV=test: every e2e request reaches it from 127.0.0.1

@@ -11,7 +11,7 @@ this frontend targets `v1.0.0-rc1` (contract snapshot in [`docs/api/`](docs/api/
 | Doc | What |
 |---|---|
 | [`docs/frontend/HANDOFF.md`](docs/frontend/HANDOFF.md) | **The as-built state**: routes, conventions, screen coverage, test totals, open items, backend follow-ups |
-| [`docs/frontend/deployment.md`](docs/frontend/deployment.md) | Hostinger runbook: topology, env, PM2/`app.cjs`, verification, backups |
+| [`docs/frontend/deployment.md`](docs/frontend/deployment.md) | Production on the VPS (Docker behind the edge Caddy): topology, image, env, staging → cutover, verification; `app.cjs`/PM2 as non-Docker options. The stack itself is safeer_api `deploy/` |
 | [`docs/safeer-frontend-plan.md`](docs/safeer-frontend-plan.md), [`docs/safeer-design-spec.md`](docs/safeer-design-spec.md) | Architecture, responsive rules, design tokens, screen list |
 | [`docs/safeer-prototype.html`](docs/safeer-prototype.html) | The clickable prototype the screens follow |
 | [`CLAUDE.md`](CLAUDE.md) | Working rules for this repo |
@@ -54,12 +54,13 @@ Set `E2E_SCREENS_DIR=docs/frontend/screens/phase-N` to write the committed 390/1
 
 | Variable | Example | Purpose |
 |---|---|---|
-| `API_INTERNAL_URL` | `http://127.0.0.1:3900` | API origin on loopback. SSR calls it directly; `/api/*` and `/files/*` are proxied to it |
+| `API_INTERNAL_URL` | `http://127.0.0.1:3900` | API origin on the internal network (`http://api:3900` in Docker). SSR calls it directly; `/api/*` and `/files/*` are proxied to it |
 | `PUBLIC_SITE_URL` | `https://<domain>` | Public origin. Its host and `www.` are the only hosts SSR accepts in production |
+| `HOST` | `127.0.0.1` | Bind address (default `127.0.0.1`; the Docker image sets `0.0.0.0`) |
 | `PORT` | `4000` | SSR server port |
 | `TRUST_PROXY` | `1` | Reverse-proxy hops in front of the server (client IP resolution) |
 
-See [`docs/frontend/deployment.md`](docs/frontend/deployment.md) §4 for the values that must match the API's.
+See [`docs/frontend/deployment.md`](docs/frontend/deployment.md) §3 for the values that must match the API's.
 
 ## CI
 

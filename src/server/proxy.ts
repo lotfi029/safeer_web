@@ -64,17 +64,23 @@ export function upstreamProblem(errorCode: string | undefined): ProblemBody {
 }
 
 /**
- * Same-origin proxy for `/api/*` and `/files/*` → API_INTERNAL_URL. Cookies, `Set-Cookie` and
+ * Same-origin proxy for `/api/*` and `/files/*` → API_INTERNAL_URL. `timeoutMs` (default
+ * PROXY_TIMEOUT_MS) bounds each upstream call; tests shorten it. Cookies, `Set-Cookie` and
  * `Accept-Language` pass through untouched; bodies are streamed (no body parser is mounted before it).
  */
-export function apiProxy(apiInternalUrl: string) {
+export function apiProxy(apiInternalUrl: string, options: { timeoutMs?: number } = {}) {
+  const timeoutMs = options.timeoutMs ?? PROXY_TIMEOUT_MS;
   return createProxyMiddleware<Request, ServerResponse>({
     target: apiInternalUrl,
     pathFilter: PROXIED_PATHS,
     changeOrigin: true,
     xfwd: false,
-    proxyTimeout: PROXY_TIMEOUT_MS,
-    timeout: PROXY_TIMEOUT_MS,
+    // S8: only the upstream timeout. httpxy applies `timeout` as `req.socket.setTimeout(…, cb)` on the
+    // visitor's socket for every request, so a keep-alive connection gained one `timeout` listener per
+    // request (MaxListenersExceededWarning, a slow leak). It also destroyed that socket at the same
+    // moment, racing the 504 below. `proxyTimeout` alone ends a hung upstream call, which the error
+    // handler answers with 504 problem+json; idle visitor sockets are Node's keepAliveTimeout's job.
+    proxyTimeout: timeoutMs,
     on: {
       proxyReq: (proxyReq, req) => {
         rewriteForwardingHeaders(proxyReq, { ip: req.ip, protocol: req.protocol, host: req.host });

@@ -10,6 +10,7 @@ Frontend for جمعية سفير الدعوية: Angular 22 (SSR, zoneless) + Ta
 - `docs/safeer-prototype.html` — clickable prototype (open with Playwright and screenshot before building a screen)
 - `docs/brand/safeer-logo-official.svg` — the official logo (full lockup). App assets are derived from it by `node scripts/build-brand.mjs`; never trace or redraw it. `docs/safeer-logo.png` was the stand-in
 - `docs/api/` — API contract snapshot from `safeer_api` @ `v1.0.0-rc1` (`e86b3b5`, = the `SAFEER_API_REF` repo variable): `CONTRACT-NOTES.md` (start here), `API-CHANGES.md`, `openapi.json` (requests) + `src/**` (mappers, DTOs, controllers, response-building services). Refresh with `node scripts/snapshot-api.mjs ../safeer_api <ref>`
+- `docs/safeer-vps-deploy-review.md`, `docs/safeer-vps-deploy-prompt.md` — the VPS deploy review (Docker behind the edge Caddy; B2, S2, S3, S5, S8 are this repo's) and its prompts (redacted copies of the ones in safeer_api)
 - `docs/safeer-backend-fr-review.md`, `docs/safeer-backend-fix-prompt.md` — backend gaps/prerequisites (B-numbers), fixed in the `safeer_api` repo, not here
 
 ## Rules

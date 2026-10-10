@@ -1,6 +1,9 @@
 export const SSR_URL = 'http://localhost:4100';
 export const SSR_DEAD_API_URL = 'http://localhost:4101';
 export const MOCK_API_URL = 'http://127.0.0.1:3100';
+/** B2: the SSR server whose PUBLIC_SITE_URL is https://safeer.test, and the recorder it calls. */
+export const SSR_PUBLIC_DOMAIN_URL = 'http://localhost:4102';
+export const RECORDING_API_URL = 'http://127.0.0.1:3102';
 /** True unless E2E_API_URL points the run at a real safeer_api (the `e2e-real` CI job, W24). */
 export const usingMockApi = !process.env['E2E_API_URL'];
 
