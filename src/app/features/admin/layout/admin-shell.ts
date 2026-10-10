@@ -165,7 +165,7 @@ export class AdminNavDrawer {
       >
         <app-logo [height]="48" alt="" />
         <span class="flex flex-col lg:max-xl:sr-only">
-          <b class="text-base text-on-primary">{{ 'admin.shell.dashboard' | transloco }}</b>
+          <b class="text-base text-sidebar-text">{{ 'admin.shell.dashboard' | transloco }}</b>
           <span class="text-xs text-sidebar-muted">{{ 'common.orgName' | transloco }}</span>
         </span>
       </a>

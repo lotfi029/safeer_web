@@ -201,12 +201,12 @@ test.describe('touch targets (W8)', () => {
 
 test.describe('fonts (W13)', () => {
   const EXPECTED = {
-    ar: ['ibm-plex-sans-arabic-arabic-400-normal', 'ibm-plex-sans-arabic-arabic-700-normal'],
-    en: ['ibm-plex-sans-latin-400-normal', 'ibm-plex-sans-latin-700-normal'],
+    ar: ['ibm-plex-sans-arabic-arabic-400-normal'],
+    en: ['ibm-plex-sans-latin-400-normal'],
   } as const;
 
   for (const lang of ['ar', 'en'] as const) {
-    test(`SSR preloads only the 2 above-the-fold faces, and the fonts load (${lang})`, async ({
+    test(`SSR preloads only the body-text face, and the fonts load (${lang})`, async ({
       page,
       request,
     }) => {
@@ -215,7 +215,9 @@ test.describe('fonts (W13)', () => {
         (m) => /href="\/fonts\/([^"]+)\.woff2"/.exec(m[0])?.[1],
       );
       expect(preloads).toEqual([...EXPECTED[lang]]);
-      expect(html).toContain('href="/fonts/fonts.css"');
+      // Phase 10: the @font-face sheet is inlined (nonce'd), not a render-blocking request.
+      expect(html).not.toContain('href="/fonts/fonts.css"');
+      expect(html).toMatch(/<style nonce="[^"]+">@font-face/);
 
       const violations: string[] = [];
       page.on(

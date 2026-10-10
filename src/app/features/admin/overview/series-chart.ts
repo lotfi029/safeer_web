@@ -92,29 +92,32 @@ export function monthLabel(month: string, intlLocale: string): string {
           </g>
         }
       </svg>
-      <table class="sr-only">
-        <caption>
-          {{
-            'admin.overview.chart.caption' | transloco
-          }}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">{{ 'admin.overview.chart.month' | transloco }}</th>
-            <th scope="col">{{ 'admin.overview.chart.received' | transloco }}</th>
-            <th scope="col">{{ 'admin.overview.chart.accepted' | transloco }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (bar of bars(); track bar.month) {
+      <!-- sr-only on a wrapper: a table ignores the 1px width and would widen the page. -->
+      <div class="sr-only">
+        <table>
+          <caption>
+            {{
+              'admin.overview.chart.caption' | transloco
+            }}
+          </caption>
+          <thead>
             <tr>
-              <th scope="row">{{ bar.label }}</th>
-              <td>{{ bar.received | digits }}</td>
-              <td>{{ bar.accepted | digits }}</td>
+              <th scope="col">{{ 'admin.overview.chart.month' | transloco }}</th>
+              <th scope="col">{{ 'admin.overview.chart.received' | transloco }}</th>
+              <th scope="col">{{ 'admin.overview.chart.accepted' | transloco }}</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (bar of bars(); track bar.month) {
+              <tr>
+                <th scope="row">{{ bar.label }}</th>
+                <td>{{ bar.received | digits }}</td>
+                <td>{{ bar.accepted | digits }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </figure>
   `,
 })

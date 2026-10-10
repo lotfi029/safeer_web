@@ -3,9 +3,10 @@ import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@an
 import { TranslocoPipe } from '@jsverse/transloco';
 
 // TODO(logo): replace with the official SVG (spec §6.1); never ship a traced SVG.
-const LOGO_SRC = '/brand/safeer-logo.png';
-const LOGO_WIDTH = 150;
-const LOGO_HEIGHT = 228;
+/** A 2× copy of docs/safeer-logo.png for the largest in-app logo (56 px): 3 KB instead of 16 KB. */
+const LOGO_SRC = '/brand/safeer-logo-sm.png';
+const LOGO_WIDTH = 74;
+const LOGO_HEIGHT = 112;
 
 /**
  * Association logo on its white "logo chip" (the ink is deep teal, so it needs a light tile on

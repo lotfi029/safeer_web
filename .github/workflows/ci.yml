@@ -5,6 +5,9 @@ on:
     types: [opened, synchronize, reopened, labeled]
   push:
     branches: [main]
+  # Nightly full matrix (6 viewports × 2 locales, light + dark) on both backends (Phase 10).
+  schedule:
+    - cron: '30 1 * * *'
   workflow_dispatch:
 
 # Cancel superseded runs of the same branch/PR (sessions plan R10).
@@ -19,10 +22,11 @@ jobs:
   build-test:
     name: lint → unit → build → e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
-      # Full 6×2 matrix on the `full-matrix` label; 390/1440 × ar/en otherwise (review F10).
-      E2E_FULL_MATRIX: ${{ contains(github.event.pull_request.labels.*.name, 'full-matrix') && '1' || '' }}
+      # Full 6×2 matrix (every viewport also in dark) nightly and on the `full-matrix` label;
+      # 390/1440 × ar/en (+ dark at 1440) otherwise (review F10, Phase 10).
+      E2E_FULL_MATRIX: ${{ (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'full-matrix')) && '1' || '' }}
     # playwright.config.ts starts the SSR server with NODE_ENV=production, so e2e tests the enforcing CSP (R10).
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +91,7 @@ jobs:
   e2e-real:
     name: e2e (real API ${{ vars.SAFEER_API_REF || 'v1.0.0-rc1' }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     services:
       mysql:
         image: mysql:8.0
@@ -103,6 +107,7 @@ jobs:
           --health-retries=10
     env:
       E2E_API_URL: http://127.0.0.1:3900
+      E2E_FULL_MATRIX: ${{ (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'full-matrix')) && '1' || '' }}
       # e2e/support/real-db.ts seeds per-role staff and auth tokens in the same MySQL, loading mysql2
       # and argon2 from this checkout (DB_* default to the service above, like scripts/real-api.mjs).
       SAFEER_API_DIR: safeer_api
@@ -166,4 +171,55 @@ jobs:
             playwright-report
             test-results
             safeer_api/api.log
+          retention-days: 14
+
+  # Phase 10: Lighthouse (mobile) on home, news and an article, served from the production build
+  # against the mock API (scripts/lighthouse.mjs). Median of 5 runs; Performance ≥ 90,
+  # Accessibility / Best practices / SEO ≥ 95.
+  lighthouse:
+    name: Lighthouse (mobile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Lighthouse
+        run: npm run lighthouse
+        env:
+          LH_RUNS: '5'
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: .lighthouseci
           retention-days: 14

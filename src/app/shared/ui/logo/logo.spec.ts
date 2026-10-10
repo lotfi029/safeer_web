@@ -19,10 +19,10 @@ describe('Logo / Brand', () => {
     await fixture.whenStable();
     const host = fixture.nativeElement as HTMLElement;
     const img = host.querySelector('img')!;
-    expect(img.getAttribute('src')).toContain('/brand/safeer-logo.png');
+    expect(img.getAttribute('src')).toContain('/brand/safeer-logo-sm.png');
     expect(img.getAttribute('alt')).toBe('جمعية سفير الدعوية');
-    expect(img.getAttribute('width')).toBe('150');
-    expect(img.getAttribute('height')).toBe('228');
+    expect(img.getAttribute('width')).toBe('74');
+    expect(img.getAttribute('height')).toBe('112');
     expect(img.classList.contains('h-full')).toBe(true);
     expect(host.style.blockSize).toBe('48px');
   });

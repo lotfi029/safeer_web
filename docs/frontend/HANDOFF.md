@@ -8,13 +8,15 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
   - Stage 2 branches are **stacked**: `feat/phase-7` on `fix/session-1-review` (what `main` gets once #9 merges), `feat/phase-8` on `feat/phase-7`, and so on.
   - Each phase has a draft PR whose base is the previous phase's branch.
 - **Backend:** built and tested against the real `safeer_api` at **`v1.0.0-rc1`** (`SAFEER_API_REF`). Real-API e2e is required, and nothing is mocked by default (CLAUDE.md).
-- **Test totals (end of Phase 9):**
+- **Test totals (end of Phase 10, final):**
   - lint clean
   - unit tests: 53 files, 225 tests
-  - server + script tests: 110
-  - e2e against the mock: **270/270**
-  - e2e against the real API: **263/263** (one full run had a single apply-flow failure under load that passes 45/45 when repeated: most likely BF-2, §0.4); 7 tests are `@mock-only` (§0.3)
-  - initial bundle: **139.6 KB gzip** (limit 150)
+  - server + script tests: 113
+  - e2e PR matrix (390/1440 × ar/en, + dark at 1440): mock **283/283**, real API **276/276**
+  - e2e full matrix (6 viewports × 2 locales × light/dark): mock **483/483**, real API **476/476**
+  - 7 tests are `@mock-only` (§0.3)
+  - initial bundle: **139.8 KB gzip** (limit 150; `check-gzip-budget.mjs` now follows static imports, §0.6)
+  - Lighthouse mobile, median of 5: home 96/100/96/100, news 90/100/100/100, article 97/100/100/100 (Perf/A11y/BP/SEO)
 
 ---
 
@@ -26,8 +28,8 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 |---|---|---|---|
 | 7 | `feat/phase-7` (`fix/session-1-review`) | real-API test support, admin shell, login/forgot, overview, applications list + review, messages | done (#10) |
 | 8 | `feat/phase-8` (`feat/phase-7`) | content CRUD kit, pages and news editors, media | done (#11) |
-| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | done |
-| 10 | `feat/phase-10` (`feat/phase-9`) | hardening, full matrix, axe, Lighthouse, CSP, deployment docs | next |
+| 9 | `feat/phase-9` (`feat/phase-8`) | users, settings (map fields), mail/SMS, audit, redirects, newsletter, interview slots, account, anonymise | done (#12) |
+| 10 | `feat/phase-10` (`feat/phase-9`) | hardening, full matrix, axe, Lighthouse, CSP, deployment docs | done (§0.6) |
 
 ### 0.2 Real-API e2e (every spec runs on both backends)
 
@@ -85,6 +87,8 @@ Mocked admin endpoints: **none**.
 - **BF-1** `POST /newsletter` answers a bare `{ ok: true }` in rc1, but `CONTRACT-NOTES.md` documents `{ ok: true, pendingConfirmation: true }`. The form now treats any `ok` as "check your email" (it is always double opt-in), and the mock matches rc1.
 - **BF-2** Two `POST /applications` at the same moment can deadlock in MySQL ("Deadlock found when trying to get lock", seen in CI with 2 workers): the duplicate-check locking read and the yearly reference counter take locks in different orders, and rc1 answers the loser with a 500 "Database error" instead of retrying the transaction. Suggested fix in the API: retry the create transaction on ER_LOCK_DEADLOCK. The e2e setup (`applicationIn`) retries a 500 meanwhile.
 - **BF-3** (docs only) `CONTRACT-NOTES.md` lists 10 reserved post slugs; the API's `RESERVED_POST_SLUGS` has 12 (`categories`, `category` too). The editor uses all 12.
+- **BF-4** `main.ts` calls `app.listen(PORT)` with no host, so the API listens on every interface. The deployment needs it on loopback only: it trusts one proxy hop and rate-limits by `X-Forwarded-For`, which a client could spoof if it reached the API directly. Suggested fix: a `HOST` env variable defaulting to `127.0.0.1`. Until then, `docs/frontend/deployment.md` §1 says to firewall the port or keep the API off any public domain.
+- **BF-5** (docs only) `UNSUPPORTED_PROVIDER` is listed as an error code but rc1 never throws it: `provider` is a DTO enum, so a wrong value is a plain 400 `VALIDATION_FAILED`. The UI keeps a message for it anyway.
 
 ### 0.5 Admin area (as built)
 
@@ -137,6 +141,29 @@ Mocked admin endpoints: **none**.
 **Tokens**
 - `--sidebar-*`: the sidebar is dark in both themes.
 - `text-secondary-text`: for secondary-coloured text on `app-bg`, where plain `--secondary` is only 4.41:1.
+
+### 0.6 Phase 10: hardening (as built)
+
+- **Motion:** dialogs rise and fade in, the side drawer slides from the inline end (direction-aware), the bottom sheet from below, toasts from the inline end, and the scrim fades (`src/styles/motion.css`). All of it is enter-only, and none of it runs under `prefers-reduced-motion`.
+- **Dark theme in every screen check:** `checkScreen()` flips `data-theme` after the light check, then runs the scroll check, axe and a `-dark` screenshot again (`checksDark`: every viewport in the full matrix, 1440 per PR). It found one real bug: the admin sidebar title used `--on-primary`, which is dark in dark mode (1.12:1). It now uses `--sidebar-text`.
+- **Full matrix fixes:** the first full-matrix run (every viewport) found horizontal page scroll in two places the PR matrix (390/1440) can't see:
+  - The applications table at 768–1024: the table's `sr-only` labels are absolutely positioned, and their containing block was outside the table's scroll box, so they widened the page. The data-table scroll container is now `relative`, the same fix as the Phase 9 users matrix.
+  - The overview chart's data table at 360: `sr-only` doesn't shrink a `<table>`, so `sr-only` now sits on a wrapper `<div>`.
+  - **Rule:** put `sr-only` on a block, never on a table, and make any `overflow-x-auto` box that contains `sr-only` text `relative`.
+- **CSP on every route type** (`security.spec.ts`):
+  - nonce, headers and zero violations for home (ar and en), a CMS page, news list, article, contact, apply, admin and portal entry
+  - the 404 page
+  - signed-in admin screens: overview, applications, news editor, media, settings, mail templates
+  - `frame-src`: iframes to the two map hosts load with no violation; any other host is blocked
+- **Lighthouse (mobile):** `npm run lighthouse` (`scripts/lighthouse.mjs`) audits the production build over the mock API. Playwright's Chromium is attached over CDP, because `lhci`/chrome-launcher crashes on Windows on its temp-profile cleanup (EPERM). It takes the median of `LH_RUNS` (CI: 5) and writes reports to `.lighthouseci/`. Getting to target took four changes:
+  1. **Compression** (`compression`, br/gzip) for everything the SSR server produces itself, mounted after the proxy. Until then HTML and JS went out raw.
+  2. **The @font-face sheet is inlined**, with the nonce, into every HTML response (`inlineStylesheet` in `src/server/html.ts`) instead of a render-blocking `<link>`.
+  3. **`index.preloadInitial: false`** (angular.json): no `modulepreload` for the initial chunks. SSR paints without JS, and the preloads competed with the document for bandwidth before first paint.
+  4. **Smaller preloads:** only the body-text face (400) is preloaded, which is the LCP text. The logo uses a 74×112 copy (`public/brand/safeer-logo-sm.png`, 3 KB instead of 16 KB); the original stays for the intro and JSON-LD.
+- **`app.cjs`:** a CommonJS start file for Hostinger's `lsnode.js`, which `require()`s the entry. It sets `SAFEER_SSR_LISTEN=1`, which `server.ts` checks, and imports the ESM bundle. Verified locally with `require('./app.cjs')`: `/healthz` = 200.
+- **Gzip budget script:** with `preloadInitial` off, the CSR index no longer lists the initial chunks, so `check-gzip-budget.mjs` follows the static imports of the entry scripts instead. It reports 139.8 KB, the same set as before.
+- **CI:** `ci.yml` now also runs nightly (the full matrix on **both** backends) and has a `lighthouse` job. `nightly.yml` (mock only) is gone.
+- **Deployment runbook:** `docs/frontend/deployment.md` (topology, env and the values that must match the API's, `app.cjs` vs PM2, deploy order, rollback, verification, backups, monitoring, client-owed items).
 
 ---
 
@@ -397,9 +424,9 @@ The e2e mock has these test-only routes:
 - **`@mock-only`:** `mockOnly(reason)` from `e2e/support/env.ts` tags a test or describe block; `playwright.config.ts` drops the tag when `E2E_API_URL` is set, and the reason shows as an annotation. List them with `npx playwright test --list --grep @mock-only`. Tag only what truly can't run against the real API (mock routes, mock accounts/tokens, fixture content the dev seed lacks), and prefer contract-bound assertions (compare with the API response) over fixture-bound ones.
 - **Applicants against the real API:** the API refuses a second active application for the same email **or** phone (409), so every spec creates its applicant with `newApplicant()` (random email and phone) in `apply.spec.ts`.
 - **Matrix helper** (`e2e/support/matrix.ts`)
-  - `matrix()` gives 390 and 1440 × ar/en per PR. With `E2E_FULL_MATRIX=1` it covers 360/390/768/1024/1440/1920 × ar/en, which runs nightly and on the `full-matrix` label.
+  - `matrix()` gives 390 and 1440 × ar/en per PR. With `E2E_FULL_MATRIX=1` it covers 360/390/768/1024/1440/1920 × ar/en, which runs nightly and on the `full-matrix` label, on both backends.
   - `openAt(page, path, viewport, locale, theme?)` opens the page with reduced motion.
-  - `checkScreen(page, testInfo, name, viewport, locale)` checks for no horizontal scroll, runs axe (serious or critical fails), and takes a screenshot.
+  - `checkScreen(page, testInfo, name, viewport, locale)` checks for no horizontal scroll, runs axe (serious or critical fails), and takes a screenshot, then does the same in dark mode (`checksDark`: every viewport in the full matrix, 1440 per PR).
 - **Screenshots**
   - Viewport-only, palette-compressed to ≤150 KB, attached to every test.
   - With `E2E_SCREENS_DIR=docs/frontend/screens/phase-N`, the 390 and 1440 shots are written as `{screen}-{ar,en}-{390,1440}.png`.
@@ -422,7 +449,7 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 
 | Item | Status in this frontend |
 |---|---|
-| B1 OTP channel choice | Built; `channel` sent to `request-otp`. e2e mock-only (needs a seeded application + known OTP). |
+| B1 OTP channel choice | Built; `channel` sent to `request-otp`. e2e on both backends (real: OTP from `GET /__dev/otp/:id`). |
 | B2 phone identifier + `APPLICATION_EXISTS` | Built; 409 on the same email **or** phone, e2e against both APIs |
 | B3 re-upload rules | Enforced in the UI (`canUpload`) and the mock |
 | B9 clean `/x` button URLs | Used as is; a legacy `#/x` mapper stays in `core/site/nav-routes.ts` |
@@ -434,7 +461,7 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 | B19 public document fields only | Types ignore `storageKey`/`checksum` |
 | C2 frontend routes | `/:lang/portal/login`, `/:lang/admin/login`, **`/:lang/admin/accept/:token`, `/:lang/admin/reset/:token` (W16)** |
 | C15 corrections | `PortalApi.correct()` → `PATCH /portal/application/corrections`, `docs_missing` only |
-| C17 interview in `/portal/me` + `DELETE /portal/interview` | Built; e2e mock-only (needs seeded slots) |
+| C17 interview in `/portal/me` + `DELETE /portal/interview` | Built; e2e on both backends (slots created through `/admin/interview-slots`) |
 | C26 sanitized HTML for section/about bodies | Rendered through `app-rich-text` (re-sanitized); `plainText()` for text-only slots |
 | C27 newsletter double opt-in, confirm/unsubscribe | `{email, token}` from the mailed link (W3) |
 | C35 notifications | Paged `{data,total,page,limit}` with the API's event set (W2) |
@@ -447,7 +474,7 @@ All of them are **live in `safeer_api` v1.0.0-rc1** and covered by the `e2e-real
 - **Filter-bar chips on phones:** in `linkMode` the chips move into a bottom sheet below 480px. The partners page uses plain chip links instead. News keeps the sheet; revisit if SEO reviewers want the links visible.
 - **SSR forms and hydration:** see the hydration gotcha in §4.
 - **Admin area:** see §0.5.
-- **Lighthouse:** not run in Session 1. It's a Session 2 exit criterion.
+- **Lighthouse:** see §0.6. The performance score depends on the machine: the median of 5 runs passes, but single runs spread by ±4 points.
 - **Types:** F11 generated types are not done (see §1).
 - **Dev-seed images:** the API's dev seed stores flat-colour JPEGs for its sample assets (hero, news covers), so those render as plain grey-teal boxes. They are real images with their alt, not missing placeholders (W7); sections with no asset show the labelled `[صورة: …]` placeholder.
 - **Portal help card:** links to the contact page because the portal shell doesn't load `/site`.
@@ -473,22 +500,25 @@ npm run test:ci              # unit
 npm run test:server          # server + scripts
 npm run build:ci             # prod build + gzip budget (<150 KB) + prod-artifact check + e2e build
 npm run build:e2e
-npx playwright test          # PR matrix (390/1440 × ar/en)
-npm run e2e:full             # full 6×2 matrix
+npx playwright test          # PR matrix (390/1440 × ar/en, + dark at 1440)
+npm run e2e:full             # full 6×2 matrix, light + dark
+npm run lighthouse           # after npm run build: home, news, article (mobile)
 npm run mock-api             # standalone mock API on :3100
 ```
 
-**CI** (`.github/workflows/ci.yml`, on pull_request, cancel-in-progress), two jobs:
+**CI** (`.github/workflows/ci.yml`, on pull_request, push to main, nightly and on demand; cancel-in-progress), three jobs:
 - `build-test`: `npm ci` → lint → unit → server tests → `build:ci` → cached Playwright Chromium → e2e against the mock → upload the report and screenshots.
 - `e2e-real` (W24): MySQL 8 service → `safeer_api` at `vars.SAFEER_API_REF` (default `v1.0.0-rc1`) → `npm ci && npm run build` there → `node scripts/real-api.mjs safeer_api --detach` → `build:e2e` → e2e with `E2E_API_URL` (`@mock-only` dropped) → upload the report and `api.log`.
 
 To run the real-API suite locally, see the README ("Run e2e against the real API locally"). `node scripts/record-fixtures.mjs` re-records the public fixtures from that API.
 
-**Nightly** (`nightly.yml`): cron `17 1 * * *`, `workflow_dispatch`, and the `full-matrix` PR label. It runs `build:e2e` and then the full 6×2 matrix.
+- `lighthouse`: production build → `npm run lighthouse` (`LH_RUNS=5`) → upload `.lighthouseci/`.
+
+**Nightly** (cron `30 1 * * *` in `ci.yml`) and the `full-matrix` PR label set `E2E_FULL_MATRIX=1` for both e2e jobs: 6 viewports × 2 locales, each in light and dark.
 
 ---
 
-## As-built routes (Phases 0–9)
+## As-built routes (Phases 0–10)
 
 | Route | Mode | Notes |
 |---|---|---|
@@ -515,7 +545,7 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | `/:lang/_kit` | SSR | dev and e2e builds only |
 | `/:lang/**` | SSR | 404 page, status 404 |
 | `/**` | SSR | Bare 404 |
-| `/healthz`, `/robots.txt`, `/sitemap.xml` | server | |
+| `/healthz`, `/robots.txt`, `/sitemap.xml` | server | Everything the server serves itself is br/gzip compressed (Phase 10) |
 | `/api/**`, `/files/**` | proxy | To `API_INTERNAL_URL` |
 | Legacy WordPress paths | server | 301 via `redirects/resolve`, or 410 for clinic-template paths |
 
