@@ -1,0 +1,51 @@
+{
+  "scores": {
+    "home": {
+      "url": "/ar",
+      "performance": 99,
+      "accessibility": 100,
+      "best-practices": 96,
+      "seo": 100
+    },
+    "news": {
+      "url": "/ar/news",
+      "performance": 98,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    },
+    "article": {
+      "url": "/ar/news/dates-distribution-2020",
+      "performance": 99,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100
+    }
+  },
+  "metrics": {
+    "home": {
+      "fcp": 1371,
+      "lcp": 1961,
+      "tbt": 77,
+      "si": 1371,
+      "cls": 0.003,
+      "benchmarkIndex": 2655
+    },
+    "news": {
+      "fcp": 1411,
+      "lcp": 1961,
+      "tbt": 118,
+      "si": 1411,
+      "cls": 0.002,
+      "benchmarkIndex": 2609.5
+    },
+    "article": {
+      "fcp": 1273,
+      "lcp": 1810,
+      "tbt": 103,
+      "si": 1273,
+      "cls": 0.005,
+      "benchmarkIndex": 2324.5
+    }
+  }
+}
