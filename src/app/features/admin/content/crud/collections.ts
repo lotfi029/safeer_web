@@ -150,9 +150,25 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     fields: [
       { key: 'slug', type: 'slug', label: 'slug', required: true, max: 64 },
       { key: 'name', type: 'text', label: 'name', bilingual: true, required: true, max: 191 },
+      {
+        key: 'sectionGroup',
+        type: 'select',
+        label: 'sectionGroup',
+        options: ['governance', 'other'],
+        defaultValue: 'governance',
+        hint: 'sectionGroupHint',
+      },
     ],
     primary: (r, l) => pick(r, 'name', l),
-    secondary: (r) => String(r['slug'] ?? ''),
+    secondary: (r, _l, t) =>
+      [
+        String(r['slug'] ?? ''),
+        r['sectionGroup']
+          ? t(`admin.content.options.sectionGroup.${String(r['sectionGroup'])}`)
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
   },
   documents: {
     id: 'documents',
@@ -170,6 +186,15 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       },
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 255 },
       {
+        key: 'meta',
+        type: 'text',
+        label: 'docMeta',
+        bilingual: true,
+        max: 255,
+        nullable: true,
+        hint: 'docMetaHint',
+      },
+      {
         key: 'assetId',
         type: 'media',
         label: 'file',
@@ -180,7 +205,43 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       { key: 'docDate', type: 'date', label: 'docDate', nullable: true },
     ],
     primary: (r, l) => pick(r, 'title', l),
-    secondary: (r) => String(r['docDate'] ?? ''),
+    secondary: (r, l) =>
+      [pick(r, 'meta', l), String(r['docDate'] ?? '')].filter(Boolean).join(' · '),
+  },
+  /** Licences (same area as documents); one of them is the primary licence (`PATCH :id/primary`). */
+  licences: {
+    id: 'licences',
+    endpoint: 'licences',
+    area: 'content',
+    publish: 'route',
+    sortable: true,
+    fields: [
+      { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 255 },
+      { key: 'number', type: 'text', label: 'licenceNumber', max: 64, nullable: true },
+      { key: 'issuer', type: 'text', label: 'issuer', bilingual: true, max: 191, nullable: true },
+      { key: 'issuedOn', type: 'date', label: 'issuedOn', nullable: true },
+      { key: 'expiresOn', type: 'date', label: 'expiresOn', nullable: true },
+      {
+        key: 'assetId',
+        type: 'media',
+        label: 'file',
+        media: 'pdf',
+        nullable: true,
+        hint: 'fileHint',
+      },
+      { key: 'isPrimary', type: 'boolean', label: 'isPrimary', hint: 'isPrimaryHint' },
+    ],
+    primary: (r, l) => pick(r, 'title', l),
+    secondary: (r, l) =>
+      [String(r['number'] ?? ''), pick(r, 'issuer', l), String(r['expiresOn'] ?? '')]
+        .filter(Boolean)
+        .join(' · '),
+    flag: {
+      key: 'isPrimary',
+      path: 'primary',
+      setLabel: 'admin.content.licences.setPrimary',
+      onLabel: 'admin.content.licences.primary',
+    },
   },
   stats: {
     id: 'stats',

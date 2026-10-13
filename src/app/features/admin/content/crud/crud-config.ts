@@ -80,6 +80,11 @@ export interface CrudConfig {
   link?: { label: string; path: (row: ContentRow) => string };
   /** Child collection shown under each row (work-area items). */
   children?: { config: CrudConfig; parentKey: string };
+  /**
+   * A one-of-a-kind flag set through its own route (licences' `PATCH :id/primary`): rows with the flag
+   * show a pill, the others a button. Setting it re-reads the list (the API clears the previous one).
+   */
+  flag?: { key: string; path: string; setLabel: string; onLabel: string };
   /** Area for delete buttons when it differs from `area` (`redirects.delete`). */
   deleteArea?: StaffArea;
   /** A problem code (and title) → the field its message belongs next to. */

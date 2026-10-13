@@ -78,6 +78,21 @@ export const SETTINGS_SECTIONS: readonly { id: string; fields: readonly CrudFiel
     ],
   },
   {
+    id: 'licence',
+    fields: [
+      { key: 'licenceNo', type: 'text', label: 'licenceNo', max: 64, nullable: true },
+      {
+        key: 'licenceIssuer',
+        type: 'text',
+        label: 'licenceIssuer',
+        bilingual: true,
+        max: 191,
+        nullable: true,
+        hint: 'licenceHint',
+      },
+    ],
+  },
+  {
     id: 'languages',
     fields: [{ key: 'enEnabled', type: 'boolean', label: 'enEnabled' }],
   },
@@ -154,8 +169,8 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
 
 /**
  * Site settings (prototype `aSettings`, `PUT admin/settings`): organisation details, languages, SEO,
- * social links and the map (Google Maps embed or OpenStreetMap only, like the API's allow-list); plus
- * the API cache.
+ * the licence (shown in the footer and on the governance pages), social links and the map (Google
+ * Maps embed or OpenStreetMap only, like the API's allow-list); plus the API cache.
  */
 @Component({
   selector: 'app-admin-settings',

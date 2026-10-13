@@ -49,6 +49,7 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
       { path: 'testimonials', label: 'testimonials', icon: 'quote', area: 'inbox' },
       { path: 'partners', label: 'partners', icon: 'handshake', area: 'content' },
       { path: 'documents', label: 'documents', icon: 'folder', area: 'content' },
+      { path: 'licences', label: 'licences', icon: 'badge-check', area: 'content' },
       { path: 'stats', label: 'stats', icon: 'chart-column', area: 'content' },
       { path: 'about-items', label: 'aboutItems', icon: 'list-checks', area: 'content' },
       { path: 'media', label: 'media', icon: 'image', area: 'content' },

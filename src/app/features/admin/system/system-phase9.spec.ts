@@ -57,6 +57,57 @@ describe('mail templates', () => {
   });
 });
 
+describe('governance collections (licences, document sections)', () => {
+  it('licences: dates stay plain, empties are null, isPrimary is a boolean, PATCH :id/primary', () => {
+    const l = COLLECTIONS['licences'];
+    expect(
+      toBody(
+        l.fields,
+        {
+          titleAr: 'ترخيص',
+          titleEn: '',
+          number: '',
+          issuerAr: '',
+          issuerEn: '',
+          issuedOn: '2020-01-01',
+          expiresOn: '',
+          assetId: '',
+          isPrimary: true,
+        },
+        'update',
+      ),
+    ).toEqual({
+      titleAr: 'ترخيص',
+      titleEn: null,
+      number: null,
+      issuerAr: null,
+      issuerEn: null,
+      issuedOn: '2020-01-01',
+      expiresOn: null,
+      assetId: null,
+      isPrimary: true,
+    });
+    expect(l.flag).toMatchObject({ key: 'isPrimary', path: 'primary' });
+    expect(l.publish).toBe('route');
+    expect(l.sortable).toBe(true);
+  });
+
+  it('document categories default to the governance group; documents carry a meta line', () => {
+    const c = COLLECTIONS['docCategories'];
+    expect(c.fields.find((f) => f.key === 'sectionGroup')).toMatchObject({
+      options: ['governance', 'other'],
+      defaultValue: 'governance',
+    });
+    expect(
+      toBody(
+        COLLECTIONS['documents'].fields.filter((f) => f.key === 'meta'),
+        { metaAr: ' ٢٠٢٤ ', metaEn: '' },
+        'create',
+      ),
+    ).toEqual({ metaAr: '٢٠٢٤', metaEn: null });
+  });
+});
+
 describe('datetime fields and redirects', () => {
   const fields: CrudField[] = [
     { key: 'startsAt', type: 'datetime', label: 'startsAt', required: true },

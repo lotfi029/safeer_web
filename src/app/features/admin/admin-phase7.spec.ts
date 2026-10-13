@@ -44,6 +44,7 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       'board',
       'partners',
       'documents',
+      'licences',
       'stats',
       'aboutItems',
       'media',

@@ -36,6 +36,7 @@ export const en: AdminTranslation = {
       testimonials: 'Testimonials',
       partners: 'Partners',
       documents: 'Documents',
+      licences: 'Licences',
       stats: 'Figures',
       aboutItems: 'About items',
       media: 'Media',
@@ -241,6 +242,15 @@ export const en: AdminTranslation = {
       docCategory: 'Section',
       file: 'File (PDF)',
       docDate: 'Date',
+      sectionGroup: 'Section group',
+      docMeta: 'Meta line',
+      licenceNumber: 'Licence number',
+      issuer: 'Issued by',
+      issuedOn: 'Issued on',
+      expiresOn: 'Expires on',
+      isPrimary: 'Main licence',
+      licenceNo: 'Association licence number',
+      licenceIssuer: 'Licensing authority',
       value: 'Figure',
       label: 'Label',
       sub: 'Short description',
@@ -272,6 +282,13 @@ export const en: AdminTranslation = {
       iconHint: 'An icon name from the icon set (e.g. book-open).',
       urlHint: 'A link starting with https://, http://, mailto: or tel:.',
       fileHint: 'Without a file the document shows as “coming soon”.',
+      sectionGroupHint:
+        'Governance sections appear in the governance menu, each with its own page.',
+      docMetaHint: 'A short line under the document title (e.g. a period or an edition).',
+      isPrimaryHint:
+        'The main licence is shown first on the licences page. Only one licence is the main one.',
+      licenceHint:
+        'Shown in the site footer and on the bylaws and policies page. Leave empty to hide them.',
       valueHint: 'Digits only. Leave empty to show “—”.',
       sectionKeyHint:
         'A fixed id the site uses to place the section; don’t change it on existing sections.',
@@ -284,6 +301,7 @@ export const en: AdminTranslation = {
         '301': 'Permanent (301)',
         '302': 'Temporary (302)',
       },
+      sectionGroup: { governance: 'Governance', other: 'Other' },
       driver: {
         log: 'Log only (not sent)',
         smtp: 'SMTP',
@@ -334,6 +352,13 @@ export const en: AdminTranslation = {
       note: 'Upload the PDF inside the document form; visitors see a document once it and its section are published.',
     },
     docCategories: { title: 'Document sections', item: 'section' },
+    licences: {
+      title: 'Licences',
+      item: 'licence',
+      note: 'Published licences appear on the Licences page in the governance menu, the main licence first.',
+      setPrimary: 'Make main licence',
+      primary: 'Main licence',
+    },
     stats: {
       title: 'Figures',
       item: 'figure',
@@ -464,6 +489,7 @@ export const en: AdminTranslation = {
         seo: 'Search engines (SEO)',
         social: 'Social links',
         map: 'Map',
+        licence: 'Licence',
         cache: 'Cache',
       },
       languagesLead:

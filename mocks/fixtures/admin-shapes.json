@@ -222,6 +222,7 @@
         "slug": "string",
         "nameAr": "string",
         "nameEn": "string",
+        "sectionGroup": "string",
         "isPublished": "boolean",
         "sortOrder": "number"
       }
@@ -237,6 +238,8 @@
         "categoryId": "string",
         "titleAr": "string",
         "titleEn": "string",
+        "metaAr": null,
+        "metaEn": null,
         "assetId": "string",
         "docDate": "string",
         "downloadCount": "number",
@@ -556,5 +559,28 @@
       "lastSeenAt": "string",
       "isCurrent": "boolean"
     }
-  ]
+  ],
+  "licences": {
+    "data": [
+      {
+        "id": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "number": "string",
+        "issuerAr": "string",
+        "issuerEn": "string",
+        "issuedOn": "string",
+        "expiresOn": "string",
+        "assetId": "string",
+        "isPrimary": "boolean",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  }
 }

@@ -118,6 +118,7 @@ export const ADMIN_ROUTES: Routes = [
           ),
           ...crud('partners', ['partners'], 'partners'),
           ...crud('documents', ['documents', 'docCategories'], 'documents', 'documents.note'),
+          ...crud('licences', ['licences'], 'licences', 'licences.note'),
           ...crud('stats', ['stats'], 'stats', 'stats.note'),
           ...crud('about-items', ['aboutItems'], 'aboutItems'),
           {

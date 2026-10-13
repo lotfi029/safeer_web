@@ -102,6 +102,11 @@ export class ContentApi {
     return this.http.patch<WithWarnings<T>>(`${A}/${endpoint}/${enc(id)}/publish`, { isPublished });
   }
 
+  /** A row action route without a body (`PATCH licences/:id/primary`). */
+  action<T extends ContentRow = ContentRow>(endpoint: string, id: Id, path: string): Observable<T> {
+    return this.http.patch<T>(`${A}/${endpoint}/${enc(id)}/${path}`, {});
+  }
+
   reorder(
     endpoint: string,
     items: { id: Id; sortOrder: number }[],

@@ -93,7 +93,7 @@ export const KERNEL = {
     required: ['slug', 'nameAr'],
     unique: 'slug',
     timestamps: false,
-    defaults: { isPublished: true, nameEn: null },
+    defaults: { isPublished: true, nameEn: null, sectionGroup: 'governance' },
     usedBy: [['documents', 'categoryId']],
   },
   documents: {
@@ -104,10 +104,31 @@ export const KERNEL = {
     defaults: {
       isPublished: false,
       titleEn: null,
+      metaAr: null,
+      metaEn: null,
       assetId: null,
       docDate: null,
       downloadCount: 0,
       sortOrder: 0,
+    },
+  },
+  /** Licences (governance): `PATCH :id/primary` makes one the primary licence. */
+  licences: {
+    area: 'content',
+    publishable: true,
+    sortable: true,
+    search: ['titleAr', 'titleEn', 'number'],
+    required: ['titleAr'],
+    defaults: {
+      isPublished: true,
+      titleEn: null,
+      number: null,
+      issuerAr: null,
+      issuerEn: null,
+      issuedOn: null,
+      expiresOn: null,
+      assetId: null,
+      isPrimary: false,
     },
   },
   stats: {
@@ -290,6 +311,20 @@ export function contentRoutes(ctx) {
       }
     }
     if (
+      endpoint === 'doc-categories' &&
+      body?.sectionGroup !== undefined &&
+      !['governance', 'other'].includes(body.sectionGroup)
+    ) {
+      return invalid('sectionGroup', 'Invalid enum value');
+    }
+    if (endpoint === 'licences') {
+      for (const key of ['issuedOn', 'expiresOn']) {
+        const v = body?.[key];
+        if (v !== undefined && v !== null && !/^\d{4}-\d{2}-\d{2}$/.test(String(v)))
+          return invalid(key, 'Invalid date');
+      }
+    }
+    if (
       endpoint === 'stats' &&
       body?.value !== undefined &&
       body.value !== null &&
@@ -314,6 +349,12 @@ export function contentRoutes(ctx) {
         return problem(409, 'CONFLICT');
     }
     return null;
+  }
+
+  /** One primary licence: making a row primary clears the flag everywhere else. */
+  function onPrimary(endpoint, row) {
+    if (endpoint !== 'licences' || !row.isPrimary) return;
+    for (const other of table('licences')) if (other.id !== row.id) other.isPrimary = false;
   }
 
   function onPublish(endpoint, row, wasPublished) {
@@ -348,6 +389,19 @@ export function contentRoutes(ctx) {
         const post = table('news').find((p) => p.id === query.get('id'));
         if (!post) return problem(404, 'NOT_FOUND');
         return json(200, { token: 'mock-preview', expiresInSeconds: 900 });
+      },
+    ],
+    [
+      'PATCH',
+      /^\/api\/v1\/admin\/licences\/([^/]+)\/primary$/,
+      ({ req, params }) => {
+        const g = guard(req, 'content', { write: true });
+        if (g.error) return g.error;
+        const row = table('licences').find((r) => r.id === params[0]);
+        if (!row) return problem(404, 'NOT_FOUND');
+        Object.assign(row, { isPrimary: true, updatedAt: nowIso() });
+        onPrimary('licences', row);
+        return json(200, row);
       },
     ],
     [
@@ -462,6 +516,7 @@ export function contentRoutes(ctx) {
           ['news', 'coverAssetId', 'posts', (r) => r.titleAr],
           ['partners', 'logoAssetId', 'partners', (r) => r.nameAr],
           ['documents', 'assetId', 'documents', (r) => r.titleAr],
+          ['licences', 'assetId', 'licences', (r) => r.titleAr],
         ];
         const usages = refs.flatMap(([endpoint, key, entity, label]) =>
           table(endpoint)
@@ -541,6 +596,7 @@ export function contentRoutes(ctx) {
             onPublish(endpoint, row, false);
           }
           table(endpoint).push(row);
+          onPrimary(endpoint, row);
           return json(201, withWarnings(endpoint, row));
         },
       ],
@@ -576,6 +632,7 @@ export function contentRoutes(ctx) {
           Object.assign(row, body);
           if (spec.timestamps !== false) row.updatedAt = nowIso();
           onPublish(endpoint, row, was);
+          onPrimary(endpoint, row);
           return json(200, withWarnings(endpoint, row));
         },
       ],

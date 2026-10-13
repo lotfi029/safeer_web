@@ -14,6 +14,7 @@ const CONTENT = [
   'Board',
   'Partners',
   'Documents',
+  'Licences',
   'Figures',
   'About items',
   'Media',
