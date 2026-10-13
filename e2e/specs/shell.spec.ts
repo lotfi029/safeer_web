@@ -268,14 +268,29 @@ test.describe('fonts (W13)', () => {
   }
 });
 
+for (const lang of ['ar', 'en'] as const) {
+  test(`the public site has no link to the staff dashboard (${lang})`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoHydrated(page, `/${lang}`);
+    await expect(page.locator('header a[href*="/admin"], footer a[href*="/admin"]')).toHaveCount(0);
+    await page.getByRole('button', { name: lang === 'ar' ? 'فتح القائمة' : 'Open menu' }).click();
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+    await expect(drawer.locator('a[href*="/admin"]')).toHaveCount(0);
+  });
+}
+
 test('client-side navigation into a private area drops the public page’s SEO tags (W19)', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
   await gotoHydrated(page, '/en/news');
   await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Open menu' }).click();
-  await page.getByRole('dialog').getByRole('link', { name: 'Staff dashboard' }).click();
+  // The dashboard has no public link (URL only), so navigate client-side through the router.
+  await page.evaluate(() => {
+    history.pushState({}, '', '/en/admin/login');
+    dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+  });
   await expect(page).toHaveURL(/\/en\/admin\/login/);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   await expect(page.locator('link[rel="canonical"], link[rel="alternate"][hreflang]')).toHaveCount(

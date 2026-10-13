@@ -117,7 +117,6 @@ export const ar = {
     contactCta: 'تواصل معنا',
     governance: 'الحوكمة',
     governanceMenu: 'قائمة الحوكمة',
-    staff: 'لوحة التحكم',
     home: 'الصفحة الرئيسية',
     footer: {
       keyLinks: 'روابط مهمة',
