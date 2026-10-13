@@ -2,6 +2,18 @@
 
 Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the apply flow, the student portal and the staff invitation/reset pages. **Stage 2** (Phases 7–10, `docs/safeer-web-session-2-combined-plan.md`) builds the admin dashboard and moves the e2e suite onto the real API. Read §0 first, then the rest.
 
+> **Governance + contact (branch `feat/governance-contact`, after Stage 2).** The owner removed the
+> scholarship feature: the apply flow, the student portal (OTP), the admin applications review and
+> interview slots, the scholarships page, the SMS settings screen and the `reviewer` role are gone
+> (W1). Contact is the call to action (W2). New: document sections get a `sectionGroup`, documents a
+> meta line, and a Licences admin screen with a "make main licence" row action (W3); public
+> governance pages `/:lang/governance/:slug` and `/:lang/governance/licences`, a «الحوكمة» header
+> menu, a drawer group, a footer column and the licence number in the footer bar (W4); 301s from
+> `/scholarships`, `/apply`, `/portal/*` → `/contact` and `/documents?category=` → the governance
+> pages, server- and client-side (W5). Contract: safeer_api `feat/governance-contact`
+> (`docs/backend/API-CHANGES.md` there, "Governance and contact"); the docs/api snapshot is not yet
+> refreshed to it. Sections above that describe the portal/apply/applications are historical.
+
 - **PRs:**
   - Phases #1–#8 are merged.
   - The fix pass is lotfi029/safeer_web#9 (`fix/session-1-review`). It was still an open draft when Stage 2 started.

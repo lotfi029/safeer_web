@@ -131,7 +131,8 @@ test.describe('admin system', () => {
     await dialog(page).getByRole('button', { name: 'Cancel' }).click();
 
     const matrixRows = page.getByTestId('role-matrix').locator('tbody tr');
-    await expect(matrixRows).toHaveCount(9);
+    // Seven areas: the two applications areas left with the reviewer role.
+    await expect(matrixRows).toHaveCount(7);
     // Deleting redirects: admin only.
     const redirectsRow = matrixRows.filter({ hasText: 'Deleting redirects' });
     await expect(redirectsRow.getByText('Allowed', { exact: true })).toHaveCount(1);
