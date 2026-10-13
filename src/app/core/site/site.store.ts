@@ -1,10 +1,10 @@
 import { inject, Injectable, RESPONSE_INIT, signal } from '@angular/core';
 import { ResolveFn } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import type { SiteResponse } from '../api/models';
+import type { DocSection, SiteResponse } from '../api/models';
 import { toApiProblem } from '../api/problem';
 import { PublicApi } from '../api/public-api';
-import { markStatus } from '../data/loaded';
+import { loadSecondary, markStatus } from '../data/loaded';
 
 export type SiteFailure = 'unavailable' | 'error';
 
@@ -12,6 +12,8 @@ export type SiteFailure = 'unavailable' | 'error';
  * `GET /site` (settings, nav, contact) for the public shell. It is the shell's critical call
  * (review F8): if it fails during SSR the response becomes 503 + Retry-After (API unreachable) or
  * 500, and the shell renders the matching error page instead of hanging or rendering half a page.
+ * The governance sections (`GET /documents/sections`, for the header menu, the drawer, the footer and
+ * the governance pages' own navigation) load beside it and degrade to an empty list.
  */
 @Injectable({ providedIn: 'root' })
 export class SiteStore {
@@ -19,6 +21,7 @@ export class SiteStore {
   private readonly responseInit = inject(RESPONSE_INIT, { optional: true });
 
   readonly site = signal<SiteResponse | null>(null);
+  readonly sections = signal<DocSection[]>([]);
   readonly failure = signal<SiteFailure | null>(null);
   private loadedLang: string | null = null;
 
@@ -26,8 +29,10 @@ export class SiteStore {
     if (this.loadedLang === lang && this.site()) {
       return;
     }
+    const sections = loadSecondary(this.api.docSections(), [] as DocSection[]);
     try {
       this.site.set(await firstValueFrom(this.api.site()));
+      this.sections.set(await sections);
       this.failure.set(null);
       this.loadedLang = lang;
     } catch (error) {

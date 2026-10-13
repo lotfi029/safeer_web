@@ -8,8 +8,11 @@ import type {
   BoardResponse,
   ContactRequest,
   Country,
+  DocSection,
+  DocSectionResponse,
   DocumentGroup,
   HomeResponse,
+  Licence,
   NewsCategory,
   NewsletterRequest,
   NewsletterTokenRequest,
@@ -78,6 +81,23 @@ export class PublicApi {
 
   documents(): Observable<DocumentGroup[]> {
     return this.http.get<DocumentGroup[]>(`${API_PREFIX}/documents`);
+  }
+
+  /** Published governance sections, in order (`GET /documents/sections`). */
+  docSections(): Observable<DocSection[]> {
+    return this.http.get<DocSection[]>(`${API_PREFIX}/documents/sections`);
+  }
+
+  /** One governance section with its documents; 404 for an unknown or unpublished slug. */
+  docSection(slug: string): Observable<DocSectionResponse> {
+    return this.http.get<DocSectionResponse>(
+      `${API_PREFIX}/documents/sections/${encodeURIComponent(slug)}`,
+    );
+  }
+
+  /** Published licences, the primary one first. */
+  licences(): Observable<Licence[]> {
+    return this.http.get<Licence[]>(`${API_PREFIX}/licences`);
   }
 
   news(query: NewsQuery = {}): Observable<Paged<PostSummary>> {

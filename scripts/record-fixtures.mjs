@@ -24,6 +24,7 @@ export const RECORDABLE = {
   workAreas: { path: '/work-areas' },
   partners: { path: '/partners' },
   documents: { path: '/documents' },
+  licences: { path: '/licences' },
   newsCategories: { path: '/news-categories' },
   aboutItems: { path: '/about-items' },
 };

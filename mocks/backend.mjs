@@ -162,6 +162,47 @@ export function createMockBackend(fixtures) {
       /^\/api\/v1\/documents$/,
       ({ lang }) => json(200, collapse(db.fixtures.documents ?? [], lang)),
     ],
+    // Governance sections: the published `governance` categories in order, with their document count.
+    [
+      'GET',
+      /^\/api\/v1\/documents\/sections$/,
+      ({ lang }) =>
+        json(
+          200,
+          collapse(
+            (db.fixtures.documents ?? [])
+              .filter((g) => g.category.sectionGroup === 'governance')
+              .map((g) => ({ ...g.category, count: g.documents.length })),
+            lang,
+          ),
+        ),
+    ],
+    [
+      'GET',
+      /^\/api\/v1\/documents\/sections\/([^/]+)$/,
+      ({ lang, params }) => {
+        const group = (db.fixtures.documents ?? []).find(
+          (g) => g.category.slug === decodeURIComponent(params[0]),
+        );
+        return group ? json(200, collapse(group, lang)) : problem(404, 'NOT_FOUND');
+      },
+    ],
+    [
+      'GET',
+      /^\/api\/v1\/licences$/,
+      ({ lang }) =>
+        json(
+          200,
+          collapse(
+            [...(db.fixtures.licences ?? [])]
+              .sort(
+                (a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder,
+              )
+              .map(({ sortOrder: _sortOrder, ...l }) => l),
+            lang,
+          ),
+        ),
+    ],
     [
       'GET',
       /^\/api\/v1\/news-categories$/,

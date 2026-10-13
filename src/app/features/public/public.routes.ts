@@ -7,6 +7,8 @@ import { testimonialsResolver } from './testimonials/testimonials.resolver';
 import { partnersResolver } from './partners/partners.resolver';
 import { documentsResolver } from './documents/documents.resolver';
 import { contactResolver } from './contact/contact.resolver';
+import { governanceSectionResolver, licencesResolver } from './governance/governance.resolvers';
+import { DEFAULT_GOVERNANCE_SECTION } from '../../core/site/governance';
 import { articleResolver, newsListResolver } from './news/news.resolvers';
 
 /**
@@ -50,6 +52,24 @@ export const PUBLIC_ROUTES: Routes = [
     path: 'documents',
     resolve: { data: documentsResolver },
     loadComponent: () => import('./documents/documents').then((m) => m.DocumentsPage),
+  },
+  // Governance (W4): `/governance` lands on the first section; licences have their own page.
+  {
+    path: 'governance',
+    pathMatch: 'full',
+    redirectTo: `governance/${DEFAULT_GOVERNANCE_SECTION}`,
+  },
+  {
+    path: 'governance/licences',
+    resolve: { data: licencesResolver },
+    loadComponent: () => import('./governance/licences').then((m) => m.LicencesPage),
+  },
+  {
+    path: 'governance/:slug',
+    resolve: { data: governanceSectionResolver },
+    runGuardsAndResolvers: 'paramsChange',
+    loadComponent: () =>
+      import('./governance/governance-section').then((m) => m.GovernanceSectionPage),
   },
   {
     path: 'contact',

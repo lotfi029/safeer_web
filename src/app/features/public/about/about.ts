@@ -5,6 +5,7 @@ import type { AboutItem } from '../../../core/api/models';
 import type { Loaded } from '../../../core/data/loaded';
 import { PageState } from '../../../core/data/page-state';
 import { LocaleService } from '../../../core/i18n/locale.service';
+import { GOVERNANCE_PATHS } from '../../../core/site/governance';
 import { DigitsPipe } from '../../../shared/pipes/format';
 import { Button } from '../../../shared/ui/button/button';
 import { FeatureCard } from '../../../shared/ui/card/card';
@@ -26,35 +27,36 @@ interface GovernanceLink {
   key: string;
   titleKey: string;
   captionKey: string;
-  category: string;
+  /** The governance section the row opens. */
+  section: string;
 }
 
-/** Governance rows (prototype `pAbout`), each linking to its documents category. */
+/** Governance rows (prototype `pAbout`), each linking to its governance section page. */
 const GOVERNANCE: readonly GovernanceLink[] = [
   {
     key: 'board',
     titleKey: 'pages.about.boardMinutes',
     captionKey: 'pages.about.minutesCaption',
-    category: 'meeting-minutes',
+    section: 'general-assembly',
   },
   {
     key: 'assembly',
     titleKey: 'pages.about.assemblyMinutes',
     captionKey: 'pages.about.minutesCaption',
-    category: 'meeting-minutes',
+    section: 'general-assembly',
   },
   {
     key: 'reports',
     titleKey: 'pages.about.activityReports',
     captionKey: 'pages.about.activityReportsCaption',
-    category: 'annual-reports',
+    section: 'annual-reports',
   },
 ];
 
 /**
  * About (prototype `#/about`): page head, "about the association" (CMS page body when present, else
  * the page lead) with links to documents and board, vision/mission cards + numbered goals, and the
- * governance links into the documents page.
+ * governance links into the governance section pages.
  */
 @Component({
   selector: 'app-about-page',
@@ -103,8 +105,8 @@ const GOVERNANCE: readonly GovernanceLink[] = [
               </p>
             }
             <div class="flex flex-wrap gap-4 [&_a]:w-full sm:[&_a]:w-auto">
-              <a appButton variant="soft" [routerLink]="locale.link('/documents')">{{
-                'shell.footer.documents' | transloco
+              <a appButton variant="soft" [routerLink]="locale.link(governancePath)">{{
+                'shell.footer.governance' | transloco
               }}</a>
               <a appButton variant="ghost" [routerLink]="locale.link('/board')">{{
                 'shell.footer.board' | transloco
@@ -191,8 +193,7 @@ const GOVERNANCE: readonly GovernanceLink[] = [
                 <li appReveal [revealIndex]="i">
                   <a
                     class="card card-hover flex items-center gap-5 !py-6 text-inherit no-underline"
-                    [routerLink]="locale.link('/documents')"
-                    [queryParams]="{ category: row.category }"
+                    [routerLink]="locale.link(sectionPath(row.section))"
                   >
                     <span class="icon-tile size-12"><app-icon name="file" [size]="22" /></span>
                     <span class="flex min-w-0 grow flex-col gap-1">
@@ -218,6 +219,8 @@ export class AboutPage {
   private readonly t = inject(TranslocoService);
 
   protected readonly governance = GOVERNANCE;
+  protected readonly governancePath = GOVERNANCE_PATHS.root;
+  protected readonly sectionPath = GOVERNANCE_PATHS.section;
 
   /** CMS page sections with a body (none in the current seed → the page lead is shown). */
   protected readonly bodies = computed(() =>

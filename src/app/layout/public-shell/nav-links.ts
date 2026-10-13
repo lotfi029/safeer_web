@@ -24,6 +24,7 @@ export const HEADER_SLUGS: ReadonlySet<string> = new Set([
   'work',
   'news',
   'partners',
+  'governance',
   'contact',
 ]);
 
