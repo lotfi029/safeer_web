@@ -126,11 +126,9 @@ export const en: Translation = {
     home: 'Home page',
     footer: {
       keyLinks: 'Key links',
-      services: 'Services',
       contact: 'Get in touch',
       social: 'Social media',
       about: 'About',
-      orgStructure: 'Organisational structure',
       board: 'Board',
       work: 'Our work',
       news: 'News',

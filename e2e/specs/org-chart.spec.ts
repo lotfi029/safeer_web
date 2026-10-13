@@ -160,11 +160,13 @@ test.describe('«من نحن» menu', () => {
     await expect(page).toHaveURL(/\/en\/about\/org-structure$/);
   });
 
-  test('the footer links the org structure', async ({ page }) => {
+  test('the footer lists main pages only: the org structure is in the «من نحن» menu', async ({
+    page,
+  }) => {
     await gotoHydrated(page, '/ar');
-    await expect(
-      page.locator('app-site-footer').getByRole('link', { name: 'الهيكل التنظيمي' }),
-    ).toHaveAttribute('href', `/ar${PATH}`);
+    const footer = page.locator('app-site-footer');
+    await expect(footer.getByRole('link', { name: 'من نحن' })).toHaveAttribute('href', '/ar/about');
+    await expect(footer.getByRole('link', { name: 'الهيكل التنظيمي' })).toHaveCount(0);
   });
 });
 
