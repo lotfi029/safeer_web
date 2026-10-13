@@ -11,23 +11,33 @@ import { useRealDb } from '../support/real-db';
  * drawer group, and the dashboard's tree screen. Runs on both backends: the tree is created through
  * the admin API (tagged), so the real API and the mock serve the same shape.
  */
-useRealDb(test);
-
 const PATH = '/about/org-structure';
-const root = tagOf('OrgRoot');
-const child = tagOf('OrgChild');
-const leaf = tagOf('OrgLeaf');
-const member = tagOf('OrgMember');
-const ids: { positions: string[]; member: string | null } = { positions: [], member: null };
+// Fresh names on every beforeAll: fullyParallel can run this file's beforeAll more than once in
+// one worker, and a tree an earlier run left behind must never share a name with this one (two
+// boxes with one name break every locator below).
+let root = '';
+let child = '';
+let leaf = '';
+let member = '';
+/** This run's tree (the tests read it). */
+const ids = { root: '', child: '' };
+/**
+ * Everything any beforeAll created and no afterAll has removed yet — kept across runs so a second
+ * beforeAll in the same worker never loses track of the first one's rows (cleanup would leak them).
+ */
+const created: { members: string[]; positions: string[] } = { members: [], positions: [] };
 
-// fullyParallel: a worker can run this file's beforeAll/afterAll more than once — start clean.
 test.beforeAll(async () => {
-  ids.positions = [];
-  ids.member = null;
+  root = tagOf('OrgRoot');
+  child = tagOf('OrgChild');
+  leaf = tagOf('OrgLeaf');
+  member = tagOf('OrgMember');
   const r = await content.create('org-positions', { nameAr: root, nameEn: `${root} EN` });
   const c = await content.create('org-positions', { nameAr: child, parentId: r.id });
   const l = await content.create('org-positions', { nameAr: leaf, parentId: r.id });
-  ids.positions.push(r.id, c.id, l.id);
+  ids.root = r.id;
+  ids.child = c.id;
+  created.positions.push(r.id, c.id, l.id);
   const m = await content.create('board', {
     nameAr: member,
     nameEn: `${member} EN`,
@@ -36,16 +46,19 @@ test.beforeAll(async () => {
     orgPositionId: c.id,
     isPublished: true,
   });
-  ids.member = m.id;
+  created.members.push(m.id);
 });
 
 test.afterAll(async () => {
-  if (ids.member) await content.remove('board', ids.member);
-  for (const id of [...ids.positions].reverse()) await content.remove('org-positions', id);
-  ids.positions = [];
-  ids.member = null;
+  // Members first (they point at positions), then positions children-first.
+  for (const id of created.members.splice(0)) await content.remove('board', id);
+  for (const id of created.positions.splice(0).reverse()) await content.remove('org-positions', id);
   await disposeSetupAdmin();
 });
+
+// After this file's own afterAll, on purpose: useRealDb's afterAll deletes the seeded admin user,
+// and the cleanup above needs that admin's session (hooks run in registration order).
+useRealDb(test);
 
 /** The public chart's box for a position (its own label, not a descendant's). */
 const box = (page: Page, name: string) =>
@@ -171,7 +184,7 @@ test.describe('dashboard «الهيكل التنظيمي»', () => {
     await rowOf(root)
       .getByRole('button', { name: /^Add a position under/ })
       .click();
-    await expect(dialog.getByLabel('Reports to')).toHaveValue(ids.positions[0]);
+    await expect(dialog.getByLabel('Reports to')).toHaveValue(ids.root);
     await dialog.getByLabel('Name (Arabic)').fill(added);
     await dialog.getByRole('button', { name: 'Save' }).click();
     await expect(dialog).toBeHidden();
@@ -211,7 +224,7 @@ test.describe('dashboard «الهيكل التنظيمي»', () => {
     const row = page.locator('[data-row]').filter({ hasText: member }).last();
     await row.getByRole('button', { name: /Edit/ }).click();
     const select = page.getByRole('dialog').getByLabel('Position in the org structure');
-    await expect(select).toHaveValue(ids.positions[1]);
+    await expect(select).toHaveValue(ids.child);
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
   });
 });
