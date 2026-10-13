@@ -12,6 +12,7 @@ const CONTENT = [
   'News',
   'Work areas',
   'Board',
+  'Org structure',
   'Partners',
   'Documents',
   'Licences',
@@ -19,7 +20,7 @@ const CONTENT = [
   'About items',
   'Media',
 ];
-const CONTENT_AND_INBOX = [...CONTENT.slice(0, 4), 'Testimonials', ...CONTENT.slice(4)];
+const CONTENT_AND_INBOX = [...CONTENT.slice(0, 5), 'Testimonials', ...CONTENT.slice(5)];
 
 /**
  * The menu and the overview blocks each role gets (GET /admin/roles + GET /admin/overview, A5). The

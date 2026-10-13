@@ -54,6 +54,7 @@ export const KERNEL = {
       bioAr: null,
       bioEn: null,
       photoAssetId: null,
+      orgPositionId: null,
     },
   },
   testimonials: {
@@ -130,6 +131,19 @@ export const KERNEL = {
       assetId: null,
       isPrimary: false,
     },
+  },
+  /** Org-chart positions (023): a tree through `parentId`; board members point at one. */
+  'org-positions': {
+    area: 'content',
+    publishable: true,
+    sortable: true,
+    search: ['nameAr', 'nameEn'],
+    required: ['nameAr'],
+    defaults: { isPublished: true, nameEn: null, parentId: null, tone: 'auto', showHolders: true },
+    usedBy: [
+      ['org-positions', 'parentId', (r) => r.nameAr],
+      ['board', 'orgPositionId', (r) => r.nameAr],
+    ],
   },
   stats: {
     area: 'content',
@@ -329,6 +343,14 @@ export function contentRoutes(ctx) {
       if (issued && expires && expires < issued)
         return invalid('expiresOn', 'expiresOn must not be before issuedOn');
     }
+    if (endpoint === 'org-positions' && body?.parentId !== undefined && body.parentId !== null) {
+      const reason = treeProblem(id ?? null, String(body.parentId));
+      if (reason) return problem(400, 'VALIDATION_FAILED', { field: 'parentId', reason });
+    }
+    if (endpoint === 'board' && body?.orgPositionId) {
+      if (!table('org-positions').some((r) => r.id === String(body.orgPositionId)))
+        return problem(400, 'VALIDATION_FAILED', { field: 'orgPositionId' });
+    }
     if (
       endpoint === 'stats' &&
       body?.value !== undefined &&
@@ -338,6 +360,22 @@ export function contentRoutes(ctx) {
       return invalid('value', 'Invalid');
     }
     return altProblem(body);
+  }
+
+  /** The API's tree rules (org-chart/tree-guard.ts): no self-parent, missing parent, cycle, > 5 levels. */
+  function treeProblem(id, parentId) {
+    const rows = table('org-positions');
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    if (id && parentId === id) return 'SELF_PARENT';
+    if (!byId.has(parentId)) return 'PARENT_NOT_FOUND';
+    let depth = 0;
+    for (let at = parentId; at; at = byId.get(at)?.parentId ?? null) {
+      if (at === id) return 'CYCLE';
+      depth += 1;
+    }
+    const below = (node) =>
+      1 + Math.max(0, ...rows.filter((r) => r.parentId === node).map((r) => below(r.id)));
+    return depth + (id ? below(id) : 1) > 5 ? 'TOO_DEEP' : null;
   }
 
   function conflict(endpoint, body, id) {
@@ -663,10 +701,21 @@ export function contentRoutes(ctx) {
           if (g.error) return g.error;
           const i = table(endpoint).findIndex((r) => r.id === params[0]);
           if (i < 0) return problem(404, 'NOT_FOUND');
-          for (const [other, key] of spec.usedBy ?? []) {
-            if (table(other).some((r) => r[key] === params[0]))
-              return problem(409, 'RESOURCE_IN_USE');
-          }
+          const usages = (spec.usedBy ?? []).flatMap(([other, key, label]) =>
+            table(other)
+              .filter((r) => r[key] === params[0])
+              .map((r) => ({
+                entity: other === 'board' ? 'board_members' : other.replace(/-/g, '_'),
+                id: r.id,
+                label: label ? label(r) : r.id,
+              })),
+          );
+          if (usages.length)
+            return problem(
+              409,
+              'RESOURCE_IN_USE',
+              (spec.usedBy ?? []).some((u) => u[2]) ? { usages } : {},
+            );
           table(endpoint).splice(i, 1);
           onPrimary(endpoint, null);
           if (endpoint === 'work-areas')

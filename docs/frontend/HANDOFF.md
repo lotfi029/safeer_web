@@ -14,6 +14,17 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 > (`docs/backend/API-CHANGES.md` there, "Governance and contact"); the docs/api snapshot is not yet
 > refreshed to it. Sections above that describe the portal/apply/applications are historical.
 
+> **Org structure (branch `feat/org-chart`).** «من نحن» is now a dropdown like «الحوكمة» (header
+> `NavMenu`, drawer group, `ShellNav.group()`): «عن الجمعية» (`/about`) and «الهيكل التنظيمي» at
+> `/:lang/about/org-structure`, which draws `GET /org-chart` with `app-org-chart` — ta3lom's chart,
+> ported (horizontal tree scaled to fit, stacked leaves, vertical tree under 700px of container
+> width; logical properties only; `--chart-*` tokens in both themes). Dashboard: `/admin/org-chart`
+> (content area) — an indented tree with add-below, move up/down, edit (the CRUD form, «يرفع إلى»
+> without the position itself or anything under it) and delete (409 lists what still uses it),
+> plus a live preview built by the same rules as the API (`org-tree.ts`). Board members gain a
+> «المنصب في الهيكل التنظيمي» select. Contract: safeer_api `feat/org-chart` (migration 023,
+> `docs/backend/API-CHANGES.md` there, "Organisational structure").
+
 - **PRs:**
   - Phases #1–#8 are merged.
   - The fix pass is lotfi029/safeer_web#9 (`fix/session-1-review`). It was still an open draft when Stage 2 started.
