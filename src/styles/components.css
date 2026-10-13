@@ -504,6 +504,186 @@
   }
 }
 
+/* Site footer (site-footer.ts): about + three sections on desktop; on a tablet the about block
+   is one row over three columns; on a phone each section is an accordion row (compact()). */
+@layer components {
+  .site-foot {
+    padding-block: 2.5rem 1.5rem;
+  }
+
+  .sf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr)) minmax(0, 1.3fr);
+    gap: 1.5rem 2rem;
+  }
+
+  .sf-about {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    min-inline-size: 0;
+  }
+
+  .sf-logo {
+    align-self: flex-start;
+  }
+
+  .sf-blurb {
+    max-inline-size: 25rem;
+    line-height: 1.9;
+    color: var(--footer-link);
+  }
+
+  .sf-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sf-sec {
+    min-inline-size: 0;
+  }
+
+  /* A section heading is a <summary>: a plain heading on wider screens. */
+  .sf-sec > summary {
+    display: block;
+    list-style: none;
+    cursor: default;
+  }
+
+  .sf-sec > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .sf-h {
+    margin-block-end: 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--footer-text);
+  }
+
+  .sf-links {
+    display: flex;
+    flex-direction: column;
+    font-size: 15px;
+  }
+
+  .sf-contact {
+    gap: 0.25rem;
+  }
+
+  .sf-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-block-start: 1.75rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid color-mix(in srgb, var(--footer-muted) 25%, transparent);
+    font-size: 0.875rem;
+    color: var(--footer-muted);
+  }
+
+  /* Tablet: the about block as one row (logo | two-line blurb | social), three columns under it. */
+  @media (max-width: 1023.98px) {
+    .sf-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .sf-about {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.875rem 1.25rem;
+      padding-block-end: 1rem;
+      border-block-end: 1px solid color-mix(in srgb, var(--footer-muted) 15%, transparent);
+    }
+
+    .sf-blurb {
+      max-inline-size: none;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  /* Phone: the logo beside the social links, each section a 48px accordion row. */
+  @media (max-width: 599.98px) {
+    .site-foot {
+      padding-block: 1.5rem 1rem;
+    }
+
+    .sf-grid {
+      display: block;
+    }
+
+    .sf-about {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.5rem 0.75rem;
+      padding-block-end: 0.75rem;
+    }
+
+    .sf-about > .sf-blurb {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .sf-about > .sf-social {
+      grid-row: 1;
+      justify-self: end;
+    }
+
+    .sf-sec {
+      border-block-end: 1px solid color-mix(in srgb, var(--footer-muted) 25%, transparent);
+    }
+
+    .sf-sec > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-block-size: 48px;
+      cursor: pointer;
+    }
+
+    .sf-sec > summary .sf-h {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .sf-sec > summary::after {
+      content: '+';
+      font-size: 1.3rem;
+      line-height: 1;
+      color: var(--footer-text);
+      opacity: 0.85;
+    }
+
+    .sf-sec[open] > summary::after {
+      content: '\2212';
+    }
+
+    .sf-sec > summary:focus-visible {
+      outline: 2px solid var(--footer-text);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    .sf-links {
+      padding-block-end: 0.5rem;
+    }
+
+    .sf-bottom {
+      margin-block-start: 0.75rem;
+    }
+  }
+}
+
 /* Long-form HTML from the API (article body, section bodies). */
 @layer components {
   .rich-text {

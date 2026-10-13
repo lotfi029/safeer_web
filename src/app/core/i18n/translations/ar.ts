@@ -128,11 +128,9 @@ export const ar = {
     home: 'الصفحة الرئيسية',
     footer: {
       keyLinks: 'روابط مهمة',
-      services: 'الخدمات',
       contact: 'للتواصل السريع',
       social: 'حسابات التواصل الاجتماعي',
       about: 'من نحن',
-      orgStructure: 'الهيكل التنظيمي',
       board: 'مجلس الإدارة',
       work: 'مجالات عملنا',
       news: 'الأخبار',

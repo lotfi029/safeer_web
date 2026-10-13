@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DOCUMENT,
+  DestroyRef,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LocaleService } from '../../core/i18n/locale.service';
@@ -14,8 +23,11 @@ interface SocialLink {
   icon: IconName;
 }
 
-/** How many governance sections the footer column lists before Licences. */
-const FOOTER_SECTIONS = 5;
+/** How many governance sections the footer lists before Licences: main pages only. */
+const FOOTER_SECTIONS = 3;
+
+/** Phone width: the footer's link sections become an accordion. */
+export const FOOTER_COMPACT_QUERY = '(max-width: 599.98px)';
 
 /** Only http(s) URLs from the API are rendered (backend C10 validates too). */
 function safeUrl(url: string | null | undefined): string | null {
@@ -23,9 +35,11 @@ function safeUrl(url: string | null | undefined): string | null {
 }
 
 /**
- * Site footer (prototype `siteFoot`): blurb, key links, governance (W4), services, contact
- * (phone/email LTR), social links that exist in settings, rights line and the licence number. Lucide has no brand logos, so social links use
- * generic icons with the network name as the accessible label.
+ * Site footer: blurb and the social links that exist in settings, then three sections - main
+ * pages, governance (W4) and contact (phone/email LTR) - then the rights line and the licence
+ * number. Desktop: four columns; tablet: the about block as one row over three columns; phone:
+ * the sections are an accordion. Lucide has no brand logos, so social links use generic icons
+ * with the network name as the accessible label.
  */
 @Component({
   selector: 'app-site-footer',
@@ -33,74 +47,15 @@ function safeUrl(url: string | null | undefined): string | null {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block bg-(--footer-bg) text-(--footer-text)' },
   template: `
-    <footer class="wrap pt-14 pb-7 md:pt-16">
-      <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.3fr_1fr_1fr_1fr_1.3fr]">
-        <div class="flex max-w-100 flex-col gap-4">
-          <app-logo class="self-start" [height]="64" [alt]="settings()?.orgName ?? null" />
-          <p class="leading-[1.9] text-(--footer-link)">
+    <footer class="wrap site-foot">
+      <div class="sf-grid">
+        <div class="sf-about">
+          <app-logo class="sf-logo" [height]="64" [alt]="settings()?.orgName ?? null" />
+          <p class="sf-blurb">
             {{ settings()?.footerBlurb ?? ('common.placeholder' | transloco) }}
           </p>
-        </div>
-
-        <nav class="flex flex-col text-[15px]" [attr.aria-labelledby]="'f-key'">
-          <h2 id="f-key" class="mb-1 text-lg font-semibold !text-(--footer-text)">
-            {{ 'shell.footer.keyLinks' | transloco }}
-          </h2>
-          @for (l of keyLinks; track l.path) {
-            <a class="footer-link" [routerLink]="locale.link(l.path)">{{ l.key | transloco }}</a>
-          }
-        </nav>
-
-        <nav class="flex flex-col text-[15px]" [attr.aria-labelledby]="'f-governance'">
-          <h2 id="f-governance" class="mb-1 text-lg font-semibold !text-(--footer-text)">
-            {{ 'shell.footer.governance' | transloco }}
-          </h2>
-          @for (l of governance(); track l.key) {
-            <a class="footer-link" [routerLink]="locale.link(l.path)">{{
-              l.label ?? (l.labelKey! | transloco)
-            }}</a>
-          }
-        </nav>
-
-        <nav class="flex flex-col text-[15px]" [attr.aria-labelledby]="'f-services'">
-          <h2 id="f-services" class="mb-1 text-lg font-semibold !text-(--footer-text)">
-            {{ 'shell.footer.services' | transloco }}
-          </h2>
-          @for (l of serviceLinks; track l.path) {
-            <a class="footer-link" [routerLink]="locale.link(l.path)">{{ l.key | transloco }}</a>
-          }
-        </nav>
-
-        <div class="flex flex-col gap-3 text-[15px]">
-          <h2 class="mb-1 text-lg font-semibold !text-(--footer-text)">
-            {{ 'shell.footer.contact' | transloco }}
-          </h2>
-          @if (contact()?.phone; as phone) {
-            <a class="footer-link inline-flex items-center gap-2" [href]="'tel:' + telHref(phone)">
-              <app-icon name="phone" [size]="18" />
-              <span class="sr-only">{{ 'shell.phone' | transloco }}:</span>
-              <bdi class="ltr">{{ phone }}</bdi>
-            </a>
-          }
-          @if (contact()?.email; as email) {
-            <a class="footer-link inline-flex items-center gap-2" [href]="'mailto:' + email">
-              <app-icon name="mail" [size]="18" />
-              <span class="sr-only">{{ 'shell.email' | transloco }}:</span>
-              <bdi class="ltr">{{ email }}</bdi>
-            </a>
-          }
-          @if (contact()?.address; as address) {
-            <p class="inline-flex items-start gap-2 text-(--footer-link)">
-              <app-icon name="map-pin" [size]="18" class="mt-1" />
-              <span class="sr-only">{{ 'shell.address' | transloco }}:</span>
-              <span>{{ address }}</span>
-            </p>
-          }
           @if (socials().length) {
-            <ul
-              class="m-0 mt-1 flex list-none flex-wrap gap-3 p-0"
-              [attr.aria-label]="'shell.footer.social' | transloco"
-            >
+            <ul class="sf-social" [attr.aria-label]="'shell.footer.social' | transloco">
               @for (s of socials(); track s.key) {
                 <li>
                   <a
@@ -117,11 +72,67 @@ function safeUrl(url: string | null | undefined): string | null {
             </ul>
           }
         </div>
+
+        <!-- Main pages only; every page is in the header menu. On a phone each section is an
+             accordion (compact()); on wider screens, on the server and without JS it is open. -->
+        <details class="sf-sec" [attr.open]="compact() ? null : ''" (toggle)="keepOpen($event)">
+          <summary [attr.tabindex]="compact() ? null : -1" (click)="lockWide($event)">
+            <h2 id="f-key" class="sf-h">{{ 'shell.footer.keyLinks' | transloco }}</h2>
+          </summary>
+          <nav class="sf-links" aria-labelledby="f-key">
+            @for (l of keyLinks; track l.path) {
+              <a class="footer-link" [routerLink]="locale.link(l.path)">{{ l.key | transloco }}</a>
+            }
+          </nav>
+        </details>
+
+        <details class="sf-sec" [attr.open]="compact() ? null : ''" (toggle)="keepOpen($event)">
+          <summary [attr.tabindex]="compact() ? null : -1" (click)="lockWide($event)">
+            <h2 id="f-governance" class="sf-h">{{ 'shell.footer.governance' | transloco }}</h2>
+          </summary>
+          <nav class="sf-links" aria-labelledby="f-governance">
+            @for (l of governance(); track l.key) {
+              <a class="footer-link" [routerLink]="locale.link(l.path)">{{
+                l.label ?? (l.labelKey! | transloco)
+              }}</a>
+            }
+          </nav>
+        </details>
+
+        <details class="sf-sec" [attr.open]="compact() ? null : ''" (toggle)="keepOpen($event)">
+          <summary [attr.tabindex]="compact() ? null : -1" (click)="lockWide($event)">
+            <h2 class="sf-h">{{ 'shell.footer.contact' | transloco }}</h2>
+          </summary>
+          <div class="sf-links sf-contact">
+            @if (contact()?.phone; as phone) {
+              <a
+                class="footer-link inline-flex items-center gap-2"
+                [href]="'tel:' + telHref(phone)"
+              >
+                <app-icon name="phone" [size]="18" />
+                <span class="sr-only">{{ 'shell.phone' | transloco }}:</span>
+                <bdi class="ltr">{{ phone }}</bdi>
+              </a>
+            }
+            @if (contact()?.email; as email) {
+              <a class="footer-link inline-flex items-center gap-2" [href]="'mailto:' + email">
+                <app-icon name="mail" [size]="18" />
+                <span class="sr-only">{{ 'shell.email' | transloco }}:</span>
+                <bdi class="ltr">{{ email }}</bdi>
+              </a>
+            }
+            @if (contact()?.address; as address) {
+              <p class="inline-flex items-start gap-2 text-(--footer-link)">
+                <app-icon name="map-pin" [size]="18" class="mt-1" />
+                <span class="sr-only">{{ 'shell.address' | transloco }}:</span>
+                <span>{{ address }}</span>
+              </p>
+            }
+          </div>
+        </details>
       </div>
 
-      <div
-        class="mt-10 flex flex-col gap-3 border-t border-(--footer-muted)/25 pt-6 text-sm text-(--footer-muted) md:flex-row md:items-center md:justify-between"
-      >
+      <div class="sf-bottom">
         <p>{{ settings()?.rightsLine ?? ('common.placeholder' | transloco) }}</p>
         @if (licenceNo(); as no) {
           <a
@@ -143,23 +154,57 @@ export class SiteFooter {
   protected readonly licencesPath = GOVERNANCE_PATHS.licences;
   /** The licence number (site settings) for the bottom bar; hidden when unset. */
   protected readonly licenceNo = computed(() => this.settings()?.licenceNo?.trim() || null);
-  /** The main governance sections (the first five) + Licences; the board has its own link. */
+  /** The main governance sections (the first three) + Licences; the board has its own link. */
   protected readonly governance = computed(() => {
     const links = governanceLinks(this.site.sections(), { board: false });
     const sections = links.filter((l) => l.key !== 'licences').slice(0, FOOTER_SECTIONS);
     return [...sections, ...links.filter((l) => l.key === 'licences')];
   });
 
+  /** Main pages only; the org structure and the rest are in the header's menus. */
   protected readonly keyLinks = [
     { key: 'shell.footer.about', path: '/about' },
-    { key: 'shell.footer.orgStructure', path: '/about/org-structure' },
     { key: 'shell.footer.board', path: '/board' },
     { key: 'shell.footer.work', path: '/work-areas' },
-  ];
-  protected readonly serviceLinks = [
     { key: 'shell.footer.news', path: '/news' },
     { key: 'shell.footer.contactLink', path: '/contact' },
   ];
+
+  /**
+   * Phone width, known only in the browser. False on the server, so the prerendered footer has
+   * every section open and works without JS.
+   */
+  protected readonly compact = signal(false);
+
+  constructor() {
+    const document = inject(DOCUMENT);
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      const mq = document.defaultView?.matchMedia?.(FOOTER_COMPACT_QUERY);
+      if (!mq) {
+        return;
+      }
+      this.compact.set(mq.matches);
+      const onChange = (e: MediaQueryListEvent) => this.compact.set(e.matches);
+      mq.addEventListener('change', onChange);
+      destroyRef.onDestroy(() => mq.removeEventListener('change', onChange));
+    });
+  }
+
+  /** On wider screens a section is not an accordion: its heading does nothing. */
+  protected lockWide(event: Event): void {
+    if (!this.compact()) {
+      event.preventDefault();
+    }
+  }
+
+  /** Belt and braces for lockWide: re-open a wide-screen section that closed anyway. */
+  protected keepOpen(event: Event): void {
+    const details = event.target as HTMLDetailsElement;
+    if (!this.compact() && !details.open) {
+      details.open = true;
+    }
+  }
 
   protected readonly socials = computed<SocialLink[]>(() => {
     const s = this.settings();
