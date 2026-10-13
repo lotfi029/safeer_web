@@ -191,4 +191,31 @@ test.describe('governance pages', () => {
       await expect(licence).toHaveAttribute('href', '/ar/governance/licences');
     },
   );
+
+  test('retired routes answer 301 to their new pages (W5)', async ({ request }) => {
+    const cases: [string, string][] = [
+      ['/ar/apply', '/ar/contact'],
+      ['/en/scholarships', '/en/contact'],
+      ['/ar/portal', '/ar/contact'],
+      ['/ar/portal/login', '/ar/contact'],
+      ['/ar/documents', '/ar/governance'],
+      ['/ar/documents?category=meeting-minutes', '/ar/governance/general-assembly'],
+      ['/en/documents?category=policies-regulations', '/en/governance/bylaws-policies'],
+      ['/ar/documents?category=licences', '/ar/governance/licences'],
+    ];
+    for (const [from, to] of cases) {
+      const res = await request.get(from, { maxRedirects: 0 });
+      expect(res.status(), from).toBe(301);
+      expect(res.headers()['location'], from).toBe(to);
+    }
+  });
+
+  test('client-side navigation to a retired route lands on its new page (W5)', async ({ page }) => {
+    await gotoHydrated(page, '/ar/news');
+    // Router navigation (not a document load): through the app's own redirect.
+    await page.evaluate(() => history.pushState({}, '', '/ar/apply'));
+    await page.evaluate(() => window.dispatchEvent(new PopStateEvent('popstate')));
+    await expect(page).toHaveURL(/\/ar\/contact$/);
+    await expect(page.locator('h1')).toHaveText('تواصل معنا');
+  });
 });

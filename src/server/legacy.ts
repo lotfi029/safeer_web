@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import { legacyDocumentsPath } from '../app/core/site/governance';
 import { TtlCache } from './ttl-cache';
 
 /**
@@ -19,6 +20,22 @@ export const GONE_PATTERNS: readonly RegExp[] = [
 const SKIP =
   /^\/(?:(?:ar|en)(?:\/|$)|api(?:\/|$)|files(?:\/|$)|healthz$|sitemap\.xml$|robots\.txt$)/;
 const STATIC_FILE = /\.[a-z0-9]{2,5}$/i;
+
+/**
+ * Routes this site retired (W5): the scholarship pages and the student portal now answer with the
+ * contact page, and the documents page with the governance pages (`?category=` mapped to its
+ * section). Returns the 301 target (same locale, query dropped), or null.
+ */
+export function retiredRoute(path: string, category: string | null): string | null {
+  const m = /^\/(ar|en)\/(scholarships|apply|portal|documents)(\/.*)?$/.exec(
+    path.replace(/\/+$/, ''),
+  );
+  if (!m) return null;
+  const [, lang, route, rest] = m;
+  if (route === 'portal') return `/${lang}/contact`;
+  if (rest) return null;
+  return route === 'documents' ? `/${lang}${legacyDocumentsPath(category)}` : `/${lang}/contact`;
+}
 
 export function isGone(path: string): boolean {
   return GONE_PATTERNS.some((p) => p.test(path));
@@ -86,6 +103,15 @@ export function legacyRedirects(
       return next();
     }
     const path = req.path;
+    const retired = retiredRoute(
+      path,
+      new URL(req.originalUrl, 'http://local').searchParams.get('category'),
+    );
+    if (retired) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.redirect(301, retired);
+      return;
+    }
     if (isGone(path)) {
       res.status(410).setHeader('Cache-Control', 'public, max-age=86400');
       res.type('html').send(GONE_HTML);

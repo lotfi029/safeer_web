@@ -1,7 +1,14 @@
 import express from 'express';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { isGone, legacyRedirects, type Resolver, sanitizeRedirect, shouldLookup } from './legacy';
+import {
+  isGone,
+  legacyRedirects,
+  type Resolver,
+  retiredRoute,
+  sanitizeRedirect,
+  shouldLookup,
+} from './legacy';
 import { TtlCache } from './ttl-cache';
 
 describe('legacy path rules', () => {
@@ -45,6 +52,27 @@ describe('legacy path rules', () => {
   });
 });
 
+describe('retired routes (W5)', () => {
+  it('scholarships, apply and the portal go to contact; documents to governance', () => {
+    expect(retiredRoute('/ar/scholarships', null)).toBe('/ar/contact');
+    expect(retiredRoute('/en/apply/', null)).toBe('/en/contact');
+    expect(retiredRoute('/ar/portal', null)).toBe('/ar/contact');
+    expect(retiredRoute('/ar/portal/login', null)).toBe('/ar/contact');
+    expect(retiredRoute('/en/documents', null)).toBe('/en/governance');
+    expect(retiredRoute('/ar/documents', 'meeting-minutes')).toBe(
+      '/ar/governance/general-assembly',
+    );
+    expect(retiredRoute('/ar/documents', 'policies-regulations')).toBe(
+      '/ar/governance/bylaws-policies',
+    );
+    expect(retiredRoute('/ar/documents', 'annual-reports')).toBe('/ar/governance/annual-reports');
+    expect(retiredRoute('/en/documents', 'licences')).toBe('/en/governance/licences');
+    expect(retiredRoute('/ar/contact', null)).toBeNull();
+    expect(retiredRoute('/ar/apply-now', null)).toBeNull();
+    expect(retiredRoute('/fr/apply', null)).toBeNull();
+  });
+});
+
 describe('legacyRedirects middleware', () => {
   let base = '';
   let server: ReturnType<express.Express['listen']>;
@@ -70,6 +98,15 @@ describe('legacyRedirects middleware', () => {
   afterAll(() => server.close());
 
   const get = (p: string) => fetch(base + p, { redirect: 'manual' });
+
+  it('301 for retired routes, with the ?category= mapping, before any lookup', async () => {
+    const res = await get('/ar/documents?category=meeting-minutes');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/ar/governance/general-assembly');
+    const apply = await get('/ar/apply');
+    expect(apply.status).toBe(301);
+    expect(apply.headers.get('location')).toBe('/ar/contact');
+  });
 
   it('410 for gone families without an API lookup', async () => {
     const res = await get('/doctor/dr-x');

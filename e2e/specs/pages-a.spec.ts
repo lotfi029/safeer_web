@@ -40,7 +40,7 @@ test.describe('public pages A (about, work areas)', () => {
     await expect(goals).toHaveCount(5);
     await expect(goals.first()).toContainText('١');
     await expect(
-      page.locator('a[href="/ar/documents?category=meeting-minutes"]').first(),
+      page.locator('main a[href="/ar/governance/general-assembly"]').first(),
     ).toBeVisible();
   });
 

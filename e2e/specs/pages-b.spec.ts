@@ -11,9 +11,9 @@ test.afterAll(async () => {
   await disposeSetupAdmin();
 });
 
-const PAGES = ['testimonials', 'partners', 'documents'] as const;
+const PAGES = ['testimonials', 'partners'] as const;
 
-test.describe('public pages: testimonials, partners, documents', () => {
+test.describe('public pages: testimonials, partners', () => {
   for (const name of PAGES) {
     for (const { viewport, locale } of matrix()) {
       test(`${name} ${locale} @${viewport.name}`, async ({ page }, testInfo) => {
@@ -106,42 +106,8 @@ test.describe('public pages: testimonials, partners, documents', () => {
     );
     expect(new Set(after)).toEqual(new Set(['government']));
 
-    await expect(page.getByRole('link', { name: 'Contact us' }).last()).toHaveAttribute(
-      'href',
-      '/en/contact?subject=partnership',
-    );
-  });
-
-  test('documents: download links point to /files/:publicId and carry download', async ({
-    page,
-  }) => {
-    await openAt(page, '/documents', { name: '1440', width: 1440, height: 900 }, 'ar');
-    const links = page.locator('a[download]');
-    const count = await links.count();
-    expect(count).toBeGreaterThan(0);
-    for (let i = 0; i < count; i++) {
-      // The asset's publicId (a UUID from the API, `doc-…` in the mock fixtures).
-      await expect(links.nth(i)).toHaveAttribute('href', /^\/files\/[\w-]+$/);
-      // Accessible name includes the document title, not just "تحميل".
-      const name = (await links.nth(i).textContent())?.replace(/\s+/g, ' ').trim() ?? '';
-      expect(name.length).toBeGreaterThan('تحميل'.length + 1);
-    }
-  });
-
-  test('documents: ?category= deep link scrolls to and highlights the section', async ({
-    page,
-  }) => {
-    await openAt(
-      page,
-      '/documents?category=meeting-minutes',
-      { name: '1440', width: 1440, height: 900 },
-      'en',
-    );
-    const section = page.locator('section#meeting-minutes');
-    await expect(section).toHaveAttribute('data-active', 'true');
-    await expect(section).toBeInViewport();
     await expect(
-      page.locator('nav[aria-labelledby="documents-nav"] a[aria-current="true"]'),
-    ).toHaveText('Meeting minutes');
+      page.locator('main').getByRole('link', { name: 'Contact us' }).last(),
+    ).toHaveAttribute('href', '/en/contact?subject=partnership');
   });
 });
