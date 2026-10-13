@@ -7,7 +7,7 @@ import { Button } from '../../shared/ui/button/button';
 import { DrawerFrame } from '../../shared/ui/drawer/drawer';
 import { ShellNav } from './nav-links';
 
-/** Mobile/tablet navigation (< 1100px): full nav + portal + staff links + apply CTA. */
+/** Mobile/tablet navigation (< 1100px): full nav + staff link + contact CTA. */
 @Component({
   selector: 'app-nav-drawer',
   imports: [RouterLink, RouterLinkActive, TranslocoPipe, Button, DrawerFrame],
@@ -42,6 +42,14 @@ import { ShellNav } from './nav-links';
           >
         </li>
       </ul>
+      <a
+        drawerActions
+        appButton
+        [block]="true"
+        [routerLink]="locale.link('/contact')"
+        (click)="close()"
+        >{{ 'shell.contactCta' | transloco }}</a
+      >
     </app-drawer-frame>
   `,
 })

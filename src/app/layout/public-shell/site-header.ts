@@ -22,7 +22,7 @@ import { ThemeToggle } from './theme-toggle';
 
 /**
  * Sticky site header (prototype `siteNav`): brand, full nav from ≥1100px (F7 `nav` breakpoint),
- * language + theme, burger → drawer below 1100px.
+ * language + theme, the contact CTA (≥768), burger → drawer below 1100px.
  */
 @Component({
   selector: 'app-site-header',
@@ -80,6 +80,13 @@ import { ThemeToggle } from './theme-toggle';
           <app-lang-switch />
         }
         <app-theme-toggle />
+        <a
+          appButton
+          size="sm"
+          class="hidden whitespace-nowrap md:inline-flex"
+          [routerLink]="locale.link('/contact')"
+          >{{ 'shell.contactCta' | transloco }}</a
+        >
         <button
           type="button"
           class="icon-btn nav:hidden"

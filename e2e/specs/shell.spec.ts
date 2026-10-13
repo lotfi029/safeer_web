@@ -92,6 +92,9 @@ test.describe('public shell', () => {
     await burger.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
+    // W2: the drawer's call to action is the contact page (the apply/portal links are gone).
+    await expect(dialog.locator('a[drawerActions]')).toHaveAttribute('href', '/en/contact');
+    await expect(dialog.locator('a[href*="/portal"], a[href*="/apply"]')).toHaveCount(0);
     if (usingMockApi) {
       await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(9);
     }
@@ -102,6 +105,20 @@ test.describe('public shell', () => {
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
     await expect(burger).toBeFocused();
+  });
+
+  test('the header CTA is «تواصل معنا» → contact; no portal or apply link anywhere (W2)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/ar');
+    const header = page.locator('app-site-header');
+    const cta = header.locator('a[appButton]');
+    await expect(cta).toHaveText('تواصل معنا');
+    await expect(cta).toHaveAttribute('href', '/ar/contact');
+    await expect(
+      page.locator('a[href*="/portal"], a[href*="/apply"], a[href*="/scholarships"]'),
+    ).toHaveCount(0);
   });
 
   test('language switch keeps the path and query', async ({ page }) => {
