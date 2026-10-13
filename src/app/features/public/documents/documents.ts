@@ -72,7 +72,7 @@ function typeLabel(asset: Asset): string {
             <!-- < lg: chip row that scrolls inside itself. -->
             <nav
               class="-my-1 flex min-w-0 overflow-x-auto py-1 lg:hidden"
-              [attr.aria-label]="'pages.documents.sections' | transloco"
+              [attr.aria-label]="'pages.governance.sections' | transloco"
             >
               <ul class="m-0 flex list-none gap-2.5 p-0">
                 @for (g of groups(); track g.category.id) {
@@ -96,7 +96,7 @@ function typeLabel(asset: Asset): string {
               aria-labelledby="documents-nav"
             >
               <p class="t-eyebrow mb-1.5" id="documents-nav">
-                {{ 'pages.documents.sections' | transloco }}
+                {{ 'pages.governance.sections' | transloco }}
               </p>
               <ul class="m-0 flex list-none flex-col gap-2.5 p-0">
                 @for (g of groups(); track g.category.id) {
@@ -209,7 +209,7 @@ export class DocumentsPage {
   protected readonly breadcrumb = computed(() => [
     { label: this.t.translate('pages.breadcrumbHome'), link: this.locale.link('/') },
     { label: this.t.translate('shell.footer.about'), link: this.locale.link('/about') },
-    { label: this.t.translate('shell.footer.documents') },
+    { label: this.t.translate('shell.footer.governance') },
   ]);
 
   private readonly seo = pageSeo();

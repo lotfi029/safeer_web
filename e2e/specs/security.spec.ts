@@ -8,19 +8,9 @@ useRealDb(test);
 
 /**
  * One page per route type (Phase 10): SSR home in both locales, a CMS page, a list, an article, the
- * contact page (map host), the apply form, and the CSR admin and portal entry points.
+ * contact page (map host), a governance section, and the CSR admin entry point.
  */
-const PAGES = [
-  '/ar',
-  '/en',
-  '/en/about',
-  '/ar/news',
-  'article',
-  '/ar/contact',
-  '/en/apply',
-  '/ar/admin',
-  '/ar/portal',
-];
+const PAGES = ['/ar', '/en', '/en/about', '/ar/news', 'article', '/ar/contact', '/ar/admin'];
 
 /** `article` stands for the newest published post (the mock fixtures or the real seed). */
 async function resolvePath(request: APIRequestContext, path: string): Promise<string> {
@@ -78,14 +68,9 @@ test.describe('security headers + CSP (R1, R2)', () => {
     expect(a).not.toBe(b);
   });
 
-  test('public HTML is no-cache; admin and portal are no-store + noindex', async ({ request }) => {
+  test('public HTML is no-cache; admin is no-store + noindex', async ({ request }) => {
     expect((await request.get('/ar')).headers()['cache-control']).toBe('no-cache');
-    for (const path of [
-      '/ar/admin',
-      '/en/admin/applications',
-      '/ar/portal',
-      '/en/portal/documents',
-    ]) {
+    for (const path of ['/ar/admin', '/en/admin/messages']) {
       const h = (await request.get(path)).headers();
       expect(h['cache-control'], path).toBe('no-store');
       expect(h['x-robots-tag'], path).toBe('noindex, nofollow');
@@ -120,7 +105,7 @@ test.describe('CSP on the remaining route types', () => {
     await signInAs(page, admin, '/admin', 'ar');
     for (const path of [
       '/admin',
-      '/admin/applications',
+      '/admin/messages',
       '/admin/news/new',
       '/admin/media',
       '/admin/system/settings',

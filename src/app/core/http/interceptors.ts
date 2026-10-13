@@ -24,10 +24,10 @@ export const localeInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req.clone({ params, setHeaders: { 'Accept-Language': lang } }));
 };
 
-/** Cookie-authenticated areas send credentials (and are therefore never transfer-cached). */
+/** The cookie-authenticated area sends credentials (and is therefore never transfer-cached). */
 export const credentialsInterceptor: HttpInterceptorFn = (req, next) => {
   const area = apiArea(req.url);
-  if (area === 'admin' || area === 'portal' || area === 'applications') {
+  if (area === 'admin') {
     return next(req.clone({ withCredentials: true }));
   }
   return next(req);
@@ -39,13 +39,12 @@ export const csrfInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
   const area = apiArea(req.url);
-  const tokens = inject(CsrfTokens);
-  const token = area === 'admin' ? tokens.staff() : area === 'portal' ? tokens.applicant() : null;
+  const token = area === 'admin' ? inject(CsrfTokens).staff() : null;
   return token ? next(req.clone({ setHeaders: { 'X-CSRF-Token': token } })) : next(req);
 };
 
 /** Paths whose 401 is an answer ("not signed in"), not an expired session. */
-const AUTH_PROBES = ['/admin/me', '/admin/auth/', '/portal/me', '/portal/auth/'];
+const AUTH_PROBES = ['/admin/me', '/admin/auth/'];
 
 /**
  * Normalises every API failure into `ApiError(ApiProblem)` (RFC 7807, zod issues → field errors).
@@ -60,8 +59,9 @@ export const problemDetailsInterceptor: HttpInterceptorFn = (req, next) => {
       const path = apiPath(req.url) ?? '';
       if (
         problem.status === 401 &&
-        (area === 'admin' || area === 'portal') &&
-        !AUTH_PROBES.some((p) => path.startsWith(p))
+        area === 'admin' &&
+        // `/admin/me` is matched exactly (a prefix match also caught `/admin/messages`).
+        !AUTH_PROBES.some((p) => (p.endsWith('/') ? path.startsWith(p) : path === p))
       ) {
         injector.get(SessionExpiry).expired(area);
       }

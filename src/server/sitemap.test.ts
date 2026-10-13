@@ -26,16 +26,21 @@ describe('sitemap.xml', () => {
     expect(xml).not.toContain('bad slug');
   });
 
+  it('no longer lists the removed scholarship routes', () => {
+    expect(xml).not.toContain('/scholarships');
+    expect(xml).not.toContain('/apply');
+  });
+
   it('still lists static routes when the index is unavailable', () => {
     expect(buildSitemap('https://safeer-sa.org', null)).toContain(
       '<loc>https://safeer-sa.org/en/contact</loc>',
     );
   });
 
-  it('robots.txt disallows admin/portal and points to the sitemap', () => {
+  it('robots.txt disallows admin and points to the sitemap', () => {
     const robots = buildRobots('https://safeer-sa.org');
     expect(robots).toContain('Disallow: /ar/admin');
-    expect(robots).toContain('Disallow: /en/portal');
+    expect(robots).not.toContain('portal');
     expect(robots).toContain('Sitemap: https://safeer-sa.org/sitemap.xml');
   });
 });

@@ -22,7 +22,7 @@ import { ThemeToggle } from './theme-toggle';
 
 /**
  * Sticky site header (prototype `siteNav`): brand, full nav from ≥1100px (F7 `nav` breakpoint),
- * language + theme, portal link (≥1280), apply CTA (≥768), burger → drawer below 1100px.
+ * language + theme, burger → drawer below 1100px.
  */
 @Component({
   selector: 'app-site-header',
@@ -80,18 +80,6 @@ import { ThemeToggle } from './theme-toggle';
           <app-lang-switch />
         }
         <app-theme-toggle />
-        <a
-          class="hidden text-[15px] font-semibold whitespace-nowrap text-heading no-underline hover:text-secondary xl:inline"
-          [routerLink]="locale.link('/portal')"
-          >{{ 'shell.portal' | transloco }}</a
-        >
-        <a
-          appButton
-          size="sm"
-          class="hidden whitespace-nowrap md:inline-flex"
-          [routerLink]="locale.link('/apply')"
-          >{{ 'shell.applyShort' | transloco }}</a
-        >
         <button
           type="button"
           class="icon-btn nav:hidden"

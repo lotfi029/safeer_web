@@ -4,8 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { LocaleService } from '../i18n/locale.service';
-import { ApplicantSessionStore } from './applicant-session.store';
-import { applicantGuard, roleGuard, staffGuard } from './guards';
+import { roleGuard, staffGuard } from './guards';
 import { StaffSessionStore } from './staff-session.store';
 
 @Component({ template: 'ok' })
@@ -13,7 +12,6 @@ class Page {}
 
 describe('guards', () => {
   const staff = { ensureLoaded: vi.fn(), can: vi.fn() };
-  const applicant = { ensureLoaded: vi.fn() };
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -25,7 +23,6 @@ describe('guards', () => {
       ],
       providers: [
         { provide: StaffSessionStore, useValue: staff },
-        { provide: ApplicantSessionStore, useValue: applicant },
         provideRouter([
           { path: 'ar/admin', canActivate: [staffGuard], component: Page },
           {
@@ -36,8 +33,6 @@ describe('guards', () => {
           },
           { path: 'ar/admin/login', component: Page },
           { path: 'ar/admin/forbidden', component: Page },
-          { path: 'ar/portal', canActivate: [applicantGuard], component: Page },
-          { path: 'ar/portal/login', component: Page },
         ]),
       ],
     });
@@ -60,12 +55,5 @@ describe('guards', () => {
     staff.can.mockReturnValue(true);
     await harness.navigateByUrl('/ar/admin/news');
     expect(TestBed.inject(Router).url).toBe('/ar/admin/news');
-  });
-
-  it('applicantGuard redirects to the portal login', async () => {
-    applicant.ensureLoaded.mockResolvedValue(false);
-    const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/ar/portal');
-    expect(TestBed.inject(Router).url).toBe('/ar/portal/login?returnUrl=%2Far%2Fportal');
   });
 });

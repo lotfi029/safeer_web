@@ -18,7 +18,7 @@ import { join, resolve } from 'node:path';
 import type { TestType } from '@playwright/test';
 import { apiEnv } from '../../scripts/api-env.mjs';
 
-export type StaffRole = 'admin' | 'reviewer' | 'editor' | 'support';
+export type StaffRole = 'admin' | 'editor' | 'support';
 export type StaffStatus = 'active' | 'disabled' | 'invited';
 export type TokenPurpose = 'invite' | 'reset';
 

@@ -3,13 +3,11 @@ import { boardResolver } from './board/board.resolver';
 import { homeResolver } from './home/home.resolver';
 import { aboutResolver } from './about/about.resolver';
 import { workAreasResolver } from './work-areas/work-areas.resolver';
-import { scholarshipsResolver } from './scholarships/scholarships.resolver';
 import { testimonialsResolver } from './testimonials/testimonials.resolver';
 import { partnersResolver } from './partners/partners.resolver';
 import { documentsResolver } from './documents/documents.resolver';
 import { contactResolver } from './contact/contact.resolver';
 import { articleResolver, newsListResolver } from './news/news.resolvers';
-import { applyResolver } from '../apply/apply.resolver';
 
 /**
  * Public pages (SSR). Each page's critical data comes from a route resolver (`loadCritical`, F8)
@@ -37,11 +35,6 @@ export const PUBLIC_ROUTES: Routes = [
     path: 'work-areas',
     resolve: { data: workAreasResolver },
     loadComponent: () => import('./work-areas/work-areas').then((m) => m.WorkAreasPage),
-  },
-  {
-    path: 'scholarships',
-    resolve: { data: scholarshipsResolver },
-    loadComponent: () => import('./scholarships/scholarships').then((m) => m.ScholarshipsPage),
   },
   {
     path: 'testimonials',
@@ -84,10 +77,5 @@ export const PUBLIC_ROUTES: Routes = [
     path: 'newsletter/unsubscribe',
     data: { mode: 'unsubscribe' },
     loadComponent: () => import('./news/newsletter-token').then((m) => m.NewsletterTokenPage),
-  },
-  {
-    path: 'apply',
-    resolve: { data: applyResolver },
-    loadComponent: () => import('../apply/apply').then((m) => m.ApplyPage),
   },
 ];

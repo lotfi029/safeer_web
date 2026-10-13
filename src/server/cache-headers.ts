@@ -1,5 +1,5 @@
-/** Areas rendered client-side, never indexed and never cached (admin dashboard, student portal). */
-const PRIVATE_AREA = /^\/(ar|en)\/(admin|portal)(\/|$)/;
+/** The area rendered client-side, never indexed and never cached (the admin dashboard). */
+const PRIVATE_AREA = /^\/(ar|en)\/admin(\/|$)/;
 
 export function isPrivateArea(path: string): boolean {
   return PRIVATE_AREA.test(path);
@@ -7,7 +7,7 @@ export function isPrivateArea(path: string): boolean {
 
 /**
  * Cache-Control for HTML (sessions plan R2): a per-request CSP nonce must never sit behind a shared
- * cache, so public SSR HTML is `no-cache` (browser revalidation only). Admin/portal are `no-store`,
+ * cache, so public SSR HTML is `no-cache` (browser revalidation only). Admin is `no-store`,
  * and so is any `?preview=` URL (W18): an unpublished post must not stay in any cache.
  * `url` is the request path, optionally with its query string.
  */

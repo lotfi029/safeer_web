@@ -7,13 +7,8 @@ describe('HTML cache headers (R2)', () => {
     expect(htmlCacheHeaders('/en/news/x')).toEqual({ 'Cache-Control': 'no-cache' });
   });
 
-  it('admin and portal are no-store + noindex', () => {
-    for (const path of [
-      '/ar/admin',
-      '/en/admin/applications',
-      '/ar/portal',
-      '/en/portal/documents',
-    ]) {
+  it('admin is no-store + noindex', () => {
+    for (const path of ['/ar/admin', '/en/admin/messages']) {
       expect(htmlCacheHeaders(path)).toEqual({
         'Cache-Control': 'no-store',
         'X-Robots-Tag': 'noindex, nofollow',
@@ -30,6 +25,8 @@ describe('HTML cache headers (R2)', () => {
   it('does not treat look-alike paths as private', () => {
     expect(isPrivateArea('/ar/administration')).toBe(false);
     expect(isPrivateArea('/fr/admin')).toBe(false);
+    // The student portal was removed: its old paths are public (they 301 to the contact page).
+    expect(isPrivateArea('/ar/portal')).toBe(false);
   });
 });
 

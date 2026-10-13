@@ -11,7 +11,7 @@ export interface SectionTarget {
 }
 
 /**
- * Resolves an API button URL (locale-agnostic `/apply` after B9, legacy `#/x`, or external https)
+ * Resolves an API button URL (locale-agnostic `/contact` after B9, legacy `#/x`, or external https)
  * to a target; internal paths get the current `/:lang` prefix. Unsafe URLs resolve to null.
  */
 export function useSectionLink(): (url: string | null | undefined) => SectionTarget | null {

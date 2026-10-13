@@ -7,10 +7,10 @@
  * Env (defaults): DB_HOST=127.0.0.1 DB_PORT=3306 DB_USER=root DB_PASSWORD='' DB_NAME=safeer API_PORT=3900
  *
  * NODE_ENV=test is deliberate: the API's TestAwareThrottlerGuard skips every per-IP @Throttle bucket
- * (applications 5/h, OTP 5/h, contact 3/h, admin login 5/min) unless a request sends
+ * (contact 3/h, admin login 5/min) unless a request sends
  * `x-test-enforce-throttle: 1`. Every e2e request reaches the API from 127.0.0.1 through the SSR proxy
  * with parallel workers, so ordering specs would not stay inside those budgets. `test` is in the API's
- * DEV_ENVS, so it still gets the dev seed (migrations/dev) and the dev OTP hook, exactly like development.
+ * DEV_ENVS, so it still gets the dev seed (migrations/dev), exactly like development.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';

@@ -1,12 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { email, form, FormField, required } from '@angular/forms/signals';
 import { TranslocoPipe } from '@jsverse/transloco';
-import {
-  APPLICATION_STATUSES,
-  ApplicationStatus,
-  TimelineKey,
-  TimelineState,
-} from '../../../core/api/models';
 import { Button } from '../../../shared/ui/button/button';
 import { ChoiceGroup } from '../../../shared/ui/choice/choice';
 import { EmptyState } from '../../../shared/ui/empty-state/empty-state';
@@ -17,38 +11,28 @@ import { Note } from '../../../shared/ui/note/note';
 import { OtpInput } from '../../../shared/ui/otp-input/otp-input';
 import { Progress } from '../../../shared/ui/progress/progress';
 import { Skeleton } from '../../../shared/ui/skeleton/skeleton';
-import {
-  DocStatusPill,
-  DocumentStatus,
-  Pill,
-  StatusPill,
-} from '../../../shared/ui/status-pill/status-pill';
+import { Pill } from '../../../shared/ui/status-pill/status-pill';
 import { Stepper } from '../../../shared/ui/stepper/stepper';
-import { Timeline, TimelineItem } from '../../../shared/ui/timeline/timeline';
+import { Timeline, TimelineItem, TimelineItemState } from '../../../shared/ui/timeline/timeline';
 
-const TIMELINE_KEYS: TimelineKey[] = ['received', 'documents', 'review', 'interview', 'decision'];
+const TIMELINE_KEYS = ['one', 'two', 'three', 'four', 'five'];
 
-/** Kit copy of the backend's status → timeline derivation (docs/api/src/portal/portal-timeline.ts). */
-function demoTimeline(status: ApplicationStatus): TimelineItem[] {
-  const done =
-    (...keys: TimelineKey[]) =>
-    (k: TimelineKey) =>
-      keys.includes(k);
-  const table: Record<ApplicationStatus, [(k: TimelineKey) => boolean, TimelineKey | null]> = {
-    draft: [done(), null],
-    new: [done('received', 'documents'), 'review'],
-    under_review: [done('received', 'documents'), 'review'],
-    docs_missing: [done('received'), 'documents'],
-    interview: [done('received', 'documents', 'review'), 'interview'],
-    accepted: [done(...TIMELINE_KEYS), null],
-    rejected: [done('received', 'documents', 'review', 'decision'), null],
-  };
-  const [isDone, now] = table[status];
-  return TIMELINE_KEYS.map((key) => {
-    const state: TimelineState = isDone(key) ? 'done' : key === now ? 'now' : 'pending';
+/** Demo timelines: `done` steps are complete, `now` is the current one (null: none). */
+function demoTimeline(done: number, now: boolean): TimelineItem[] {
+  return TIMELINE_KEYS.map((key, i) => {
+    const state: TimelineItemState = i < done ? 'done' : now && i === done ? 'now' : 'pending';
     return { key, label: `[${key}]`, state, caption: state === 'done' ? '[...]' : null };
   });
 }
+
+/** Kit statuses for the generic pill demo. */
+const DEMO_PILLS = [
+  ['teal', 'teal'],
+  ['ok', 'ok'],
+  ['warn', 'warn'],
+  ['plain', 'plain'],
+  ['solid', 'solid'],
+] as const;
 
 /** Kit: file drop, stepper, timeline, OTP, pills, progress, notes, skeleton, empty state, choices. */
 @Component({
@@ -59,7 +43,6 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
     Button,
     ChoiceGroup,
     Control,
-    DocStatusPill,
     EmptyState,
     Field,
     FileDrop,
@@ -68,7 +51,6 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
     Pill,
     Progress,
     Skeleton,
-    StatusPill,
     Stepper,
     Timeline,
   ],
@@ -92,19 +74,15 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">drag-over look</p>
-          <app-file-drop highlight [label]="'docType.id_copy' | transloco" />
+          <app-file-drop highlight label="[...] 1" />
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">uploading 40%</p>
-          <app-file-drop
-            status="uploading"
-            [progress]="40"
-            [label]="'docType.certificate' | transloco"
-          />
+          <app-file-drop status="uploading" [progress]="40" label="[...] 2" />
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">done</p>
-          <app-file-drop status="done" [label]="'docType.admission_letter' | transloco" />
+          <app-file-drop status="done" label="[...] 3" />
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">error (server)</p>
@@ -126,19 +104,18 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
 
     <section aria-labelledby="kit-timeline" class="flex flex-col gap-6">
       <h2 id="kit-timeline" class="t-h4">Timeline</h2>
-      @for (s of statuses; track s) {
+      @for (t of timelines; track $index) {
         <div class="card flex flex-col gap-4">
-          <app-status-pill class="self-start" [status]="s" />
-          <app-timeline [items]="timelines[s]" />
+          <app-timeline [items]="t" />
         </div>
       }
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div class="card min-w-0">
-          <app-timeline orientation="vertical" [items]="timelines.under_review" />
+          <app-timeline orientation="vertical" [items]="timelines[1]" />
         </div>
         <!-- Forced horizontal only makes sense with room: shown from md up. -->
         <div class="card hidden min-w-0 md:col-span-2 md:block">
-          <app-timeline orientation="horizontal" [items]="timelines.interview" />
+          <app-timeline orientation="horizontal" [items]="timelines[2]" />
         </div>
       </div>
     </section>
@@ -160,7 +137,7 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
         <div class="flex flex-col gap-2">
           <p class="t-caption">invalid</p>
           <app-otp-input value="12" invalid touched describedBy="kit-otp-err" />
-          <p id="kit-otp-err" class="field-error">{{ 'errors.codes.OTP_INVALID' | transloco }}</p>
+          <p id="kit-otp-err" class="field-error">{{ 'errors.generic' | transloco }}</p>
         </div>
         <div class="flex flex-col gap-2">
           <p class="t-caption">disabled</p>
@@ -172,13 +149,8 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
     <section aria-labelledby="kit-pills" class="flex flex-col gap-4">
       <h2 id="kit-pills" class="t-h4">Pills</h2>
       <div class="flex flex-wrap gap-2">
-        @for (s of statuses; track s) {
-          <app-status-pill [status]="s" />
-        }
-      </div>
-      <div class="flex flex-wrap gap-2">
-        @for (s of docStatuses; track s) {
-          <app-doc-status-pill [status]="s" />
+        @for (p of pills; track p[0]) {
+          <app-pill [variant]="p[0]">{{ 'kit.status.' + p[1] | transloco }}</app-pill>
         }
       </div>
       <div class="flex flex-wrap gap-2">
@@ -271,17 +243,14 @@ function demoTimeline(status: ApplicationStatus): TimelineItem[] {
   `,
 })
 export class KitFormsSection {
-  protected readonly statuses = APPLICATION_STATUSES;
-  protected readonly docStatuses: DocumentStatus[] = [
-    'under_review',
-    'accepted',
-    'rejected',
-    'missing',
-  ];
+  protected readonly pills = DEMO_PILLS;
   protected readonly steps = [{ label: '[...] 1' }, { label: '[...] 2' }, { label: '[...] 3' }];
-  protected readonly timelines = Object.fromEntries(
-    APPLICATION_STATUSES.map((s) => [s, demoTimeline(s)]),
-  ) as Record<ApplicationStatus, TimelineItem[]>;
+  protected readonly timelines = [
+    demoTimeline(0, false),
+    demoTimeline(2, true),
+    demoTimeline(3, true),
+    demoTimeline(5, false),
+  ];
 
   protected readonly picked = signal<File[]>([]);
   protected readonly rejectedCount = signal(0);

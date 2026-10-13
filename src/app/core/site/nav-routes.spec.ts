@@ -8,9 +8,10 @@ describe('nav routes', () => {
   });
 
   it('maps API button URLs (B9 paths, legacy hash routes, external) safely', () => {
-    expect(appPathForApiUrl('/apply')).toEqual({ internal: '/apply' });
+    expect(appPathForApiUrl('/contact')).toEqual({ internal: '/contact' });
     expect(appPathForApiUrl('#/work')).toEqual({ internal: '/work-areas' });
-    expect(appPathForApiUrl('#/apply')).toEqual({ internal: '/apply' });
+    expect(appPathForApiUrl('#/contact')).toEqual({ internal: '/contact' });
+    expect(pathForNavSlug('governance')).toBe('/governance');
     expect(appPathForApiUrl('https://example.org/x')).toEqual({
       external: 'https://example.org/x',
     });
@@ -22,21 +23,11 @@ describe('nav routes', () => {
 
 describe('navLabel (W5)', () => {
   it('uses the short prototype label for header slugs in both languages', () => {
-    expect(
-      navLabel(
-        'scholarships',
-        'en',
-        'Scholarships for international students in Saudi universities',
-      ),
-    ).toBe('Scholarships');
-    expect(navLabel('scholarships', 'ar', 'منح الوافدين للدراسة بالجامعات السعودية')).toBe(
-      'منح الوافدين',
-    );
+    expect(navLabel('governance', 'en', 'Governance and transparency')).toBe('Governance');
+    expect(navLabel('governance', 'ar', 'الحوكمة والشفافية')).toBe('الحوكمة');
   });
 
   it('falls back to the API title for slugs without a short label', () => {
-    expect(navLabel('documents', 'en', 'Licences, policies and regulations')).toBe(
-      'Licences, policies and regulations',
-    );
+    expect(navLabel('testimonials', 'en', 'What our students say')).toBe('What our students say');
   });
 });

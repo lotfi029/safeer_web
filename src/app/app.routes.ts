@@ -19,10 +19,6 @@ export const routes: Routes = [
         path: 'admin',
         loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
       },
-      {
-        path: 'portal',
-        loadChildren: () => import('./features/portal/portal.routes').then((m) => m.PORTAL_ROUTES),
-      },
       ...KIT_ROUTES,
       {
         path: '',

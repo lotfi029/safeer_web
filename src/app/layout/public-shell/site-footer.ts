@@ -121,15 +121,9 @@ export class SiteFooter {
   protected readonly keyLinks = [
     { key: 'shell.footer.about', path: '/about' },
     { key: 'shell.footer.board', path: '/board' },
-    { key: 'shell.footer.documents', path: '/documents' },
     { key: 'shell.footer.work', path: '/work-areas' },
   ];
-  protected readonly serviceLinks = [
-    { key: 'shell.footer.scholarships', path: '/scholarships' },
-    { key: 'shell.footer.applyLink', path: '/apply' },
-    { key: 'shell.portal', path: '/portal' },
-    { key: 'shell.footer.news', path: '/news' },
-  ];
+  protected readonly serviceLinks = [{ key: 'shell.footer.news', path: '/news' }];
 
   protected readonly socials = computed<SocialLink[]>(() => {
     const s = this.settings();

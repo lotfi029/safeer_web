@@ -92,9 +92,8 @@ test.describe('public shell', () => {
     await burger.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('link', { name: 'Apply for a scholarship' })).toBeVisible();
     if (usingMockApi) {
-      await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(10);
+      await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(9);
     }
     for (let i = 0; i < 20; i++) {
       await page.keyboard.press('Tab');
@@ -251,11 +250,12 @@ test.describe('fonts (W13)', () => {
 test('client-side navigation into a private area drops the public page’s SEO tags (W19)', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1024, height: 768 });
   await gotoHydrated(page, '/en/news');
   await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
-  await page.getByRole('link', { name: 'Student portal' }).first().click();
-  await expect(page).toHaveURL(/\/en\/portal\/login/);
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('dialog').getByRole('link', { name: 'Staff dashboard' }).click();
+  await expect(page).toHaveURL(/\/en\/admin\/login/);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   await expect(page.locator('link[rel="canonical"], link[rel="alternate"][hreflang]')).toHaveCount(
     0,

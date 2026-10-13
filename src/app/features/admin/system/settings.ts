@@ -129,26 +129,11 @@ export const SETTINGS_SECTIONS: readonly { id: string; fields: readonly CrudFiel
       { key: 'mapLng', type: 'number', label: 'mapLng', nullable: true },
     ],
   },
-  {
-    id: 'applications',
-    fields: [
-      {
-        key: 'applicationRefPrefix',
-        type: 'text',
-        label: 'applicationRefPrefix',
-        required: true,
-        max: 10,
-        hint: 'prefixHint',
-      },
-      { key: 'notifyEmailOnStatusChange', type: 'boolean', label: 'notifyEmail' },
-      { key: 'notifySmsOnStatusChange', type: 'boolean', label: 'notifySms' },
-    ],
-  },
 ];
 
 const ALL_FIELDS = SETTINGS_SECTIONS.flatMap((s) => s.fields);
 
-/** Rules the generic checks don't cover (map host allow-list, coordinates, prefix, http(s) links). */
+/** Rules the generic checks don't cover (map host allow-list, coordinates, http(s) links). */
 export function settingsErrors(model: Record<string, unknown>): Record<string, string[]> {
   const errors: Record<string, string[]> = {};
   const add = (k: string, kind: string) => (errors[k] ??= []).push(kind);
@@ -158,8 +143,6 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
   if (lat !== '' && !(Number(lat) >= -90 && Number(lat) <= 90)) add('mapLat', 'range');
   const lng = String(model['mapLng'] ?? '');
   if (lng !== '' && !(Number(lng) >= -180 && Number(lng) <= 180)) add('mapLng', 'range');
-  const prefix = String(model['applicationRefPrefix'] ?? '').trim();
-  if (prefix && !/^[A-Z]+$/.test(prefix)) add('applicationRefPrefix', 'prefix');
   for (const f of SETTINGS_SECTIONS.find((s) => s.id === 'social')!.fields) {
     const v = String(model[f.key] ?? '').trim();
     if (v && !/^(https?:\/\/[^/\s]+|mailto:|tel:)\S*$/i.test(v)) add(f.key, 'url');
@@ -171,8 +154,8 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
 
 /**
  * Site settings (prototype `aSettings`, `PUT admin/settings`): organisation details, languages, SEO,
- * social links, the map (Google Maps embed or OpenStreetMap only, like the API's allow-list),
- * application reference prefix and status notifications; plus the API cache.
+ * social links and the map (Google Maps embed or OpenStreetMap only, like the API's allow-list); plus
+ * the API cache.
  */
 @Component({
   selector: 'app-admin-settings',
@@ -323,7 +306,7 @@ export class AdminSettings {
     if (this.tried()) {
       for (const [key, kinds] of Object.entries(this.client())) {
         out[key] = kinds.map((kind) =>
-          ['mapHost', 'range', 'prefix', 'url'].includes(kind)
+          ['mapHost', 'range', 'url'].includes(kind)
             ? { kind, message: this.t.translate(`admin.system.settings.errors.${kind}`) }
             : toFieldErrors({ [key]: [kind] }, ALL_FIELDS, (k) => this.t.translate(k))[key][0],
         );

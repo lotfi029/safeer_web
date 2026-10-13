@@ -138,7 +138,7 @@ test.describe('contact page', () => {
       page.getByRole('button', { name: 'Send' }).click(),
     ]);
     const body = req.postDataJSON();
-    expect(body).toMatchObject({ name, subject: 'scholarship', website: '' });
+    expect(body).toMatchObject({ name, subject: 'inquiry', website: '' });
     expect(typeof body.formRenderedAt).toBe('number');
     await expect(page.getByText('your message has arrived')).toBeVisible();
     // `{ ok: true }` alone proves nothing (a dropped message answers the same): read the inbox.

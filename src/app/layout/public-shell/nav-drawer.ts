@@ -36,28 +36,12 @@ import { ShellNav } from './nav-links';
         <li>
           <a
             class="flex min-h-12 items-center rounded-btn px-3 font-semibold text-text no-underline hover:bg-raise"
-            [routerLink]="locale.link('/portal')"
-            (click)="close()"
-            >{{ 'shell.portal' | transloco }}</a
-          >
-        </li>
-        <li>
-          <a
-            class="flex min-h-12 items-center rounded-btn px-3 font-semibold text-text no-underline hover:bg-raise"
             [routerLink]="locale.link('/admin')"
             (click)="close()"
             >{{ 'shell.staff' | transloco }}</a
           >
         </li>
       </ul>
-      <a
-        drawerActions
-        appButton
-        [block]="true"
-        [routerLink]="locale.link('/apply')"
-        (click)="close()"
-        >{{ 'shell.apply' | transloco }}</a
-      >
     </app-drawer-frame>
   `,
 })

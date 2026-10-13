@@ -7,24 +7,20 @@
  *
  * Usage: node scripts/record-admin-shapes.mjs [--api http://127.0.0.1:3900] [--only overview,messages]
  * Signs in as a temporary admin seeded through e2e/support/real-db.ts (removed afterwards; set
- * DB_PORT etc. as for scripts/real-api.mjs). The e2e database needs at least one application under
- * review and one contact message (run the e2e suite against it first).
+ * DB_PORT etc. as for scripts/real-api.mjs). The e2e database needs at least one contact message
+ * (run the e2e suite against it first).
  */
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 /**
- * Endpoint → path. `{application}`/`{message}`/`{applicationWithDocs}` resolve from the list calls.
+ * Endpoint → path. `{message}` resolves from the list call.
  * Phases 8–9 add their endpoints here.
  */
 export const ADMIN_SHAPES = {
   me: '/admin/me',
   roles: '/admin/roles',
   overview: '/admin/overview',
-  applications: '/admin/applications?limit=5&status=under_review',
-  applicationCounts: '/admin/applications/counts',
-  assignees: '/admin/applications/assignees',
-  application: '/admin/applications/{application}',
   messages: '/admin/messages?limit=5',
   message: '/admin/messages/{message}',
   newsletter: '/admin/newsletter?limit=5',
@@ -51,12 +47,8 @@ export const ADMIN_SHAPES = {
   mailSettings: '/admin/mail/settings',
   mailTemplates: '/admin/mail/templates',
   mailLog: '/admin/mail/log?limit=5',
-  smsSettings: '/admin/sms/settings',
-  smsTemplates: '/admin/sms/templates',
-  smsLog: '/admin/sms/log?limit=5',
   audit: '/admin/audit?limit=5',
   redirects: '/admin/redirects?limit=5',
-  interviewSlots: '/admin/interview-slots?limit=5',
   sessions: '/admin/auth/sessions',
 };
 
@@ -65,8 +57,6 @@ export const ADMIN_SYSTEM = {
   settings: '/admin/settings',
   mailSettings: '/admin/mail/settings',
   mailTemplates: '/admin/mail/templates',
-  smsSettings: '/admin/sms/settings',
-  smsTemplates: '/admin/sms/templates',
 };
 
 /**
@@ -197,7 +187,6 @@ async function record(api, admin, out, only) {
   };
 
   const ids = {
-    application: (await get('/admin/applications?limit=1&status=under_review')).data[0]?.id,
     message: (await get('/admin/messages?limit=1')).data[0]?.id,
   };
   const shapes = {
@@ -210,8 +199,6 @@ async function record(api, admin, out, only) {
       return ids[k];
     });
     shapes[name] = shapeOf(await get(path));
-    // An event's `data` differs by event type: pin only that it's there.
-    if (name === 'application' && shapes[name].events?.[0]) shapes[name].events[0].data = 'any';
     console.log(`recorded ${name}`);
   }
   writeFileSync(out, `${JSON.stringify(shapes, null, 2)}\n`);
@@ -237,9 +224,11 @@ async function record(api, admin, out, only) {
     };
     for (const [name, path] of Object.entries(ADMIN_SYSTEM)) system[name] = await get(path);
     // Test sends and saves from e2e runs are not part of the seed.
-    for (const k of ['mailSettings', 'smsSettings']) {
-      Object.assign(system[k], { lastTestAt: null, lastTestOk: null, lastTestError: null });
-    }
+    Object.assign(system['mailSettings'], {
+      lastTestAt: null,
+      lastTestOk: null,
+      lastTestError: null,
+    });
     writeFileSync('mocks/fixtures/adminSystem.json', `${JSON.stringify(system, null, 2)}\n`);
   }
 }

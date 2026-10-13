@@ -1,4 +1,3 @@
-export declare const MOCK_OTP_CODE: string;
 export declare const MOCK_STAFF_PASSWORD: string;
 
 export interface MockRequest {

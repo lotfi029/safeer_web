@@ -9,11 +9,10 @@ export const NAV_SLUG_PATHS: Readonly<Record<NavSlug, string>> = {
   about: '/about',
   board: '/board',
   work: '/work-areas',
-  scholarships: '/scholarships',
   news: '/news',
   testimonials: '/testimonials',
   partners: '/partners',
-  documents: '/documents',
+  governance: '/governance',
   contact: '/contact',
 };
 
@@ -22,7 +21,7 @@ export function pathForNavSlug(slug: string): string | null {
 }
 
 /**
- * Button URLs from the API are locale-agnostic paths after B9 (`/apply`). Seeds before B9 still hold
+ * Button URLs from the API are locale-agnostic paths after B9 (`/contact`). Seeds before B9 still hold
  * prototype hash routes (`#/work`); map those too. External http(s) URLs pass through; anything
  * else (javascript:, //host, …) is dropped (backend C10 validates too).
  */
@@ -49,7 +48,7 @@ export function appPathForApiUrl(
 
 /**
  * W5: short header-bar labels (the prototype's `NAV`). The API nav carries the full page titles
- * ("Scholarships for international students in Saudi universities"), which overflow the header;
+ * (e.g. a long page title), which overflow the header;
  * the drawer keeps those. A slug missing here falls back to the API title.
  */
 export const NAV_SHORT_LABELS: Readonly<Record<'ar' | 'en', Partial<Record<NavSlug, string>>>> = {
@@ -57,18 +56,18 @@ export const NAV_SHORT_LABELS: Readonly<Record<'ar' | 'en', Partial<Record<NavSl
     home: 'الرئيسية',
     about: 'من نحن',
     work: 'مجالات عملنا',
-    scholarships: 'منح الوافدين',
     news: 'الأخبار',
     partners: 'شركاؤنا',
+    governance: 'الحوكمة',
     contact: 'تواصل معنا',
   },
   en: {
     home: 'Home',
     about: 'About',
     work: 'Our work',
-    scholarships: 'Scholarships',
     news: 'News',
     partners: 'Partners',
+    governance: 'Governance',
     contact: 'Contact',
   },
 };

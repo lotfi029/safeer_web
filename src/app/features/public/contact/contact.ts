@@ -18,10 +18,9 @@ import {
   validate,
 } from '@angular/forms/signals';
 import { DomSanitizer } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import type { ContactSubject, Page } from '../../../core/api/models';
+import { CONTACT_SUBJECTS, type ContactSubject, type Page } from '../../../core/api/models';
 import { problemMessageKey, toApiProblem } from '../../../core/api/problem';
 import { PublicApi } from '../../../core/api/public-api';
 import type { Loaded } from '../../../core/data/loaded';
@@ -38,12 +37,7 @@ import { PageHead } from '../../../shared/ui/page-head/page-head';
 import { Reveal } from '../../../shared/ui/reveal/reveal';
 import { pageSeo } from '../page-meta';
 
-export const CONTACT_SUBJECTS: readonly ContactSubject[] = [
-  'scholarship',
-  'partnership',
-  'feedback',
-  'other',
-];
+export { CONTACT_SUBJECTS };
 
 export { contactResolver } from './contact.resolver';
 
@@ -66,18 +60,7 @@ interface ContactModel {
  */
 @Component({
   selector: 'app-contact-page',
-  imports: [
-    RouterLink,
-    TranslocoPipe,
-    FormField,
-    PageState,
-    Button,
-    Control,
-    Field,
-    Icon,
-    PageHead,
-    Reveal,
-  ],
+  imports: [TranslocoPipe, FormField, PageState, Button, Control, Field, Icon, PageHead, Reveal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (data().failure; as failure) {
@@ -290,15 +273,6 @@ interface ContactModel {
                   >
                 }
               </div>
-              <div class="card band border-0">
-                <h2 class="t-h4">{{ 'pages.contact.registerTitle' | transloco }}</h2>
-                <p class="mt-3 mb-5 text-band-soft">
-                  {{ 'pages.contact.registerBody' | transloco }}
-                </p>
-                <a appButton variant="onband" [block]="true" [routerLink]="locale.link('/apply')">{{
-                  'pages.contact.registerCta' | transloco
-                }}</a>
-              </div>
             </aside>
           </div>
         </div>
@@ -340,7 +314,7 @@ export class ContactPage {
     name: '',
     phone: '',
     email: '',
-    subject: 'scholarship',
+    subject: 'inquiry',
     body: '',
     website: '',
   });

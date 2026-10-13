@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { LocaleService } from '../i18n/locale.service';
-import { ApplicantSessionStore } from './applicant-session.store';
 import type { StaffArea } from './role-matrix';
 import { StaffSessionStore } from './staff-session.store';
 
@@ -42,25 +41,4 @@ export const staffLoginGuard: CanActivateFn = async () => {
   const router = inject(Router);
   const locale = inject(LocaleService);
   return (await store.ensureLoaded()) ? router.createUrlTree([locale.link('/admin')]) : true;
-};
-
-/** Applicant-only portal routes. Anonymous → `/:lang/portal/login?returnUrl=`. */
-export const applicantGuard: CanActivateFn = async (_route, state) => {
-  const store = inject(ApplicantSessionStore);
-  const router = inject(Router);
-  const locale = inject(LocaleService);
-  if (await store.ensureLoaded()) {
-    return true;
-  }
-  return router.createUrlTree([locale.link('/portal/login')], {
-    queryParams: { returnUrl: state.url },
-  });
-};
-
-/** Signed-in applicants skip the portal login page. */
-export const applicantLoginGuard: CanActivateFn = async () => {
-  const store = inject(ApplicantSessionStore);
-  const router = inject(Router);
-  const locale = inject(LocaleService);
-  return (await store.ensureLoaded()) ? router.createUrlTree([locale.link('/portal')]) : true;
 };

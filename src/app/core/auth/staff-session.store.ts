@@ -57,7 +57,7 @@ export class StaffSessionStore {
     }
   }
 
-  /** Whether the current role may use an area of the matrix (`applications`, `content`, …). */
+  /** Whether the current role may use an area of the matrix (`content`, `inbox`, …). */
   can(area: StaffArea): boolean {
     const role = this.role();
     return !!role && (this.matrix()[area] ?? []).includes(role);

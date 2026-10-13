@@ -42,10 +42,10 @@ describe('real-db (Stage 2 real-API e2e support)', () => {
   });
 
   it('only ever seeds @e2e.invalid identities with a name', () => {
-    const who = seededIdentity('reviewer', 'ab12');
+    const who = seededIdentity('support', 'ab12');
     expect(who).toEqual({
-      name: 'E2E reviewer ab12',
-      email: `e2e-reviewer-ab12@${E2E_EMAIL_DOMAIN}`,
+      name: 'E2E support ab12',
+      email: `e2e-support-ab12@${E2E_EMAIL_DOMAIN}`,
     });
   });
 

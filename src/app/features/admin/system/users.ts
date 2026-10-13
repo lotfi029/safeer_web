@@ -19,10 +19,8 @@ import { ToastService } from '../../../shared/ui/toast/toast';
 import { AdminPageHead } from '../layout/admin-page-head';
 import { confirmAction } from '../shared/confirm-dialog';
 
-const ROLES: readonly StaffRole[] = ['admin', 'reviewer', 'editor', 'support'];
+const ROLES: readonly StaffRole[] = ['admin', 'editor', 'support'];
 const AREAS: readonly StaffArea[] = [
-  'applications',
-  'applications.delete',
   'content',
   'redirects.delete',
   'inbox',
@@ -335,7 +333,6 @@ export class UserForm {
           </tbody>
         </table>
       </div>
-      <p class="note m-0">{{ 'admin.system.users.applicantData' | transloco }}</p>
     </section>
   `,
 })

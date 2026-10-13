@@ -13,7 +13,7 @@ export function apiPath(url: string): string | null {
   return rest.split('?')[0] || '/';
 }
 
-export type ApiArea = 'admin' | 'portal' | 'applications' | 'public';
+export type ApiArea = 'admin' | 'public';
 
 export function apiArea(url: string): ApiArea | null {
   const path = apiPath(url);
@@ -22,12 +22,6 @@ export function apiArea(url: string): ApiArea | null {
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
     return 'admin';
-  }
-  if (path === '/portal' || path.startsWith('/portal/')) {
-    return 'portal';
-  }
-  if (path === '/applications') {
-    return 'applications';
   }
   return 'public';
 }

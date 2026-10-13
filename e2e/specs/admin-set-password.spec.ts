@@ -59,7 +59,7 @@ test.describe('staff invitation and password reset links (W16)', () => {
     }) => {
       // An invitation is for an invited account (C3); a reset is for an active one.
       const user = await staffAccount(
-        'reviewer',
+        'support',
         mode === 'accept' ? { status: 'invited' } : { fresh: true },
       );
       const token = await authToken(user, mode === 'accept' ? 'invite' : 'reset');

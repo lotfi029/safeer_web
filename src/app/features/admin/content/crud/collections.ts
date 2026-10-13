@@ -204,7 +204,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     sortable: true,
     tabs: {
       param: 'kind',
-      values: ['vision', 'mission', 'goal', 'care_pillar', 'scholarship_step', 'requirement'],
+      values: ['vision', 'mission', 'goal', 'care_pillar', 'requirement'],
       label: 'admin.content.options.kind',
     },
     fields: [
@@ -212,7 +212,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
         key: 'kind',
         type: 'select',
         label: 'kind',
-        options: ['vision', 'mission', 'goal', 'care_pillar', 'scholarship_step', 'requirement'],
+        options: ['vision', 'mission', 'goal', 'care_pillar', 'requirement'],
         hidden: true,
       },
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },
@@ -361,41 +361,6 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     errorField: (code, title) =>
       code === 'REDIRECT_CHAIN' ? (/already exists/i.test(title) ? 'fromPath' : 'toPath') : null,
   },
-  /** Interview slots (applications area). Editing a booked slot notifies the applicant. */
-  interviewSlots: {
-    id: 'interviewSlots',
-    endpoint: 'interview-slots',
-    area: 'applications',
-    fields: [
-      { key: 'startsAt', type: 'datetime', label: 'startsAt', required: true, hint: 'riyadhTime' },
-      {
-        key: 'endsAt',
-        type: 'datetime',
-        label: 'endsAt',
-        required: true,
-        after: 'startsAt',
-        hint: 'riyadhTime',
-      },
-      {
-        key: 'location',
-        type: 'text',
-        label: 'location',
-        bilingual: true,
-        max: 255,
-        nullable: true,
-      },
-    ],
-    primary: (r, l) => slotLabel(String(r['startsAt']), String(r['endsAt']), l),
-    secondary: (r, l, t) =>
-      [
-        pick(r, 'location', l),
-        r['applicationId']
-          ? t('admin.content.interviewSlots.booked')
-          : t('admin.content.interviewSlots.free'),
-      ]
-        .filter(Boolean)
-        .join(' · '),
-  },
   /** Only its fields are used (the news screens are hand-built); slug is edited separately. */
   news: {
     id: 'news',
@@ -447,24 +412,3 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     secondary: (r) => String(r['slug'] ?? ''),
   },
 };
-
-/** `Sun, 12 Oct 2026, 10:00–10:30` in Riyadh time (Gregorian; Arabic-Indic digits in Arabic). */
-export function slotLabel(startsAt: string, endsAt: string, lang: 'ar' | 'en' = 'en'): string {
-  const locale = lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-arab' : 'en-GB';
-  const opts = {
-    timeZone: 'Asia/Riyadh',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  } as const;
-  const day = new Intl.DateTimeFormat(locale, {
-    timeZone: 'Asia/Riyadh',
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(startsAt));
-  const from = new Intl.DateTimeFormat(locale, opts).format(new Date(startsAt));
-  const to = new Intl.DateTimeFormat(locale, opts).format(new Date(endsAt));
-  return `${day}, ${from}–${to}`;
-}

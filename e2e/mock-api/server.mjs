@@ -4,14 +4,12 @@
  *   ANY /api/v1/__echo   → echoes method, url, headers; sets a test cookie
  *   GET /__log           → recent requests seen by the mock (SSR-path assertions)
  *   DELETE /__log        → clears the log
- *   POST /__reset        → resets mock state (?reference=SA-… restores one seeded application)
+ *   POST /__reset        → resets mock state
  *   POST /__site         → merges a JSON body into the site settings (map specs); send nulls to restore
  *   POST /__auth-token   → {purpose: accept|reset, userId?} → a fresh single-use token (W16 specs)
  *   POST /__staff        → {role, status?, locked?, fresh?} → a new staff user with a known password
  *                          (the mock twin of e2e/support/real-db.ts seedStaff)
  *   POST /__staff/:id/expire-lock → ends that user's lock now
- *   POST /__clone?reference=SA-…&tag=… → a fresh copy of a seeded application (new id,
- *                          reference and a `tag-…` email, so a spec can search for its own copies)
  */
 import { createServer } from 'node:http';
 import { createMockBackend } from '../../mocks/backend.mjs';
@@ -114,42 +112,7 @@ const server = createServer(async (req, res) => {
     if (user) user.lockedUntil = new Date(Date.now() - 1000).toISOString();
     return send(res, user ? 200 : 404, { ok: !!user });
   }
-  if (url.pathname === '/__clone' && req.method === 'POST') {
-    // A fresh copy of a seeded application under a new id/reference, so a spec can change it
-    // without racing other specs (the mock twin of creating one through the real API).
-    const seed = (fixtures.applications ?? []).find(
-      (a) => a.reference === url.searchParams.get('reference'),
-    );
-    if (!seed) return send(res, 404, { ok: false });
-    const id = String(++backend.db.seq);
-    const copy = structuredClone(seed);
-    Object.assign(copy, {
-      id,
-      reference: `SA-2026-${id.padStart(5, '0')}`,
-      email: `${url.searchParams.get('tag') ?? 'copy'}-${id}@mock.invalid`,
-      phone: `+9665${id.padStart(8, '0')}`,
-      interview: null,
-    });
-    for (const d of copy.documents ?? []) {
-      d.id = `${d.id}-${id}`;
-      if (d.supersededBy) d.supersededBy = `${d.supersededBy}-${id}`;
-    }
-    backend.db.applications.set(id, copy);
-    return send(res, 200, { id, reference: copy.reference, email: copy.email });
-  }
   if (url.pathname === '/__reset') {
-    // `?reference=SA-…` restores just that seeded application (and frees its interview slot) so
-    // specs running in parallel keep their sessions; no query resets the whole backend.
-    const reference = url.searchParams.get('reference');
-    if (reference) {
-      const seed = (fixtures.applications ?? []).find((a) => a.reference === reference);
-      if (!seed) return send(res, 404, { ok: false });
-      backend.db.applications.set(seed.id, structuredClone(seed));
-      for (const slot of backend.db.fixtures.interviewSlots ?? []) {
-        if (slot.applicationId === seed.id) slot.applicationId = null;
-      }
-      return send(res, 200, { ok: true });
-    }
     backend = createMockBackend(fixtures);
     return send(res, 200, { ok: true });
   }

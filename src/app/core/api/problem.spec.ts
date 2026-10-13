@@ -45,7 +45,8 @@ describe('toApiProblem', () => {
   it('unwraps ApiError and maps codes to Transloco keys', () => {
     const problem = toApiProblem(new HttpErrorResponse({ status: 401 }));
     expect(toApiProblem(new ApiError(problem))).toBe(problem);
-    expect(problemMessageKey({ code: 'OTP_INVALID' })).toBe('errors.codes.OTP_INVALID');
+    expect(problemMessageKey({ code: 'RATE_LIMITED' })).toBe('errors.codes.RATE_LIMITED');
+    expect(problemMessageKey({ code: 'OTP_INVALID' })).toBe('errors.generic');
     expect(problemMessageKey({ code: 'NETWORK' })).toBe('errors.network');
     expect(problemMessageKey({ code: 'SOMETHING_NEW' })).toBe('errors.generic');
   });

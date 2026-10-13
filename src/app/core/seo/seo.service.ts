@@ -63,7 +63,7 @@ export class SeoService {
   }
 
   /**
-   * Private areas (admin, portal) are never indexed. W19: also drops everything a public page set
+   * The private area (admin) is never indexed. W19: also drops everything a public page set
    * before a client-side navigation here (description, canonical, hreflang, OG/Twitter, JSON-LD),
    * so none of it describes the wrong page.
    */

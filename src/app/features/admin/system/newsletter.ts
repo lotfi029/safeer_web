@@ -71,7 +71,7 @@ const PAGE = 20;
         [disabled]="busy()"
         (click)="exportCsv()"
       >
-        <app-icon name="download" [size]="18" />{{ 'admin.applications.export' | transloco }}
+        <app-icon name="download" [size]="18" />{{ 'admin.common.exportCsv' | transloco }}
       </button>
     </app-admin-page-head>
     <nav

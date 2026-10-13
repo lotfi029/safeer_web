@@ -1,13 +1,10 @@
 /**
  * Stage 2: API-level setup that works on both backends, so one spec runs against the mock and the real
  * API. Staff accounts come from real-db.ts on the real API and from the mock's fixture accounts (or the
- * mock-only `/__staff` route for disabled/locked variants) on the mock. Applications in a given status
- * are built through the public apply API and moved on by a seeded admin through the admin API (real),
- * or restored from the mock's seeded fixtures (mock). OTP codes come from the API's dev hook
- * (`GET /__dev/otp/:applicationId`, NODE_ENV=test) or the fixed mock code.
+ * mock-only `/__staff` route for disabled/locked variants) on the mock. Contact messages and newsletter
+ * sign-ups go through the public API and are found again through the admin API.
  */
 import { request as pwRequest, type APIRequestContext, type APIResponse } from '@playwright/test';
-import { randomInt } from 'node:crypto';
 import { MOCK_API_URL, usingMockApi } from './env';
 import {
   expireLock,
@@ -20,7 +17,6 @@ import {
 
 export const API_ORIGIN = process.env['E2E_API_URL'] || MOCK_API_URL;
 export const API = `${API_ORIGIN}/api/v1`;
-export const MOCK_OTP = '123456';
 const MOCK_STAFF_PASSWORD = 'mock-password';
 
 export interface StaffAccount {
@@ -45,7 +41,7 @@ export async function staffAccount(
   }
   if (!opts.status && !opts.locked && !opts.fresh) {
     return {
-      id: { admin: '1', reviewer: '2', editor: '3', support: '4' }[role],
+      id: { admin: '1', editor: '3', support: '4' }[role],
       name: '[...]',
       email: `${role}@mock.invalid`,
       password: MOCK_STAFF_PASSWORD,
@@ -131,35 +127,10 @@ export class ApiClient {
     );
     return (await res.json()) as T;
   }
-  async upload<T>(path: string, docType: string, file: UploadFile): Promise<T> {
-    const res = await ApiClient.ok(
-      await this.ctx.post(path, {
-        multipart: {
-          docType,
-          file: { name: file.name, mimeType: file.mimeType, buffer: file.buffer },
-        },
-        headers: this.headers(),
-      }),
-      `UPLOAD ${path}`,
-    );
-    return (await res.json()) as T;
-  }
   dispose(): Promise<void> {
     return this.ctx.dispose();
   }
 }
-
-export interface UploadFile {
-  name: string;
-  mimeType: string;
-  buffer: Buffer;
-}
-
-export const pdf = (name: string): UploadFile => ({
-  name,
-  mimeType: 'application/pdf',
-  buffer: Buffer.from('%PDF-1.4\n%e2e\n'),
-});
 
 /** Signs `user` in through the API and returns a client carrying the staff session. */
 export async function staffClient(user: StaffAccount): Promise<ApiClient> {
@@ -173,7 +144,7 @@ export async function staffClient(user: StaffAccount): Promise<ApiClient> {
 }
 
 let adminClient: Promise<ApiClient> | undefined;
-/** One seeded admin per worker for setup calls (moving applications on, creating slots, reading inboxes). */
+/** One seeded admin per worker for setup calls (reading inboxes, seeding content). */
 export function setupAdmin(): Promise<ApiClient> {
   adminClient ??= staffAccount('admin', { fresh: !usingMockApi }).then(staffClient);
   return adminClient;
@@ -183,170 +154,6 @@ export async function disposeSetupAdmin(): Promise<void> {
   const c = adminClient;
   adminClient = undefined;
   if (c) await (await c).dispose();
-}
-
-// ---------------------------------------------------------------- applications
-
-export type AppStatus =
-  'draft' | 'new' | 'under_review' | 'docs_missing' | 'interview' | 'accepted' | 'rejected';
-
-/** Seeded in mocks/fixtures/applications.json (one application per status). */
-export const MOCK_REFS: Record<AppStatus, string> = {
-  under_review: 'SA-2026-00101',
-  docs_missing: 'SA-2026-00102',
-  interview: 'SA-2026-00103',
-  accepted: 'SA-2026-00104',
-  rejected: 'SA-2026-00105',
-  new: 'SA-2026-00106',
-  draft: 'SA-2026-00107',
-};
-
-export interface TestApplication {
-  id: string;
-  reference: string;
-  email: string;
-  status: AppStatus;
-  /** A list search (`q`) that finds this application and its siblings made with the same tag. */
-  search: string;
-}
-
-/** A fresh email and phone (the API refuses a second active application for either). */
-export function newApplicant(tag: string) {
-  const n = String(randomInt(0, 1e8)).padStart(8, '0');
-  return { email: `${tag}-${n}@example.invalid`, phone: `+9665${n}` };
-}
-
-export const STEP1 = {
-  firstName: 'Sara',
-  lastName: 'Ali',
-  birthDate: '2001-05-06',
-  nationality: 'SA',
-  gender: 'female',
-} as const;
-export const STEP2 = {
-  university: '[University]',
-  major: '[Major]',
-  degreeLevel: 'bachelor',
-} as const;
-
-/** The files every submitted e2e application carries (same names as the mock fixtures' base names). */
-export const DOC_FILES = {
-  id_copy: pdf('id-card.pdf'),
-  certificate: pdf('certificate.pdf'),
-  admission_letter: pdf('admission.pdf'),
-} as const;
-
-interface AdminDoc {
-  id: string;
-  docType: string;
-  status: string;
-}
-
-/**
- * An application in `status` for a portal or admin spec. Mock: a fresh copy of the seeded fixture
- * (`/__clone`), so specs never share one.
- * Real: created through the public API (step 1, step 2, consent, three documents, submit) and moved on
- * by the worker's seeded admin: `docs_missing` has its ID copy rejected (certificate and admission
- * accepted) and documents requested; `interview` passes through under_review.
- */
-export async function applicationIn(
-  status: AppStatus,
-  tagIn: string = status,
-): Promise<TestApplication> {
-  const tag = tagIn.replace(/_/g, '-');
-  if (usingMockApi) {
-    const ctx = await pwRequest.newContext();
-    try {
-      const res = await ctx.post(
-        `${MOCK_API_URL}/__clone?reference=${MOCK_REFS[status]}&tag=${encodeURIComponent(tag)}`,
-      );
-      const copy = (await res.json()) as { id: string; reference: string; email: string };
-      return { ...copy, status, search: tag };
-    } finally {
-      await ctx.dispose();
-    }
-  }
-  const who = newApplicant(tag);
-  const applicant = await ApiClient.create();
-  try {
-    const { reference, csrfToken } = await createWithRetry(applicant, { ...STEP1, ...who });
-    applicant.csrf = csrfToken;
-    const admin = await setupAdmin();
-    const found = await admin.get<{ data: Array<{ id: string; reference: string }> }>(
-      'admin/applications',
-      { q: reference, status: 'draft' },
-    );
-    const id = found.data.find((a) => a.reference === reference)?.id;
-    if (!id) throw new Error(`application ${reference} not found through the admin API`);
-    const app: TestApplication = { id, reference, email: who.email, status, search: tag };
-    if (status === 'draft') return app;
-
-    await applicant.patch('portal/application', { ...STEP2, consent: true });
-    for (const [docType, file] of Object.entries(DOC_FILES)) {
-      await applicant.upload('portal/documents', docType, file);
-    }
-    await applicant.post('portal/application/submit', {
-      ...STEP1,
-      ...who,
-      ...STEP2,
-      consent: true,
-    });
-    if (status === 'new') return app;
-
-    const path = `admin/applications/${id}`;
-    await admin.patch(path, { status: 'under_review' });
-    if (status === 'docs_missing') {
-      const detail = await admin.get<{ documents: AdminDoc[] }>(path);
-      for (const doc of detail.documents) {
-        await admin.patch(
-          `${path}/documents/${doc.id}`,
-          doc.docType === 'id_copy'
-            ? { status: 'rejected', reason: '[The ID copy is not readable]' }
-            : { status: 'accepted' },
-        );
-      }
-      await admin.post(`${path}/request-documents`, { docTypes: ['id_copy'] });
-    } else if (status === 'interview' || status === 'accepted' || status === 'rejected') {
-      await admin.patch(path, { status });
-    }
-    return app;
-  } finally {
-    await applicant.dispose();
-  }
-}
-
-/** The sign-in code just issued for `app` (call after requesting it). */
-export async function otpFor(app: TestApplication): Promise<string> {
-  if (usingMockApi) return MOCK_OTP;
-  const ctx = await pwRequest.newContext();
-  try {
-    const res = await ctx.get(`${API}/__dev/otp/${app.id}`);
-    if (!res.ok()) throw new Error(`no OTP for ${app.reference}: ${res.status()}`);
-    return ((await res.json()) as { code: string }).code;
-  } finally {
-    await ctx.dispose();
-  }
-}
-
-/** Real API: open interview slots in the future (the mock has seeded ones). */
-export async function openInterviewSlots(count = 2): Promise<Array<{ id: string }>> {
-  if (usingMockApi) return [];
-  const admin = await setupAdmin();
-  const slots = [];
-  // Days ahead plus a random minute offset keep parallel workers' slots from colliding.
-  const base = Date.now() + (7 + randomInt(0, 300)) * 86_400_000 + randomInt(0, 600) * 60_000;
-  for (let i = 0; i < count; i++) {
-    const startsAt = new Date(base + i * 3_600_000);
-    slots.push(
-      await admin.post<{ id: string }>('admin/interview-slots', {
-        startsAt: startsAt.toISOString(),
-        endsAt: new Date(startsAt.getTime() + 1_800_000).toISOString(),
-        locationAr: '[المقر]',
-        locationEn: '[Office]',
-      }),
-    );
-  }
-  return slots;
 }
 
 /** Contact/newsletter bodies the API accepts: `formRenderedAt` is already more than 3 s old. */
@@ -365,7 +172,7 @@ export interface TestMessage {
  * A contact message sent through the public API (`formRenderedAt` 5 s old, so the API's too-fast check
  * keeps it), then found through the admin API: a silent spam drop also answers `{ ok: true }`.
  */
-export async function postContact(tag: string, subject = 'scholarship'): Promise<TestMessage> {
+export async function postContact(tag: string, subject = 'inquiry'): Promise<TestMessage> {
   // The API's person-name rule allows Arabic/Latin letters, spaces, ' and - only (no digits).
   const name = `Sender ${lettersOnly(tag)}`;
   const email = `${tag}@example.invalid`;
@@ -425,24 +232,4 @@ export async function postNewsletter(tag: string): Promise<string> {
     await ctx.dispose();
   }
   return email;
-}
-
-/**
- * BF-2 (backend follow-up): two `POST /applications` at the same moment can deadlock in MySQL (the
- * duplicate-check locking read and the reference counter), and rc1 answers the loser with a 500
- * "Database error" instead of retrying the transaction. Parallel workers hit it now and then, so the
- * setup retries a 500 (only a 500) a few times.
- */
-async function createWithRetry(
-  client: ApiClient,
-  body: object,
-): Promise<{ reference: string; csrfToken: string }> {
-  for (let attempt = 1; ; attempt++) {
-    const res = await client.ctx.post('applications', { data: body });
-    if (res.ok()) return (await res.json()) as { reference: string; csrfToken: string };
-    if (res.status() !== 500 || attempt >= 4) {
-      throw new Error(`POST applications → ${res.status()} ${await res.text()}`);
-    }
-    await new Promise((r) => setTimeout(r, 200 * attempt));
-  }
 }

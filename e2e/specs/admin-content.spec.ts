@@ -288,7 +288,7 @@ test.describe('admin content', () => {
       await d.getByLabel('Primary button link').fill('javascript:alert(1)');
       await d.getByRole('button', { name: 'Save' }).click();
       await expect(d.getByRole('alert').first()).toBeVisible();
-      await d.getByLabel('Primary button link').fill('/apply');
+      await d.getByLabel('Primary button link').fill('/contact');
       await d.getByRole('button', { name: 'Save' }).click();
       await expect(d).toBeHidden();
       const row = rowOf(page, '[عنوان القسم]');
@@ -418,7 +418,7 @@ test.describe('admin content', () => {
     await expect(card).toHaveCount(0);
   });
 
-  test('roles: editors get content but not the inbox; reviewers get no content', async ({
+  test('roles: editors get content but not the inbox; support gets no content', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -429,8 +429,8 @@ test.describe('admin content', () => {
     await page.goto('/en/admin/testimonials');
     await expect(page).toHaveURL(/\/admin\/forbidden$/);
     await page.getByRole('button', { name: 'Sign out' }).click();
-    const reviewer = await staffAccount('reviewer', { fresh: true });
-    await signInAs(page, reviewer, '/admin/pages');
+    const support = await staffAccount('support', { fresh: true });
+    await signInAs(page, support, '/admin/pages');
     await expect(page).toHaveURL(/\/admin\/forbidden$/);
   });
 });

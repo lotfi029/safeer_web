@@ -1,7 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoService, TranslocoTestingModule } from '@jsverse/transloco';
-import { documentUrl } from '../../core/api/admin/admin-api';
 import { StaffSessionStore } from '../../core/auth/staff-session.store';
 import { ROLE_MATRIX } from '../../core/auth/role-matrix';
 import type { StaffRole } from '../../core/api/models';
@@ -9,14 +8,10 @@ import { AdminStrings } from '../../core/i18n/admin-strings';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { ar as adminAr } from '../../core/i18n/translations/admin/ar';
 import { en as adminEn } from '../../core/i18n/translations/admin/en';
-import { decisionActions, eventLine } from './applications/application-review';
-import { fullName, listQuery, PAGE_SIZE } from './applications/applications-list';
-import { canRequestDocuments, canReviewDocuments, nextStatuses } from './applications/transitions';
 import { loginErrorKey } from './auth/admin-login';
 import { AdminBadges } from './layout/admin-badges';
 import { AdminNav } from './layout/admin-nav';
 import { messageStatusParam } from './messages/messages';
-import { monthLabel } from './overview/series-chart';
 
 function navFor(role: StaffRole, badges: Record<string, number> = {}) {
   const me = signal({ role });
@@ -56,8 +51,6 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
     const withTestimonials = [...content.slice(0, 4), 'testimonials', ...content.slice(4)];
     expect(labels('admin')).toEqual([
       'overview',
-      'applications',
-      'interviewSlots',
       'messages',
       'newsletter',
       ...withTestimonials,
@@ -65,11 +58,8 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       'users',
       'settings',
       'mail',
-      'sms',
       'audit',
     ]);
-    TestBed.resetTestingModule();
-    expect(labels('reviewer')).toEqual(['overview', 'applications', 'interviewSlots']);
     TestBed.resetTestingModule();
     expect(labels('support')).toEqual(['overview', 'messages', 'newsletter', 'testimonials']);
     TestBed.resetTestingModule();
@@ -77,47 +67,14 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
   });
 
   it('links carry the locale and badges come from the overview counts', () => {
-    const nav = navFor('admin', { newApplications: 3, unreadMessages: 0 });
+    const nav = navFor('admin', { unreadMessages: 3 });
     const items = nav.groups()[0].items;
-    expect(items.find((i) => i.label === 'applications')).toMatchObject({
-      link: '/ar/admin/applications',
+    expect(items.find((i) => i.label === 'messages')).toMatchObject({
+      link: '/ar/admin/messages',
       count: 3,
     });
-    expect(items.find((i) => i.label === 'messages')?.count).toBe(0);
+    expect(items.find((i) => i.label === 'newsletter')?.count).toBe(0);
     expect(items[0].link).toBe('/ar/admin');
-  });
-});
-
-describe('application transitions', () => {
-  it('offers the shared map as decisions, with accept/reject wording', () => {
-    expect(decisionActions('under_review').map((a) => [a.to, a.labelKey])).toEqual([
-      ['docs_missing', 'admin.review.status.moveTo'],
-      ['interview', 'admin.review.status.moveTo'],
-      ['accepted', 'admin.review.actions.accept'],
-      ['rejected', 'admin.review.actions.reject'],
-    ]);
-    expect(decisionActions('accepted')).toEqual([]);
-    expect(decisionActions('draft')).toEqual([]);
-    expect(nextStatuses('docs_missing')).toEqual(['under_review']);
-  });
-
-  it('request documents and document review follow the API rules', () => {
-    expect(
-      ['new', 'under_review', 'interview'].map((s) => canRequestDocuments(s as never)),
-    ).toEqual([true, true, true]);
-    expect(canRequestDocuments('docs_missing')).toBe(false);
-    expect(canReviewDocuments('draft')).toBe(false);
-    expect(canReviewDocuments('rejected')).toBe(false);
-    expect(canReviewDocuments('docs_missing')).toBe(true);
-  });
-});
-
-describe('downloadPath rule (A11)', () => {
-  it('links a current document through the API base and never a superseded one', () => {
-    expect(documentUrl({ downloadPath: 'admin/applications/7/documents/9/file' })).toBe(
-      '/api/v1/admin/applications/7/documents/9/file',
-    );
-    expect(documentUrl({ downloadPath: null })).toBeNull();
   });
 });
 
@@ -129,50 +86,7 @@ describe('login errors', () => {
   });
 });
 
-describe('applications list query', () => {
-  it('reads the URL, ignoring unknown statuses and bad pages', () => {
-    expect(listQuery({ status: 'interview', q: '  SA-2026 ', reviewer: '4', page: 3 })).toEqual({
-      status: 'interview',
-      q: 'SA-2026',
-      reviewerId: '4',
-      page: 3,
-      limit: PAGE_SIZE,
-    });
-    expect(listQuery({ status: 'bogus', q: '', page: 0 })).toMatchObject({
-      status: null,
-      q: null,
-      page: 1,
-    });
-    expect(fullName({ firstName: 'A', middleName: null, lastName: 'B' })).toBe('A B');
-  });
-});
-
-describe('activity log lines', () => {
-  const t = (key: string, params?: Record<string, unknown>) =>
-    `${key}${params ? JSON.stringify(params) : ''}`;
-
-  it('describes status changes and document events with their data', () => {
-    expect(eventLine({ type: 'STATUS_CHANGED', data: { from: 'new', to: 'accepted' } }, t)).toBe(
-      'admin.review.log.events.STATUS_CHANGED{"to":"status.accepted"}',
-    );
-    expect(eventLine({ type: 'DOCUMENT_REJECTED', data: { docType: 'id_copy' } }, t)).toBe(
-      'admin.review.log.events.DOCUMENT_REJECTED{"type":"docType.id_copy"}',
-    );
-    expect(eventLine({ type: 'DOCS_REQUESTED', data: { docTypes: ['id_copy', 'other'] } }, t)).toBe(
-      'admin.review.log.events.DOCS_REQUESTED{"types":"docType.id_copy، docType.other"}',
-    );
-    expect(eventLine({ type: 'SOMETHING_NEW', data: null }, t)).toBe(
-      'admin.review.log.events.other{"type":"SOMETHING_NEW"}',
-    );
-  });
-});
-
-describe('overview chart and messages helpers', () => {
-  it('labels months in the Gregorian calendar', () => {
-    expect(monthLabel('2026-09', 'en-GB')).toBe('Sept');
-    expect(monthLabel('bad', 'en-GB')).toBe('bad');
-  });
-
+describe('messages helpers', () => {
   it('keeps only known message filters', () => {
     expect(messageStatusParam('archived')).toBe('archived');
     expect(messageStatusParam('spam')).toBeNull();

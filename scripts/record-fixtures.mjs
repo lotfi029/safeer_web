@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 /**
  * Public fixtures and how to fetch them. Not recorded here: `posts` (the mock needs drafts, preview
  * tokens and bodies the list endpoint doesn't return), `testimonials` (the dev seed has no published
- * quotes), and the staff/portal fixtures (accounts, applications, slots), which are mock state.
+ * quotes), and the staff fixtures (accounts), which are mock state.
  */
 export const RECORDABLE = {
   site: { path: '/site' },

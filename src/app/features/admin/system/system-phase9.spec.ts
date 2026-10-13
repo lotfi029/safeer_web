@@ -1,6 +1,12 @@
 import { subscriberStatus } from '../../../core/api/admin/system-api';
-import { COLLECTIONS, slotLabel } from '../content/crud/collections';
-import { fromRiyadhInput, toBody, toRiyadhInput, validate } from '../content/crud/crud-config';
+import { COLLECTIONS } from '../content/crud/collections';
+import {
+  type CrudField,
+  fromRiyadhInput,
+  toBody,
+  toRiyadhInput,
+  validate,
+} from '../content/crud/crud-config';
 import { deviceLabel } from './account';
 import { diffLines } from './audit';
 import { templateFields, unknownVariables } from './channel';
@@ -17,31 +23,28 @@ describe('settings rules (site-settings.dto.ts)', () => {
     expect(mapEmbedAllowed('https://www.google.com/maps/place')).toBe(false);
   });
 
-  it('checks coordinates, the reference prefix and social links', () => {
+  it('checks coordinates and social links', () => {
     expect(
       settingsErrors({
         mapLat: '91',
         mapLng: '-181',
-        applicationRefPrefix: 'sa',
         facebookUrl: 'javascript:x',
       }),
     ).toEqual({
       mapLat: ['range'],
       mapLng: ['range'],
-      applicationRefPrefix: ['prefix'],
       facebookUrl: ['url'],
     });
     expect(
       settingsErrors({
         mapLat: '24.7',
-        applicationRefPrefix: 'SA',
         facebookUrl: 'https://facebook.com/x',
       }),
     ).toEqual({});
   });
 });
 
-describe('mail/SMS templates', () => {
+describe('mail templates', () => {
   it('finds placeholders the template does not declare', () => {
     expect(unknownVariables(['Hi {{ name }}, {{link}} {{ other }}'], ['name', 'link'])).toEqual([
       'other',
@@ -49,29 +52,24 @@ describe('mail/SMS templates', () => {
     expect(unknownVariables([null, 'plain'], [])).toEqual([]);
   });
 
-  it('mail templates have a subject; SMS bodies are capped at 480', () => {
-    expect(templateFields('mail').map((f) => f.key)).toEqual([
-      'name',
-      'subject',
-      'body',
-      'isEnabled',
-    ]);
-    const sms = templateFields('sms');
-    expect(sms.find((f) => f.key === 'body')?.max).toBe(480);
+  it('mail templates have a subject and a body', () => {
+    expect(templateFields().map((f) => f.key)).toEqual(['name', 'subject', 'body', 'isEnabled']);
   });
 });
 
-describe('interview slots and redirects', () => {
+describe('datetime fields and redirects', () => {
+  const fields: CrudField[] = [
+    { key: 'startsAt', type: 'datetime', label: 'startsAt', required: true },
+    { key: 'endsAt', type: 'datetime', label: 'endsAt', required: true, after: 'startsAt' },
+    { key: 'location', type: 'text', label: 'location', bilingual: true, nullable: true },
+  ];
+
   it('converts Riyadh wall-clock time to an ISO instant with offset and back', () => {
     expect(fromRiyadhInput('2026-10-12T10:00')).toBe('2026-10-12T10:00:00+03:00');
     expect(toRiyadhInput('2026-10-12T07:00:00.000Z')).toBe('2026-10-12T10:00');
-    expect(slotLabel('2026-10-12T07:00:00Z', '2026-10-12T07:30:00Z')).toBe(
-      'Mon, 12 Oct 2026, 10:00–10:30',
-    );
   });
 
   it('requires the end after the start and sends ISO instants', () => {
-    const fields = COLLECTIONS['interviewSlots'].fields;
     expect(validate(fields, { startsAt: '2026-10-12T10:00', endsAt: '2026-10-12T09:00' })).toEqual({
       endsAt: ['after'],
     });
