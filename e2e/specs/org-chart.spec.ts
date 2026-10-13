@@ -110,15 +110,22 @@ test.describe('org structure page', () => {
 });
 
 test.describe('«من نحن» menu', () => {
-  test('the header dropdown lists the about page and the org structure', async ({ page }) => {
+  test('the header dropdown lists the about page, the org structure and the licences', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await gotoHydrated(page, '/ar');
     const button = page.locator('app-site-header').getByRole('button', { name: 'من نحن' });
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await button.click();
     const menu = page.locator('#about-menu');
-    await expect(menu.getByRole('link')).toHaveCount(2);
+    await expect(menu.getByRole('link')).toHaveCount(3);
     await expect(menu.getByRole('link', { name: 'عن الجمعية' })).toBeVisible();
+    // As on ta3lom: the licences page is also under «من نحن» (same URL as under «الحوكمة»).
+    await expect(menu.getByRole('link', { name: 'التراخيص' })).toHaveAttribute(
+      'href',
+      '/ar/governance/licences',
+    );
     await menu.getByRole('link', { name: 'الهيكل التنظيمي' }).click();
     await expect(page).toHaveURL(/\/ar\/about\/org-structure$/);
     await expect(menu).toBeHidden();

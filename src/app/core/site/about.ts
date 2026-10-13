@@ -1,3 +1,5 @@
+import { GOVERNANCE_PATHS } from './governance';
+
 /** Locale-agnostic paths of the «من نحن» pages (prefix with `LocaleService.link()`). */
 export const ABOUT_PATHS = {
   about: '/about',
@@ -15,7 +17,10 @@ export interface NavMenuLink {
   exact?: boolean;
 }
 
-/** The «من نحن» dropdown: the about page itself, then the organisational structure. */
+/**
+ * The «من نحن» dropdown, as on ta3lom: the about page itself, the organisational structure, then
+ * the licences (the governance page — same URL, also listed under «الحوكمة»).
+ */
 export function aboutLinks(): NavMenuLink[] {
   return [
     {
@@ -30,6 +35,12 @@ export function aboutLinks(): NavMenuLink[] {
       label: null,
       labelKey: 'shell.orgStructure',
       path: ABOUT_PATHS.orgStructure,
+    },
+    {
+      key: 'licences',
+      label: null,
+      labelKey: 'pages.governance.licences',
+      path: GOVERNANCE_PATHS.licences,
     },
   ];
 }
