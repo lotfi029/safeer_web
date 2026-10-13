@@ -15,7 +15,7 @@ test.describe('Phase 0 placeholder shell', () => {
     expect(en).toMatch(/<html[^>]*lang="en"[^>]*dir="ltr"/);
   });
 
-  test('admin and portal render client-side with noindex', async ({ page }) => {
+  test('admin renders client-side with noindex', async ({ page }) => {
     await page.goto('/ar/admin');
     await expect(page).toHaveURL(/\/ar\/admin\/login/);
     await expect(page.locator('h1')).toHaveText('تسجيل دخول الموظفين');
@@ -23,8 +23,6 @@ test.describe('Phase 0 placeholder shell', () => {
       'content',
       'noindex, nofollow',
     );
-    await page.goto('/ar/portal');
-    await expect(page.locator('h1')).toHaveText('بوابة الطالب');
   });
 
   for (const { viewport, locale } of matrix()) {

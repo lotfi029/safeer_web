@@ -9,7 +9,7 @@ import type { CsvExport } from './admin-models';
 const A = `${API_PREFIX}/admin`;
 const enc = encodeURIComponent;
 
-// ---------- models (safeer_api v1.0.0-rc1: users, site-settings, mail, sms, audit, newsletter, auth) ----------
+// ---------- models (safeer_api: users, site-settings, mail, audit, newsletter, auth) ----------
 
 export interface SiteSettings {
   id: Id;
@@ -40,9 +40,10 @@ export interface SiteSettings {
   seoTitleEn: string | null;
   seoDescriptionAr: string | null;
   seoDescriptionEn: string | null;
-  notifyEmailOnStatusChange: boolean;
-  notifySmsOnStatusChange: boolean;
-  applicationRefPrefix: string;
+  /** Read-only: copied by the API from the primary published licence (PUT refuses them). */
+  licenceNo: string | null;
+  licenceIssuerAr: string | null;
+  licenceIssuerEn: string | null;
   updatedBy: Id | null;
   updatedAt: string;
 }
@@ -66,20 +67,6 @@ export interface MailSettings {
   updatedAt: string;
   /** The password is never returned; this says whether one is stored. */
   passwordIsSet: boolean;
-}
-
-export interface SmsSettings {
-  id: Id;
-  isEnabled: boolean;
-  driver: 'log' | 'http' | 'unifonic';
-  providerUrl: string | null;
-  senderName: string | null;
-  lastTestAt: string | null;
-  lastTestOk: boolean | null;
-  lastTestError: string | null;
-  updatedAt: string;
-  /** The token is never returned; this says whether one is stored. */
-  tokenIsSet: boolean;
 }
 
 export interface MessageTemplate {
@@ -108,8 +95,6 @@ export interface MessageLog {
   subject?: string;
   hasPayload?: boolean;
   nextRetryAt?: string | null;
-  /** SMS. */
-  toPhone?: string;
   status: LogStatus;
   attempts: number;
   error: string | null;
@@ -164,9 +149,10 @@ export interface CacheStats {
   uptimeSeconds: number;
 }
 
-export type Channel = 'mail' | 'sms';
+/** The message channel (SMS was removed with the student portal). */
+export type Channel = 'mail';
 
-/** Users, settings, mail/SMS, audit, newsletter, account and cache (Stage 2, Phase 9). */
+/** Users, settings, mail, audit, newsletter, account and cache (Stage 2, Phase 9). */
 @Injectable({ providedIn: 'root' })
 export class SystemApi {
   private readonly http = inject(HttpClient);
@@ -208,14 +194,11 @@ export class SystemApi {
     return this.http.delete<{ purged: number; tag: string | null }>(`${A}/cache`);
   }
 
-  // ---------- mail / SMS ----------
-  channelSettings<T extends MailSettings | SmsSettings>(channel: Channel): Observable<T> {
+  // ---------- mail ----------
+  channelSettings<T extends MailSettings>(channel: Channel): Observable<T> {
     return this.http.get<T>(`${A}/${channel}/settings`);
   }
-  saveChannelSettings<T extends MailSettings | SmsSettings>(
-    channel: Channel,
-    body: object,
-  ): Observable<T> {
+  saveChannelSettings<T extends MailSettings>(channel: Channel, body: object): Observable<T> {
     return this.http.put<T>(`${A}/${channel}/settings`, body);
   }
   testChannel(channel: Channel, to: string): Observable<{ ok: boolean; error?: string }> {
@@ -296,12 +279,5 @@ export class SystemApi {
   }
   endOtherSessions(): Observable<{ ended: number }> {
     return this.http.delete<{ ended: number }>(`${A}/auth/sessions`);
-  }
-
-  // ---------- applications ----------
-  anonymise(id: Id): Observable<{ anonymized: true; reference: string }> {
-    return this.http.delete<{ anonymized: true; reference: string }>(
-      `${A}/applications/${enc(id)}`,
-    );
   }
 }

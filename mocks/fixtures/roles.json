@@ -1,9 +1,7 @@
 {
-  "_source": "B17: GET /admin/roles, copied from safeer_api src/auth/role-matrix.ts @ v1.0.0-rc1 (docs/api/src/auth/role-matrix.ts).",
-  "roles": ["admin", "reviewer", "editor", "support"],
+  "_source": "B17: GET /admin/roles, copied from safeer_api src/auth/role-matrix.ts (docs/api/src/auth/role-matrix.ts).",
+  "roles": ["admin", "editor", "support"],
   "matrix": {
-    "applications": ["admin", "reviewer"],
-    "applications.delete": ["admin"],
     "content": ["admin", "editor"],
     "redirects.delete": ["admin"],
     "inbox": ["admin", "support"],

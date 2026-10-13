@@ -27,6 +27,7 @@ test.describe('admin content', () => {
     ['admin-testimonials', '/admin/testimonials'],
     ['admin-partners', '/admin/partners'],
     ['admin-documents', '/admin/documents'],
+    ['admin-licences', '/admin/licences'],
     ['admin-stats', '/admin/stats'],
     ['admin-about-items', '/admin/about-items'],
     ['admin-pages', '/admin/pages'],
@@ -198,6 +199,43 @@ test.describe('admin content', () => {
     await content.remove('testimonials', created!.id);
   });
 
+  test('licences: add two, make one the main licence, then the other (PATCH :id/primary)', async ({
+    page,
+  }) => {
+    const before = await content.list<{ id: string; isPrimary: boolean }>('licences');
+    const wasPrimary = before.data.find((l) => l.isPrimary)?.id;
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await asEditor(page, '/admin/licences');
+    const list = page.locator('app-crud-list[data-collection="licences"]');
+    const titles = [tagOf('Licence'), tagOf('Licence')];
+    for (const title of titles) {
+      await list.getByRole('button', { name: 'Add licence' }).click();
+      await dialog(page).getByLabel('Title (Arabic)').fill(title);
+      await dialog(page).getByLabel('Licence number').fill('[...]');
+      // The API copies the primary licence's number/issuer into the site settings: keep them as the
+      // seed's while this test holds the primary flag.
+      await dialog(page).getByLabel('Issued by (Arabic)').fill('[جهة الترخيص]');
+      await dialog(page).getByLabel('Issued on').fill('2020-01-01');
+      await dialog(page).getByLabel('Expires on').fill('2030-01-01');
+      await dialog(page).getByRole('button', { name: 'Save' }).click();
+      await expect(dialog(page)).toBeHidden();
+    }
+    const [a, b] = titles.map((t) => rowOf(list, t));
+    await b.getByRole('button', { name: /Make main licence/ }).click();
+    await expect(b.getByTestId('row-flag')).toHaveText('Main licence');
+    await expect(a.getByTestId('row-flag')).toHaveCount(0);
+    await a.getByRole('button', { name: /Make main licence/ }).click();
+    await expect(a.getByTestId('row-flag')).toHaveText('Main licence');
+    await expect(b.getByTestId('row-flag')).toHaveCount(0);
+    await expect(list.getByTestId('row-flag')).toHaveCount(1);
+
+    const after = await content.list<{ id: string; titleAr: string }>('licences');
+    for (const l of after.data.filter((r) => titles.includes(r.titleAr))) {
+      await content.remove('licences', l.id);
+    }
+    if (wasPrimary) await content.patch('licences', `${wasPrimary}/primary`, {});
+  });
+
   test('documents: slug rule, PDF upload through the picker, category in use cannot be deleted', async ({
     page,
   }) => {
@@ -211,10 +249,13 @@ test.describe('admin content', () => {
     await dialog(page).getByRole('button', { name: 'Save' }).click();
     await expect(dialog(page).getByText('Lower-case letters and digits')).toBeVisible();
     await dialog(page).getByLabel('Slug').fill(slug);
+    await expect(dialog(page).getByLabel('Section group')).toHaveValue('governance');
+    await dialog(page).getByLabel('Section group').selectOption('other');
     await dialog(page).getByRole('button', { name: 'Save' }).click();
     await expect(dialog(page)).toBeHidden();
     const catRow = cats.locator('[data-row]').filter({ hasText: slug });
     await expect(catRow).toBeVisible();
+    await expect(catRow).toContainText('Other');
 
     const docs = page.locator('app-crud-list[data-collection="documents"]');
     const title = tagOf('Document');
@@ -224,6 +265,7 @@ test.describe('admin content', () => {
       .getByLabel('Section')
       .selectOption({ label: await catRow.getByTestId('row-title').innerText() });
     await d.getByLabel('Title (Arabic)').fill(title);
+    await d.getByLabel('Meta line (Arabic)').fill('[...]');
     await d.getByRole('button', { name: /Choose/ }).click();
     const picker = page.getByRole('dialog', { name: 'Choose a file' });
     await picker.locator('input[type=file]').setInputFiles(uniquePdf());
@@ -288,7 +330,7 @@ test.describe('admin content', () => {
       await d.getByLabel('Primary button link').fill('javascript:alert(1)');
       await d.getByRole('button', { name: 'Save' }).click();
       await expect(d.getByRole('alert').first()).toBeVisible();
-      await d.getByLabel('Primary button link').fill('/apply');
+      await d.getByLabel('Primary button link').fill('/contact');
       await d.getByRole('button', { name: 'Save' }).click();
       await expect(d).toBeHidden();
       const row = rowOf(page, '[عنوان القسم]');
@@ -418,7 +460,7 @@ test.describe('admin content', () => {
     await expect(card).toHaveCount(0);
   });
 
-  test('roles: editors get content but not the inbox; reviewers get no content', async ({
+  test('roles: editors get content but not the inbox; support gets no content', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -429,8 +471,8 @@ test.describe('admin content', () => {
     await page.goto('/en/admin/testimonials');
     await expect(page).toHaveURL(/\/admin\/forbidden$/);
     await page.getByRole('button', { name: 'Sign out' }).click();
-    const reviewer = await staffAccount('reviewer', { fresh: true });
-    await signInAs(page, reviewer, '/admin/pages');
+    const support = await staffAccount('support', { fresh: true });
+    await signInAs(page, support, '/admin/pages');
     await expect(page).toHaveURL(/\/admin\/forbidden$/);
   });
 });

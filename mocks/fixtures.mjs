@@ -15,11 +15,10 @@ import board from './fixtures/board.json' with { type: 'json' };
 import testimonials from './fixtures/testimonials.json' with { type: 'json' };
 import partners from './fixtures/partners.json' with { type: 'json' };
 import documents from './fixtures/documents.json' with { type: 'json' };
+import licences from './fixtures/licences.json' with { type: 'json' };
 import newsCategories from './fixtures/newsCategories.json' with { type: 'json' };
 import posts from './fixtures/posts.json' with { type: 'json' };
 import countries from './fixtures/countries.json' with { type: 'json' };
-import applications from './fixtures/applications.json' with { type: 'json' };
-import interviewSlots from './fixtures/interviewSlots.json' with { type: 'json' };
 import adminContent from './fixtures/adminContent.json' with { type: 'json' };
 import adminSystem from './fixtures/adminSystem.json' with { type: 'json' };
 
@@ -36,11 +35,10 @@ export const fixtures = {
   testimonials,
   partners,
   documents,
+  licences,
   newsCategories,
   posts,
   countries,
-  applications,
-  interviewSlots,
   adminContent,
   adminSystem,
 };

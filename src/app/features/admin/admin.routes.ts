@@ -69,20 +69,6 @@ export const ADMIN_ROUTES: Routes = [
             loadComponent: () => import('./forbidden').then((m) => m.Forbidden),
           },
           {
-            path: 'applications',
-            canActivate: [roleGuard],
-            data: { area: 'applications' },
-            loadComponent: () =>
-              import('./applications/applications-list').then((m) => m.ApplicationsList),
-          },
-          {
-            path: 'applications/:id',
-            canActivate: [roleGuard],
-            data: { area: 'applications' },
-            loadComponent: () =>
-              import('./applications/application-review').then((m) => m.ApplicationReview),
-          },
-          {
             path: 'messages',
             canActivate: [roleGuard],
             data: { area: 'inbox' },
@@ -132,6 +118,7 @@ export const ADMIN_ROUTES: Routes = [
           ),
           ...crud('partners', ['partners'], 'partners'),
           ...crud('documents', ['documents', 'docCategories'], 'documents', 'documents.note'),
+          ...crud('licences', ['licences'], 'licences', 'licences.note'),
           ...crud('stats', ['stats'], 'stats', 'stats.note'),
           ...crud('about-items', ['aboutItems'], 'aboutItems'),
           {
@@ -143,13 +130,6 @@ export const ADMIN_ROUTES: Routes = [
           },
           // ---------- system (Phase 9) ----------
           ...crud('redirects', ['redirects'], 'redirects', 'redirects.note'),
-          ...crud(
-            'interview-slots',
-            ['interviewSlots'],
-            'interviewSlots',
-            'interviewSlots.note',
-            'applications',
-          ),
           {
             path: 'newsletter',
             canActivate: [roleGuard],
@@ -172,12 +152,6 @@ export const ADMIN_ROUTES: Routes = [
             path: 'system/mail',
             canActivate: [roleGuard],
             data: { area: 'settings', channel: 'mail' },
-            loadComponent: () => import('./system/channel').then((m) => m.AdminChannel),
-          },
-          {
-            path: 'system/sms',
-            canActivate: [roleGuard],
-            data: { area: 'settings', channel: 'sms' },
             loadComponent: () => import('./system/channel').then((m) => m.AdminChannel),
           },
           {

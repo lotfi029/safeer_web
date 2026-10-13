@@ -9,24 +9,20 @@ import { DigitsPipe, LocalDatePipe, RelTimePipe } from '../../../shared/pipes/fo
 import { Button } from '../../../shared/ui/button/button';
 import { Icon } from '../../../shared/ui/icon/icon';
 import type { IconName } from '../../../shared/ui/icon/icon-names';
-import { StatusPill } from '../../../shared/ui/status-pill/status-pill';
 import { AdminBadges } from '../layout/admin-badges';
 import { AdminPageHead } from '../layout/admin-page-head';
-import { SeriesChart } from './series-chart';
 
-type StatKey = keyof AdminOverview['statCards'];
+type StatKey = keyof NonNullable<AdminOverview['statCards']>;
 
+/** Stat cards the API still sends; anything else in `statCards` is ignored. */
 const STATS: readonly { key: StatKey; icon: IconName }[] = [
-  { key: 'newApplications', icon: 'file' },
-  { key: 'underReview', icon: 'clock' },
-  { key: 'acceptedThisMonth', icon: 'check' },
   { key: 'unreadMessages', icon: 'mail' },
 ];
 
 /**
  * Overview (prototype `aOverview`, C20/A5). Every block is shown only when the role's response has it:
- * application figures, the chart and the latest applications for admin/reviewer; unread messages for
- * admin/support; content alerts for everyone; recent activity for admins (area `audit`).
+ * unread messages for admin/support; content alerts for everyone; recent activity for admins (area
+ * `audit`). A missing block is simply not rendered.
  */
 @Component({
   selector: 'app-admin-overview',
@@ -38,9 +34,7 @@ const STATS: readonly { key: StatKey; icon: IconName }[] = [
     RelTimePipe,
     Button,
     Icon,
-    StatusPill,
     AdminPageHead,
-    SeriesChart,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -94,17 +88,8 @@ const STATS: readonly { key: StatKey; icon: IconName }[] = [
           </ul>
         }
 
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          @if (o.series?.length) {
-            <section class="card">
-              <app-series-chart [series]="o.series!" />
-            </section>
-          }
-          <section
-            class="card flex flex-col gap-4"
-            [class.lg:col-span-2]="!o.series?.length"
-            aria-labelledby="alerts-title"
-          >
+        <div class="grid gap-6">
+          <section class="card flex flex-col gap-4" aria-labelledby="alerts-title">
             <h2 class="t-h4 m-0 text-heading" id="alerts-title">
               {{ 'admin.overview.alerts.title' | transloco }}
             </h2>
@@ -147,50 +132,14 @@ const STATS: readonly { key: StatKey; icon: IconName }[] = [
           </section>
         </div>
 
-        @if (o.latestApplications; as latest) {
-          <section class="card flex flex-col gap-4" aria-labelledby="latest-title">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <h2 class="t-h4 m-0 text-heading" id="latest-title">
-                {{ 'admin.overview.latest.title' | transloco }}
-              </h2>
-              <a class="font-semibold" [routerLink]="locale.link('/admin/applications')">{{
-                'admin.overview.latest.viewAll' | transloco
-              }}</a>
-            </div>
-            @if (latest.length) {
-              <ul class="m-0 flex list-none flex-col p-0" data-testid="latest-applications">
-                @for (a of latest; track a.id) {
-                  <li class="border-t border-border first:border-t-0">
-                    <a
-                      class="flex flex-wrap items-center gap-x-6 gap-y-2 py-3 text-text no-underline hover:bg-raise md:px-2"
-                      [routerLink]="locale.link('/admin/applications/' + a.id)"
-                    >
-                      <strong class="text-heading" dir="ltr">{{ a.reference }}</strong>
-                      <span class="min-w-0 flex-1 truncate">{{
-                        a.name || ('common.missingValue' | transloco)
-                      }}</span>
-                      <span class="t-small text-text-muted">{{
-                        a.submittedAt | localDate: 'medium'
-                      }}</span>
-                      <app-status-pill [status]="a.status" />
-                    </a>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="t-muted m-0">{{ 'admin.overview.latest.empty' | transloco }}</p>
-            }
-          </section>
-        }
-
         @if (showAudit()) {
           <section class="card flex flex-col gap-4" aria-labelledby="audit-title">
             <h2 class="t-h4 m-0 text-heading" id="audit-title">
               {{ 'admin.overview.audit.title' | transloco }}
             </h2>
-            @if (o.recentAuditLog.length) {
+            @if (o.recentAuditLog?.length) {
               <ul class="m-0 flex list-none flex-col gap-3 p-0" data-testid="recent-audit">
-                @for (e of o.recentAuditLog; track e.id) {
+                @for (e of o.recentAuditLog ?? []; track e.id) {
                   <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span class="font-semibold text-heading">{{ e.action }}</span>
                     <span class="min-w-0 break-words"
@@ -211,7 +160,7 @@ const STATS: readonly { key: StatKey; icon: IconName }[] = [
       </div>
     } @else if (!error()) {
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-hidden="true">
-        @for (i of [1, 2, 3, 4]; track i) {
+        @for (i of [1, 2]; track i) {
           <div class="card flex flex-col gap-3">
             <span class="skeleton h-5 w-2/3"></span>
             <span class="skeleton h-9 w-1/3"></span>

@@ -1,17 +1,16 @@
 import { expect, test } from '@playwright/test';
 import { checkScreen, matrix, openAt } from '../support/matrix';
 
-/** About, work areas and scholarships (phase 3, prototype `#/about`, `#/work`, `#/scholarships`). */
+/** About and work areas (phase 3, prototype `#/about`, `#/work`). */
 const PAGES = [
   { name: 'about', path: '/about', title: 'من نحن' },
   { name: 'work-areas', path: '/work-areas', title: 'مجالات عمل الجمعية' },
-  { name: 'scholarships', path: '/scholarships', title: 'منح الوافدين للدراسة بالجامعات السعودية' },
 ] as const;
 
 const MOBILE = { name: '390', width: 390, height: 844 };
 const DESKTOP = { name: '1440', width: 1440, height: 900 };
 
-test.describe('public pages A (about, work areas, scholarships)', () => {
+test.describe('public pages A (about, work areas)', () => {
   for (const p of PAGES) {
     for (const { viewport, locale } of matrix()) {
       test(`${p.name} ${locale} @${viewport.name}`, async ({ page }, testInfo) => {
@@ -41,7 +40,7 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
     await expect(goals).toHaveCount(5);
     await expect(goals.first()).toContainText('١');
     await expect(
-      page.locator('a[href="/ar/documents?category=meeting-minutes"]').first(),
+      page.locator('main a[href="/ar/governance/general-assembly"]').first(),
     ).toBeVisible();
   });
 
@@ -71,43 +70,5 @@ test.describe('public pages A (about, work areas, scholarships)', () => {
     const themes = page.locator('#work-themes').locator('xpath=ancestor::section[1]');
     await expect(themes.locator('ul > li')).toHaveCount(5);
     await expect(themes.getByText('فرصة تحسين')).toHaveCount(2);
-  });
-
-  test('scholarships: sticky apply bar on mobile only', async ({ page }) => {
-    await openAt(page, '/scholarships', MOBILE, 'ar');
-    const bar = page.getByTestId('apply-bar');
-    await expect(bar).toBeVisible();
-    await expect(bar).toBeInViewport();
-    await expect(bar.getByRole('link')).toHaveAttribute('href', '/ar/apply');
-    const box = await bar.boundingBox();
-    expect(box!.y + box!.height).toBeCloseTo(MOBILE.height, 0);
-
-    // At the very end of the page the bar rests above the footer (never covers it).
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    const footer = page.locator('footer');
-    await expect(footer).toBeInViewport();
-    const barBox = await bar.boundingBox();
-    const footerBox = await footer.boundingBox();
-    expect(barBox!.y + barBox!.height).toBeLessThanOrEqual(footerBox!.y + 1);
-
-    await page.setViewportSize(DESKTOP);
-    await expect(bar).toBeHidden();
-  });
-
-  test('scholarships: steps are an ordered list of 5 and the last is highlighted', async ({
-    page,
-  }) => {
-    await openAt(page, '/scholarships', DESKTOP, 'ar');
-    const steps = page
-      .locator('#scholarships-steps')
-      .locator('xpath=ancestor::section[1]')
-      .locator('ol > li');
-    await expect(steps).toHaveCount(5);
-    const [first, last] = await Promise.all([
-      steps.first().boundingBox(),
-      steps.last().boundingBox(),
-    ]);
-    // xl: one row of 5 columns.
-    expect(Math.abs(first!.y - last!.y)).toBeLessThan(2);
   });
 });

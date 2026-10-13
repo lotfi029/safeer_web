@@ -93,7 +93,7 @@ export const KERNEL = {
     required: ['slug', 'nameAr'],
     unique: 'slug',
     timestamps: false,
-    defaults: { isPublished: true, nameEn: null },
+    defaults: { isPublished: true, nameEn: null, sectionGroup: 'governance' },
     usedBy: [['documents', 'categoryId']],
   },
   documents: {
@@ -104,10 +104,31 @@ export const KERNEL = {
     defaults: {
       isPublished: false,
       titleEn: null,
+      metaAr: null,
+      metaEn: null,
       assetId: null,
       docDate: null,
       downloadCount: 0,
       sortOrder: 0,
+    },
+  },
+  /** Licences (governance): `PATCH :id/primary` makes one the primary licence. */
+  licences: {
+    area: 'content',
+    publishable: true,
+    sortable: true,
+    search: ['titleAr', 'titleEn', 'number'],
+    required: ['titleAr'],
+    defaults: {
+      isPublished: true,
+      titleEn: null,
+      number: null,
+      issuerAr: null,
+      issuerEn: null,
+      issuedOn: null,
+      expiresOn: null,
+      assetId: null,
+      isPrimary: false,
     },
   },
   stats: {
@@ -258,7 +279,7 @@ export function contentRoutes(ctx) {
     return { data: rows.slice((page - 1) * limit, page * limit), total: rows.length, page, limit };
   }
 
-  function checkBody(endpoint, body, { create }) {
+  function checkBody(endpoint, body, { create, id = null }) {
     const spec = KERNEL[endpoint];
     if (create) {
       for (const f of spec.required ?? []) {
@@ -290,6 +311,25 @@ export function contentRoutes(ctx) {
       }
     }
     if (
+      endpoint === 'doc-categories' &&
+      body?.sectionGroup !== undefined &&
+      !['governance', 'other'].includes(body.sectionGroup)
+    ) {
+      return invalid('sectionGroup', 'Invalid enum value');
+    }
+    if (endpoint === 'licences') {
+      for (const key of ['issuedOn', 'expiresOn']) {
+        const v = body?.[key];
+        if (v !== undefined && v !== null && !/^\d{4}-\d{2}-\d{2}$/.test(String(v)))
+          return invalid(key, 'Invalid date');
+      }
+      const current = id ? table('licences').find((r) => r.id === id) : {};
+      const issued = body?.issuedOn !== undefined ? body.issuedOn : current?.issuedOn;
+      const expires = body?.expiresOn !== undefined ? body.expiresOn : current?.expiresOn;
+      if (issued && expires && expires < issued)
+        return invalid('expiresOn', 'expiresOn must not be before issuedOn');
+    }
+    if (
       endpoint === 'stats' &&
       body?.value !== undefined &&
       body.value !== null &&
@@ -314,6 +354,24 @@ export function contentRoutes(ctx) {
         return problem(409, 'CONFLICT');
     }
     return null;
+  }
+
+  /**
+   * One primary licence: making a row primary clears the flag everywhere else. Every licence write
+   * copies the primary published licence's number/issuer into the site settings (null without one).
+   */
+  function onPrimary(endpoint, row) {
+    if (endpoint !== 'licences') return;
+    if (row?.isPrimary)
+      for (const other of table('licences')) if (other.id !== row.id) other.isPrimary = false;
+    const primary = table('licences').find((l) => l.isPrimary && l.isPublished);
+    const site = ctx.fixtures.site?.settings;
+    if (site)
+      Object.assign(site, {
+        licenceNo: primary?.number ?? null,
+        licenceIssuerAr: primary?.issuerAr ?? null,
+        licenceIssuerEn: primary?.issuerEn ?? null,
+      });
   }
 
   function onPublish(endpoint, row, wasPublished) {
@@ -348,6 +406,19 @@ export function contentRoutes(ctx) {
         const post = table('news').find((p) => p.id === query.get('id'));
         if (!post) return problem(404, 'NOT_FOUND');
         return json(200, { token: 'mock-preview', expiresInSeconds: 900 });
+      },
+    ],
+    [
+      'PATCH',
+      /^\/api\/v1\/admin\/licences\/([^/]+)\/primary$/,
+      ({ req, params }) => {
+        const g = guard(req, 'content', { write: true });
+        if (g.error) return g.error;
+        const row = table('licences').find((r) => r.id === params[0]);
+        if (!row) return problem(404, 'NOT_FOUND');
+        Object.assign(row, { isPrimary: true, updatedAt: nowIso() });
+        onPrimary('licences', row);
+        return json(200, row);
       },
     ],
     [
@@ -462,6 +533,7 @@ export function contentRoutes(ctx) {
           ['news', 'coverAssetId', 'posts', (r) => r.titleAr],
           ['partners', 'logoAssetId', 'partners', (r) => r.nameAr],
           ['documents', 'assetId', 'documents', (r) => r.titleAr],
+          ['licences', 'assetId', 'licences', (r) => r.titleAr],
         ];
         const usages = refs.flatMap(([endpoint, key, entity, label]) =>
           table(endpoint)
@@ -507,6 +579,7 @@ export function contentRoutes(ctx) {
           row.isPublished = body?.isPublished ?? true;
           row.updatedAt = nowIso();
           onPublish(endpoint, row, was);
+          onPrimary(endpoint, null);
           return json(200, withWarnings(endpoint, row));
         },
       ]);
@@ -541,6 +614,7 @@ export function contentRoutes(ctx) {
             onPublish(endpoint, row, false);
           }
           table(endpoint).push(row);
+          onPrimary(endpoint, row);
           return json(201, withWarnings(endpoint, row));
         },
       ],
@@ -563,7 +637,8 @@ export function contentRoutes(ctx) {
           const row = table(endpoint).find((r) => r.id === params[0]);
           if (!row) return problem(404, 'NOT_FOUND');
           const bad =
-            checkBody(endpoint, body, { create: false }) ?? conflict(endpoint, body, row.id);
+            checkBody(endpoint, body, { create: false, id: row.id }) ??
+            conflict(endpoint, body, row.id);
           if (bad) return bad;
           if (
             endpoint === 'news' &&
@@ -576,6 +651,7 @@ export function contentRoutes(ctx) {
           Object.assign(row, body);
           if (spec.timestamps !== false) row.updatedAt = nowIso();
           onPublish(endpoint, row, was);
+          onPrimary(endpoint, row);
           return json(200, withWarnings(endpoint, row));
         },
       ],
@@ -592,6 +668,7 @@ export function contentRoutes(ctx) {
               return problem(409, 'RESOURCE_IN_USE');
           }
           table(endpoint).splice(i, 1);
+          onPrimary(endpoint, null);
           if (endpoint === 'work-areas')
             db.content['work-area-items'] = table('work-area-items').filter(
               (r) => r.workAreaId !== params[0],

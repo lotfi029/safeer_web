@@ -70,38 +70,21 @@ describe('API interceptor pipeline', () => {
     req.flush({});
   });
 
-  it('sends X-CSRF-Token from the matching session on non-GET only', () => {
+  it('sends X-CSRF-Token from the staff session on non-GET admin calls only', () => {
     tokens.staff.set('staff-token');
-    tokens.applicant.set('app-token');
 
     http.post('/api/v1/admin/auth/logout', {}).subscribe();
     expect(ctrl.expectOne('/api/v1/admin/auth/logout').request.headers.get('X-CSRF-Token')).toBe(
       'staff-token',
     );
 
-    http.patch('/api/v1/portal/application', {}).subscribe();
-    expect(
-      ctrl
-        .expectOne((r) => r.url === '/api/v1/portal/application')
-        .request.headers.get('X-CSRF-Token'),
-    ).toBe('app-token');
-
-    http.get('/api/v1/portal/me').subscribe();
-    expect(
-      ctrl.expectOne((r) => r.url === '/api/v1/portal/me').request.headers.has('X-CSRF-Token'),
-    ).toBe(false);
+    http.get('/api/v1/admin/me').subscribe();
+    expect(ctrl.expectOne('/api/v1/admin/me').request.headers.has('X-CSRF-Token')).toBe(false);
 
     http.post('/api/v1/contact', {}).subscribe();
     const contact = ctrl.expectOne((r) => r.url === '/api/v1/contact');
     expect(contact.request.headers.has('X-CSRF-Token')).toBe(false);
     expect(contact.request.withCredentials).toBe(false);
-  });
-
-  it('sends credentials on POST /applications (starts the applicant session)', () => {
-    http.post('/api/v1/applications', {}).subscribe();
-    expect(ctrl.expectOne((r) => r.url === '/api/v1/applications').request.withCredentials).toBe(
-      true,
-    );
   });
 
   it('turns failures into ApiError', async () => {
@@ -115,29 +98,27 @@ describe('API interceptor pipeline', () => {
     await expect(promise).rejects.toBeInstanceOf(ApiError);
   });
 
-  it('a 401 inside the portal clears the session and redirects to the portal login', async () => {
+  it('a 401 inside the admin clears the session and redirects to the admin login', async () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    tokens.applicant.set('app-token');
-    const promise = firstValueFrom(http.get('/api/v1/portal/documents'));
+    tokens.staff.set('staff-token');
+    const promise = firstValueFrom(http.get('/api/v1/admin/messages'));
     ctrl
-      .expectOne((r) => r.url === '/api/v1/portal/documents')
+      .expectOne((r) => r.url === '/api/v1/admin/messages')
       .flush({ code: 'UNAUTHENTICATED' }, { status: 401, statusText: 'x' });
     await expect(promise).rejects.toBeInstanceOf(ApiError);
-    expect(tokens.applicant()).toBeNull();
+    expect(tokens.staff()).toBeNull();
     expect(navigate).toHaveBeenCalledWith(
-      ['/en/portal/login'],
+      ['/en/admin/login'],
       expect.objectContaining({ queryParams: expect.any(Object) }),
     );
   });
 
-  it('a 401 from /portal/me is an answer, not an expiry', async () => {
+  it('a 401 from /admin/me is an answer, not an expiry', async () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate');
-    const promise = firstValueFrom(http.get('/api/v1/portal/me'));
-    ctrl
-      .expectOne((r) => r.url === '/api/v1/portal/me')
-      .flush({}, { status: 401, statusText: 'x' });
+    const promise = firstValueFrom(http.get('/api/v1/admin/me'));
+    ctrl.expectOne('/api/v1/admin/me').flush({}, { status: 401, statusText: 'x' });
     await expect(promise).rejects.toBeInstanceOf(ApiError);
     expect(navigate).not.toHaveBeenCalled();
   });

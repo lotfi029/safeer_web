@@ -1,13 +1,10 @@
 import { ar as aboutPage } from './pages/about';
 import { ar as workPage } from './pages/work';
-import { ar as scholarshipsPage } from './pages/scholarships';
 import { ar as testimonialsPage } from './pages/testimonials';
 import { ar as partnersPage } from './pages/partners';
-import { ar as documentsPage } from './pages/documents';
+import { ar as governancePage } from './pages/governance';
 import { ar as contactPage } from './pages/contact';
 import { ar as newsPage } from './pages/news';
-import { ar as applyPage } from './pages/apply';
-import { ar as portal } from './portal';
 
 /**
  * Arabic UI strings (default locale). Content (pages, news, …) comes from the API, never from here.
@@ -102,7 +99,7 @@ export const ar = {
       searchLabel: 'بحث',
     },
     timeline: {
-      label: 'مسار الطلب',
+      label: 'المراحل',
       done: 'مكتملة',
       now: 'جارية الآن',
       pending: 'لم تبدأ',
@@ -117,9 +114,9 @@ export const ar = {
     mainNav: 'القائمة الرئيسية',
     openMenu: 'فتح القائمة',
     menu: 'القائمة',
-    apply: 'قدّم طلب منحة',
-    portal: 'بوابة الطالب',
-    applyShort: 'قدّم طلب منحة',
+    contactCta: 'تواصل معنا',
+    governance: 'الحوكمة',
+    governanceMenu: 'قائمة الحوكمة',
     staff: 'لوحة التحكم',
     home: 'الصفحة الرئيسية',
     footer: {
@@ -129,11 +126,12 @@ export const ar = {
       social: 'حسابات التواصل الاجتماعي',
       about: 'من نحن',
       board: 'مجلس الإدارة',
-      documents: 'التراخيص والسياسات',
       work: 'مجالات عملنا',
-      scholarships: 'منح الوافدين',
-      applyLink: 'تسجيل طلب منحة',
       news: 'الأخبار',
+      contactLink: 'تواصل معنا',
+      governance: 'الحوكمة',
+      licences: 'التراخيص',
+      licenceNo: 'رقم الترخيص: {{no}}',
     },
     social: {
       facebook: 'فيسبوك',
@@ -157,13 +155,11 @@ export const ar = {
       allPartners: 'مشاهدة كل الشركاء',
     },
     news: newsPage,
-    apply: applyPage,
     about: aboutPage,
     work: workPage,
-    scholarships: scholarshipsPage,
     testimonials: testimonialsPage,
     partners: partnersPage,
-    documents: documentsPage,
+    governance: governancePage,
     contact: contactPage,
     board: {
       membersEyebrow: 'الأعضاء',
@@ -194,27 +190,6 @@ export const ar = {
     contact: 'تواصل معنا',
     retry: 'إعادة المحاولة',
   },
-  status: {
-    draft: 'مسودة',
-    new: 'جديد',
-    under_review: 'قيد المراجعة',
-    docs_missing: 'مستندات ناقصة',
-    interview: 'مقابلة',
-    accepted: 'مقبول',
-    rejected: 'مرفوض',
-  },
-  documentStatus: {
-    under_review: 'قيد المراجعة',
-    accepted: 'مقبول',
-    rejected: 'مرفوض',
-    missing: 'مطلوب',
-  },
-  docType: {
-    id_copy: 'صورة الهوية',
-    certificate: 'الشهادات الدراسية',
-    admission_letter: 'خطاب القبول',
-    other: 'مستند آخر',
-  },
   validation: {
     required: 'هذا الحقل مطلوب.',
     email: 'أدخل بريدًا إلكترونيًا صحيحًا.',
@@ -234,18 +209,6 @@ export const ar = {
       FORBIDDEN: 'لا تملك صلاحية لهذا الإجراء.',
       NOT_FOUND: 'العنصر غير موجود.',
       RATE_LIMITED: 'محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.',
-      APPLICATION_LOCKED: 'لا يمكن تعديل الطلب في حالته الحالية.',
-      APPLICATION_EXISTS: 'يوجد طلب قائم مرتبط بهذه البيانات. أرسلنا إليك رابط متابعته.',
-      OTP_INVALID: 'الرمز غير صحيح أو منتهي الصلاحية.',
-      DOCUMENTS_INCOMPLETE: 'بعض المستندات المطلوبة لم تُرفع بعد.',
-      SLOT_ALREADY_BOOKED: 'هذا الموعد محجوز. اختر موعدًا آخر.',
-      INTERVIEW_NOT_AVAILABLE: 'حجز المقابلة غير متاح حاليًا.',
-      INVALID_STATUS_TRANSITION: 'لا يمكن نقل الطلب إلى هذه الحالة.',
-      QUOTA_EXCEEDED:
-        'بلغ الطلب الحد الأقصى للملفات المرفوعة. تواصل معنا إن احتجت إلى إرسال ملفات أخرى.',
-      DOCUMENT_NOT_REVIEWABLE: 'لم يعد بالإمكان مراجعة هذا المستند.',
-      DOCUMENT_SUPERSEDED: 'استُبدل هذا المستند، ولم يعد ملفه متاحًا.',
-      INVALID_ASSIGNEE: 'لا يمكن إسناد الطلب إلى هذا المستخدم.',
       REDIRECT_CHAIN: 'هذا التحويل يمرّ عبر تحويل آخر.',
       UPSTREAM_UNAVAILABLE: 'الخدمة غير متاحة مؤقتًا. حاول بعد قليل.',
       UPSTREAM_TIMEOUT: 'استغرق الطلب وقتًا طويلًا. حاول مرة أخرى.',
@@ -264,7 +227,6 @@ export const ar = {
       INTERNAL_ERROR: 'حدث خطأ غير متوقع. حاول مرة أخرى.',
     },
   },
-  portal,
   admin: {
     login: {
       title: 'تسجيل دخول الموظفين',
@@ -303,5 +265,12 @@ export const ar = {
   },
   kit: {
     title: 'مكتبة المكوّنات',
+    status: {
+      plain: 'عادي',
+      teal: 'أساسي',
+      ok: 'نجاح',
+      warn: 'تنبيه',
+      solid: 'بارز',
+    },
   },
 };

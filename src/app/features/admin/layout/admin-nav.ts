@@ -13,7 +13,7 @@ export interface AdminNavItem {
   icon: IconName;
   /** Role-matrix area; no area = any staff member. */
   area?: StaffArea;
-  badge?: 'newApplications' | 'unreadMessages';
+  badge?: 'unreadMessages';
   exact?: boolean;
 }
 
@@ -29,19 +29,6 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
     label: 'main',
     items: [
       { path: '', label: 'overview', icon: 'layout-dashboard', exact: true },
-      {
-        path: 'applications',
-        label: 'applications',
-        icon: 'file-text',
-        area: 'applications',
-        badge: 'newApplications',
-      },
-      {
-        path: 'interview-slots',
-        label: 'interviewSlots',
-        icon: 'calendar-check',
-        area: 'applications',
-      },
       {
         path: 'messages',
         label: 'messages',
@@ -62,6 +49,7 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
       { path: 'testimonials', label: 'testimonials', icon: 'quote', area: 'inbox' },
       { path: 'partners', label: 'partners', icon: 'handshake', area: 'content' },
       { path: 'documents', label: 'documents', icon: 'folder', area: 'content' },
+      { path: 'licences', label: 'licences', icon: 'badge-check', area: 'content' },
       { path: 'stats', label: 'stats', icon: 'chart-column', area: 'content' },
       { path: 'about-items', label: 'aboutItems', icon: 'list-checks', area: 'content' },
       { path: 'media', label: 'media', icon: 'image', area: 'content' },
@@ -74,7 +62,6 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
       { path: 'system/users', label: 'users', icon: 'user-cog', area: 'users' },
       { path: 'system/settings', label: 'settings', icon: 'settings', area: 'settings' },
       { path: 'system/mail', label: 'mail', icon: 'mail', area: 'settings' },
-      { path: 'system/sms', label: 'sms', icon: 'smartphone', area: 'settings' },
       { path: 'system/audit', label: 'audit', icon: 'history', area: 'audit' },
     ],
   },

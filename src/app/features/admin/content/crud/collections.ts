@@ -150,9 +150,25 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     fields: [
       { key: 'slug', type: 'slug', label: 'slug', required: true, max: 64 },
       { key: 'name', type: 'text', label: 'name', bilingual: true, required: true, max: 191 },
+      {
+        key: 'sectionGroup',
+        type: 'select',
+        label: 'sectionGroup',
+        options: ['governance', 'other'],
+        defaultValue: 'governance',
+        hint: 'sectionGroupHint',
+      },
     ],
     primary: (r, l) => pick(r, 'name', l),
-    secondary: (r) => String(r['slug'] ?? ''),
+    secondary: (r, _l, t) =>
+      [
+        String(r['slug'] ?? ''),
+        r['sectionGroup']
+          ? t(`admin.content.options.sectionGroup.${String(r['sectionGroup'])}`)
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
   },
   documents: {
     id: 'documents',
@@ -170,6 +186,15 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       },
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 255 },
       {
+        key: 'meta',
+        type: 'text',
+        label: 'docMeta',
+        bilingual: true,
+        max: 190,
+        nullable: true,
+        hint: 'docMetaHint',
+      },
+      {
         key: 'assetId',
         type: 'media',
         label: 'file',
@@ -180,7 +205,43 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       { key: 'docDate', type: 'date', label: 'docDate', nullable: true },
     ],
     primary: (r, l) => pick(r, 'title', l),
-    secondary: (r) => String(r['docDate'] ?? ''),
+    secondary: (r, l) =>
+      [pick(r, 'meta', l), String(r['docDate'] ?? '')].filter(Boolean).join(' · '),
+  },
+  /** Licences (same area as documents); one of them is the primary licence (`PATCH :id/primary`). */
+  licences: {
+    id: 'licences',
+    endpoint: 'licences',
+    area: 'content',
+    publish: 'route',
+    sortable: true,
+    fields: [
+      { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },
+      { key: 'number', type: 'text', label: 'licenceNumber', max: 100, nullable: true },
+      { key: 'issuer', type: 'text', label: 'issuer', bilingual: true, max: 190, nullable: true },
+      { key: 'issuedOn', type: 'date', label: 'issuedOn', nullable: true },
+      { key: 'expiresOn', type: 'date', label: 'expiresOn', nullable: true },
+      {
+        key: 'assetId',
+        type: 'media',
+        label: 'file',
+        media: 'pdf',
+        nullable: true,
+        hint: 'fileHint',
+      },
+      { key: 'isPrimary', type: 'boolean', label: 'isPrimary', hint: 'isPrimaryHint' },
+    ],
+    primary: (r, l) => pick(r, 'title', l),
+    secondary: (r, l) =>
+      [String(r['number'] ?? ''), pick(r, 'issuer', l), String(r['expiresOn'] ?? '')]
+        .filter(Boolean)
+        .join(' · '),
+    flag: {
+      key: 'isPrimary',
+      path: 'primary',
+      setLabel: 'admin.content.licences.setPrimary',
+      onLabel: 'admin.content.licences.primary',
+    },
   },
   stats: {
     id: 'stats',
@@ -204,7 +265,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     sortable: true,
     tabs: {
       param: 'kind',
-      values: ['vision', 'mission', 'goal', 'care_pillar', 'scholarship_step', 'requirement'],
+      values: ['vision', 'mission', 'goal', 'care_pillar'],
       label: 'admin.content.options.kind',
     },
     fields: [
@@ -212,7 +273,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
         key: 'kind',
         type: 'select',
         label: 'kind',
-        options: ['vision', 'mission', 'goal', 'care_pillar', 'scholarship_step', 'requirement'],
+        options: ['vision', 'mission', 'goal', 'care_pillar'],
         hidden: true,
       },
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },
@@ -361,41 +422,6 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     errorField: (code, title) =>
       code === 'REDIRECT_CHAIN' ? (/already exists/i.test(title) ? 'fromPath' : 'toPath') : null,
   },
-  /** Interview slots (applications area). Editing a booked slot notifies the applicant. */
-  interviewSlots: {
-    id: 'interviewSlots',
-    endpoint: 'interview-slots',
-    area: 'applications',
-    fields: [
-      { key: 'startsAt', type: 'datetime', label: 'startsAt', required: true, hint: 'riyadhTime' },
-      {
-        key: 'endsAt',
-        type: 'datetime',
-        label: 'endsAt',
-        required: true,
-        after: 'startsAt',
-        hint: 'riyadhTime',
-      },
-      {
-        key: 'location',
-        type: 'text',
-        label: 'location',
-        bilingual: true,
-        max: 255,
-        nullable: true,
-      },
-    ],
-    primary: (r, l) => slotLabel(String(r['startsAt']), String(r['endsAt']), l),
-    secondary: (r, l, t) =>
-      [
-        pick(r, 'location', l),
-        r['applicationId']
-          ? t('admin.content.interviewSlots.booked')
-          : t('admin.content.interviewSlots.free'),
-      ]
-        .filter(Boolean)
-        .join(' · '),
-  },
   /** Only its fields are used (the news screens are hand-built); slug is edited separately. */
   news: {
     id: 'news',
@@ -447,24 +473,3 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     secondary: (r) => String(r['slug'] ?? ''),
   },
 };
-
-/** `Sun, 12 Oct 2026, 10:00–10:30` in Riyadh time (Gregorian; Arabic-Indic digits in Arabic). */
-export function slotLabel(startsAt: string, endsAt: string, lang: 'ar' | 'en' = 'en'): string {
-  const locale = lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-arab' : 'en-GB';
-  const opts = {
-    timeZone: 'Asia/Riyadh',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  } as const;
-  const day = new Intl.DateTimeFormat(locale, {
-    timeZone: 'Asia/Riyadh',
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(startsAt));
-  const from = new Intl.DateTimeFormat(locale, opts).format(new Date(startsAt));
-  const to = new Intl.DateTimeFormat(locale, opts).format(new Date(endsAt));
-  return `${day}, ${from}–${to}`;
-}

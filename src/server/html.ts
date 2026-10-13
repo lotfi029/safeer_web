@@ -83,7 +83,7 @@ const MAIN_SCRIPT = /<script src="(main-[\w-]+\.js)" type="module"( nonce="[^"]*
  * show. The `<script type="module">` for `main-*.js` becomes a nonce'd loader that inserts it after
  * the first frame (at once in a background tab, where frames don't run). Clicks before hydration
  * are replayed (`withEventReplay`). `script-src 'self'` allows the inserted same-origin script.
- * Not used for the admin/portal CSR shells, which render nothing until the bundle runs.
+ * Not used for the admin CSR shell, which renders nothing until the bundle runs.
  */
 export function deferMainScript(html: string, nonce: string): string {
   const match = MAIN_SCRIPT.exec(html);
@@ -101,7 +101,7 @@ export function deferMainScript(html: string, nonce: string): string {
 /**
  * Post-processes a response from the Angular engine. For HTML (SSR output and the CSR shell served to
  * RenderMode.Client routes alike) it swaps the nonce placeholder, inlines `inline` (the @font-face
- * sheet, Phase 10: all of it on admin/portal, only `firstPaintCss` on public pages with the rest after
+ * sheet, Phase 10: all of it on admin, only `firstPaintCss` on public pages with the rest after
  * the first paint), defers the app bundle on public pages (`deferMainScript`), and adds CSP + cache
  * headers.
  */

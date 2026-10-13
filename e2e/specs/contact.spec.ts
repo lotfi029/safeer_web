@@ -115,6 +115,28 @@ test.describe('contact page', () => {
     expect(await hp.evaluate((el) => el.closest('[aria-hidden="true"]') !== null)).toBe(true);
   });
 
+  test('the five subjects, «استفسار» first and selected by default; no register card', async ({
+    page,
+  }) => {
+    await page.goto('/ar/contact');
+    const subject = page.getByLabel('الموضوع');
+    await expect(subject.locator('option')).toHaveText([
+      'استفسار',
+      'شراكة',
+      'دعم وتبرع',
+      'ملاحظات',
+      'أخرى',
+    ]);
+    await expect(subject).toHaveValue('inquiry');
+    await expect(page.locator('a[href*="/apply"]')).toHaveCount(0);
+    await page.goto('/en/contact?subject=support');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByLabel('Subject')).toHaveValue('support');
+    await expect(page.getByLabel('Subject').locator('option:checked')).toHaveText(
+      'Support and donations',
+    );
+  });
+
   test('?subject=partnership preselects the subject', async ({ page }) => {
     await page.goto('/en/contact?subject=partnership');
     await page.waitForLoadState('networkidle');
@@ -138,7 +160,7 @@ test.describe('contact page', () => {
       page.getByRole('button', { name: 'Send' }).click(),
     ]);
     const body = req.postDataJSON();
-    expect(body).toMatchObject({ name, subject: 'scholarship', website: '' });
+    expect(body).toMatchObject({ name, subject: 'inquiry', website: '' });
     expect(typeof body.formRenderedAt).toBe('number');
     await expect(page.getByText('your message has arrived')).toBeVisible();
     // `{ ok: true }` alone proves nothing (a dropped message answers the same): read the inbox.

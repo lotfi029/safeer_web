@@ -9,15 +9,6 @@
     "lastLoginAt": null
   },
   {
-    "id": "2",
-    "name": "[...]",
-    "email": "reviewer@mock.invalid",
-    "role": "reviewer",
-    "isLocked": false,
-    "status": "active",
-    "lastLoginAt": null
-  },
-  {
     "id": "3",
     "name": "[...]",
     "email": "editor@mock.invalid",

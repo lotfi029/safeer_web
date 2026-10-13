@@ -106,9 +106,9 @@ test.describe('messages', () => {
     expect(await findMessage(m.name)).toBeUndefined();
   });
 
-  test('reviewers have no inbox', async ({ page }) => {
-    const reviewer = await staffAccount('reviewer', { fresh: true });
-    await signInAs(page, reviewer, '/admin/messages');
+  test('editors have no inbox', async ({ page }) => {
+    const editor = await staffAccount('editor', { fresh: true });
+    await signInAs(page, editor, '/admin/messages');
     await expect(page).toHaveURL(/\/en\/admin\/forbidden$/);
   });
 });

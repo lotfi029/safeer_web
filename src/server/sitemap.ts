@@ -5,7 +5,22 @@ export interface SitemapIndexData {
   pages: { slug: string; updatedAt?: string }[];
   posts: { slug: string; updatedAt?: string }[];
   categories: { slug: string }[];
+  /** Governance section slugs (`GET /documents/sections`); the seeded ones when it is unavailable. */
+  governanceSections?: string[];
 }
+
+/** The seeded governance sections (safeer_api), listed when the API can't say which are published. */
+export const DEFAULT_GOVERNANCE_SECTIONS = [
+  'bylaws-policies',
+  'financial-reports',
+  'general-assembly',
+  'strategic-plan',
+  'operational-plan',
+  'annual-reports',
+  'project-reports',
+  'committees',
+  'committee-decisions',
+];
 
 /** Public app routes always listed (locale-agnostic). Page slugs map onto these (slug ≠ route). */
 export const STATIC_ROUTES = [
@@ -13,24 +28,20 @@ export const STATIC_ROUTES = [
   '/about',
   '/board',
   '/work-areas',
-  '/scholarships',
   '/news',
   '/testimonials',
   '/partners',
-  '/documents',
   '/contact',
-  '/apply',
+  '/governance/licences',
 ];
 const PAGE_SLUG_ROUTES: Record<string, string> = {
   home: '/',
   about: '/about',
   board: '/board',
   work: '/work-areas',
-  scholarships: '/scholarships',
   news: '/news',
   testimonials: '/testimonials',
   partners: '/partners',
-  documents: '/documents',
   contact: '/contact',
 };
 
@@ -64,6 +75,11 @@ export function buildSitemap(origin: string, index: SitemapIndexData | null): st
     }
   }
   const entries = STATIC_ROUTES.map((route) => urlEntry(origin, route, lastmods.get(route)));
+  for (const slug of index?.governanceSections ?? DEFAULT_GOVERNANCE_SECTIONS) {
+    if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) && slug !== 'licences') {
+      entries.push(urlEntry(origin, `/governance/${slug}`));
+    }
+  }
   for (const post of index?.posts ?? []) {
     if (/^[a-z0-9-]+$/i.test(post.slug)) {
       entries.push(urlEntry(origin, `/news/${post.slug}`, post.updatedAt));
@@ -78,8 +94,6 @@ export function buildRobots(origin: string): string {
     'Allow: /',
     'Disallow: /ar/admin',
     'Disallow: /en/admin',
-    'Disallow: /ar/portal',
-    'Disallow: /en/portal',
     'Disallow: /api/',
     '',
     `Sitemap: ${origin}/sitemap.xml`,
@@ -112,12 +126,36 @@ export function apiSitemapIndex(
 ): () => Promise<SitemapIndexData | null> {
   return async () => {
     try {
-      const res = await fetch(`${apiInternalUrl}/api/v1/sitemap-index`, {
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      return res.ok ? ((await res.json()) as SitemapIndexData) : null;
+      const [res, sections] = await Promise.all([
+        fetch(`${apiInternalUrl}/api/v1/sitemap-index`, {
+          signal: AbortSignal.timeout(timeoutMs),
+        }),
+        fetchGovernanceSections(apiInternalUrl, timeoutMs),
+      ]);
+      if (!res.ok) return null;
+      const index = (await res.json()) as SitemapIndexData;
+      return sections ? { ...index, governanceSections: sections } : index;
     } catch {
       return null;
     }
   };
+}
+
+/** Published governance section slugs, or null (the sitemap then lists the seeded ones). */
+async function fetchGovernanceSections(
+  apiInternalUrl: string,
+  timeoutMs: number,
+): Promise<string[] | null> {
+  try {
+    const res = await fetch(`${apiInternalUrl}/api/v1/documents/sections`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as { slug?: unknown }[];
+    return Array.isArray(rows)
+      ? rows.map((r) => r.slug).filter((s): s is string => typeof s === 'string')
+      : null;
+  } catch {
+    return null;
+  }
 }

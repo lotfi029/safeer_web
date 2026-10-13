@@ -28,7 +28,10 @@
     "seoTitleAr": "جمعية سفير الدعوية",
     "seoTitleEn": "Safeer Da'wah Association",
     "seoDescriptionAr": "جمعية أهلية غير ربحية متخصصة في رعاية طلاب وطالبات المنح الدوليين الدارسين في الجامعات السعودية.",
-    "seoDescriptionEn": "A Saudi non-profit association dedicated to supporting international scholarship students at Saudi universities."
+    "seoDescriptionEn": "A Saudi non-profit association dedicated to supporting international scholarship students at Saudi universities.",
+    "licenceNo": "[...]",
+    "licenceIssuerAr": "[جهة الترخيص]",
+    "licenceIssuerEn": "[Licensing authority]"
   },
   "nav": [
     {
@@ -52,11 +55,6 @@
       "labelEn": "Our areas of work"
     },
     {
-      "slug": "scholarships",
-      "labelAr": "منح الوافدين للدراسة بالجامعات السعودية",
-      "labelEn": "Scholarships for international students in Saudi universities"
-    },
-    {
       "slug": "news",
       "labelAr": "أخبار الجمعية",
       "labelEn": "Association news"
@@ -72,9 +70,9 @@
       "labelEn": "Our partners"
     },
     {
-      "slug": "documents",
-      "labelAr": "التراخيص والسياسات واللوائح",
-      "labelEn": "Licences, policies and regulations"
+      "slug": "governance",
+      "labelAr": "الحوكمة",
+      "labelEn": "Governance"
     },
     {
       "slug": "contact",

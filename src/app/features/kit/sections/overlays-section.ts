@@ -18,15 +18,7 @@ import { Pagination } from '../../../shared/ui/pagination/pagination';
 import { Tab, TabContent, Tabs } from '../../../shared/ui/tabs/tabs';
 import { ToastOutlet, ToastService } from '../../../shared/ui/toast/toast';
 
-const STATUSES = [
-  'draft',
-  'new',
-  'under_review',
-  'docs_missing',
-  'interview',
-  'accepted',
-  'rejected',
-] as const;
+const STATUSES = ['plain', 'teal', 'ok', 'warn', 'solid'] as const;
 type Status = (typeof STATUSES)[number];
 
 interface DemoRow {
@@ -186,11 +178,11 @@ export class KitDemoDrawer {
       <h2 class="t-h4" id="kit-tabs">Tabs</h2>
       <app-tabs [(selectedIndex)]="tabIndex" label="Tabs">
         @for (status of tabStatuses; track status) {
-          <app-tab [label]="'status.' + status | transloco">
+          <app-tab [label]="'kit.status.' + status | transloco">
             <div class="card">[...]</div>
           </app-tab>
         }
-        <app-tab [label]="'status.rejected' | transloco" [disabled]="true"
+        <app-tab [label]="'kit.status.warn' | transloco" [disabled]="true"
           ><div class="card">[...]</div></app-tab
         >
         <app-tab [label]="'common.more' | transloco">
@@ -264,10 +256,11 @@ export class KitDemoDrawer {
         <ng-template appDataTableCell="status" let-row>
           <span
             class="pill"
-            [class.pill-ok]="row.status === 'accepted'"
-            [class.pill-warn]="row.status === 'rejected' || row.status === 'docs_missing'"
-            [class.pill-plain]="row.status === 'draft'"
-            >{{ 'status.' + row.status | transloco }}</span
+            [class.pill-ok]="row.status === 'ok'"
+            [class.pill-warn]="row.status === 'warn'"
+            [class.pill-plain]="row.status === 'plain'"
+            [class.pill-solid]="row.status === 'solid'"
+            >{{ 'kit.status.' + row.status | transloco }}</span
           >
         </ng-template>
         <ng-template appDataTableActions>
@@ -313,7 +306,7 @@ export class KitOverlaysSection {
 
   protected readonly dialogResult = signal<string | null>(null);
   protected readonly tabIndex = signal(0);
-  protected readonly tabStatuses: Status[] = ['new', 'under_review', 'accepted'];
+  protected readonly tabStatuses: Status[] = ['teal', 'ok', 'plain'];
 
   private readonly param = (name: string, fallback: number) =>
     computed(() => Number(this.query()?.get(name) ?? fallback) || fallback);
@@ -326,7 +319,7 @@ export class KitOverlaysSection {
   protected readonly lastSearch = signal('');
   protected readonly linkFilter = computed(() => this.query()?.get('status') ?? null);
   private readonly allLabel = translateSignal('common.all');
-  private readonly statusLabels = translateSignal(STATUSES.map((s) => `status.${s}`));
+  private readonly statusLabels = translateSignal(STATUSES.map((s) => `kit.status.${s}`));
   protected readonly chips = computed<FilterChip[]>(() => [
     { value: null, label: this.allLabel() },
     ...STATUSES.map((value, i) => ({ value, label: this.statusLabels()[i] })),

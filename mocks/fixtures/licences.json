@@ -1,0 +1,37 @@
+[
+  {
+    "id": "1",
+    "titleAr": "ترخيص الجمعية",
+    "titleEn": "Association licence",
+    "number": "[...]",
+    "issuerAr": "[جهة الترخيص]",
+    "issuerEn": "[Licensing authority]",
+    "issuedOn": "2019-03-10",
+    "expiresOn": "2099-12-31",
+    "isPrimary": true,
+    "asset": {
+      "id": "9",
+      "publicId": "6251f38c-de6b-4a0f-b92c-f6964fd0b3bd",
+      "kind": "pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 593,
+      "widthPx": null,
+      "heightPx": null,
+      "alt": null
+    },
+    "sortOrder": 0
+  },
+  {
+    "id": "2",
+    "titleAr": "[ترخيص آخر]",
+    "titleEn": "[Another licence]",
+    "number": "[...]",
+    "issuerAr": null,
+    "issuerEn": null,
+    "issuedOn": "2020-01-01",
+    "expiresOn": "2022-12-31",
+    "isPrimary": false,
+    "asset": null,
+    "sortOrder": 1
+  }
+]

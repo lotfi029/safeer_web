@@ -60,12 +60,7 @@ import { AdminNav } from './admin-nav';
               }}</span>
               @if (item.count > 0) {
                 <span
-                  class="ms-auto rounded-full px-2 py-0.5 text-xs font-bold"
-                  [class]="
-                    item.badge === 'newApplications'
-                      ? 'bg-alert text-on-primary'
-                      : 'bg-secondary text-on-primary'
-                  "
+                  class="ms-auto rounded-full bg-secondary px-2 py-0.5 text-xs font-bold text-on-primary"
                   [class.lg:max-xl:absolute]="dark()"
                   [class.lg:max-xl:-top-1]="dark()"
                   [class.lg:max-xl:end-1]="dark()"

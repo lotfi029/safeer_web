@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LocaleService } from '../../core/i18n/locale.service';
+import { GOVERNANCE_PATHS, governanceLinks } from '../../core/site/governance';
 import { SiteStore } from '../../core/site/site.store';
 import { Icon } from '../../shared/ui/icon/icon';
 import type { IconName } from '../../shared/ui/icon/icon-names';
@@ -13,14 +14,17 @@ interface SocialLink {
   icon: IconName;
 }
 
+/** How many governance sections the footer column lists before Licences. */
+const FOOTER_SECTIONS = 5;
+
 /** Only http(s) URLs from the API are rendered (backend C10 validates too). */
 function safeUrl(url: string | null | undefined): string | null {
   return url && /^https:\/\//i.test(url.trim()) ? url.trim() : null;
 }
 
 /**
- * Site footer (prototype `siteFoot`): blurb, key links, services, contact (phone/email LTR),
- * social links that exist in settings, rights line. Lucide has no brand logos, so social links use
+ * Site footer (prototype `siteFoot`): blurb, key links, governance (W4), services, contact
+ * (phone/email LTR), social links that exist in settings, rights line and the licence number. Lucide has no brand logos, so social links use
  * generic icons with the network name as the accessible label.
  */
 @Component({
@@ -30,7 +34,7 @@ function safeUrl(url: string | null | undefined): string | null {
   host: { class: 'block bg-(--footer-bg) text-(--footer-text)' },
   template: `
     <footer class="wrap pt-14 pb-7 md:pt-16">
-      <div class="grid gap-10 md:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
+      <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.3fr_1fr_1fr_1fr_1.3fr]">
         <div class="flex max-w-100 flex-col gap-4">
           <app-logo class="self-start" [height]="64" [alt]="settings()?.orgName ?? null" />
           <p class="leading-[1.9] text-(--footer-link)">
@@ -44,6 +48,17 @@ function safeUrl(url: string | null | undefined): string | null {
           </h2>
           @for (l of keyLinks; track l.path) {
             <a class="footer-link" [routerLink]="locale.link(l.path)">{{ l.key | transloco }}</a>
+          }
+        </nav>
+
+        <nav class="flex flex-col text-[15px]" [attr.aria-labelledby]="'f-governance'">
+          <h2 id="f-governance" class="mb-1 text-lg font-semibold !text-(--footer-text)">
+            {{ 'shell.footer.governance' | transloco }}
+          </h2>
+          @for (l of governance(); track l.key) {
+            <a class="footer-link" [routerLink]="locale.link(l.path)">{{
+              l.label ?? (l.labelKey! | transloco)
+            }}</a>
           }
         </nav>
 
@@ -108,6 +123,14 @@ function safeUrl(url: string | null | undefined): string | null {
         class="mt-10 flex flex-col gap-3 border-t border-(--footer-muted)/25 pt-6 text-sm text-(--footer-muted) md:flex-row md:items-center md:justify-between"
       >
         <p>{{ settings()?.rightsLine ?? ('common.placeholder' | transloco) }}</p>
+        @if (licenceNo(); as no) {
+          <a
+            class="footer-link"
+            [routerLink]="locale.link(licencesPath)"
+            data-testid="footer-licence"
+            >{{ 'shell.footer.licenceNo' | transloco: { no } }}</a
+          >
+        }
       </div>
     </footer>
   `,
@@ -117,18 +140,24 @@ export class SiteFooter {
   private readonly site = inject(SiteStore);
   protected readonly settings = computed(() => this.site.site()?.settings ?? null);
   protected readonly contact = computed(() => this.site.site()?.contact ?? null);
+  protected readonly licencesPath = GOVERNANCE_PATHS.licences;
+  /** The licence number (site settings) for the bottom bar; hidden when unset. */
+  protected readonly licenceNo = computed(() => this.settings()?.licenceNo?.trim() || null);
+  /** The main governance sections (the first five) + Licences; the board has its own link. */
+  protected readonly governance = computed(() => {
+    const links = governanceLinks(this.site.sections(), { board: false });
+    const sections = links.filter((l) => l.key !== 'licences').slice(0, FOOTER_SECTIONS);
+    return [...sections, ...links.filter((l) => l.key === 'licences')];
+  });
 
   protected readonly keyLinks = [
     { key: 'shell.footer.about', path: '/about' },
     { key: 'shell.footer.board', path: '/board' },
-    { key: 'shell.footer.documents', path: '/documents' },
     { key: 'shell.footer.work', path: '/work-areas' },
   ];
   protected readonly serviceLinks = [
-    { key: 'shell.footer.scholarships', path: '/scholarships' },
-    { key: 'shell.footer.applyLink', path: '/apply' },
-    { key: 'shell.portal', path: '/portal' },
     { key: 'shell.footer.news', path: '/news' },
+    { key: 'shell.footer.contactLink', path: '/contact' },
   ];
 
   protected readonly socials = computed<SocialLink[]>(() => {

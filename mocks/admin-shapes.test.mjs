@@ -31,7 +31,7 @@ describe('mock admin responses match the recorded rc1 shapes', () => {
     },
   });
   const messageId = backend.db.messages[0].id;
-  const ids = { application: '101', message: messageId };
+  const ids = { message: messageId };
 
   for (const [name, template] of Object.entries(ADMIN_SHAPES)) {
     it(name, () => {

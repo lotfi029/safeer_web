@@ -42,7 +42,7 @@ export class LocaleService {
     }
   }
 
-  /** Prefixes a locale-agnostic app path (`/apply`) with the current language (`/ar/apply`). */
+  /** Prefixes a locale-agnostic app path (`/contact`) with the current language (`/ar/contact`). */
   link(path: string, lang: Lang = this.current()): string {
     const clean = path.startsWith('/') ? path : `/${path}`;
     return clean === '/' ? `/${lang}` : `/${lang}${clean}`;

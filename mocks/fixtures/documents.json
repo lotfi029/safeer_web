@@ -1,43 +1,19 @@
 [
   {
     "category": {
-      "id": "1",
-      "slug": "licences",
-      "nameAr": "التراخيص",
-      "nameEn": "Licences"
-    },
-    "documents": [
-      {
-        "id": "1",
-        "titleAr": "ترخيص الجمعية",
-        "titleEn": "Association licence",
-        "docDate": "2019-03-10",
-        "asset": {
-          "id": "9",
-          "publicId": "6251f38c-de6b-4a0f-b92c-f6964fd0b3bd",
-          "kind": "pdf",
-          "mimeType": "application/pdf",
-          "sizeBytes": 593,
-          "widthPx": null,
-          "heightPx": null,
-          "alt": null
-        },
-        "sortOrder": 0
-      }
-    ]
-  },
-  {
-    "category": {
       "id": "2",
-      "slug": "policies-regulations",
-      "nameAr": "السياسات واللوائح",
-      "nameEn": "Policies & regulations"
+      "slug": "bylaws-policies",
+      "nameAr": "اللوائح والسياسات",
+      "nameEn": "Bylaws & policies",
+      "sectionGroup": "governance"
     },
     "documents": [
       {
         "id": "2",
         "titleAr": "اللائحة الأساسية للجمعية",
         "titleEn": "Association bylaws",
+        "metaAr": "[الإصدار]",
+        "metaEn": "[Edition]",
         "docDate": "2019-05-01",
         "asset": {
           "id": "10",
@@ -50,21 +26,44 @@
           "alt": null
         },
         "sortOrder": 1
+      },
+      {
+        "id": "5",
+        "titleAr": "[لائحة قيد الإعداد]",
+        "titleEn": "[A policy in preparation]",
+        "metaAr": null,
+        "metaEn": null,
+        "docDate": null,
+        "asset": null,
+        "sortOrder": 2
       }
     ]
   },
   {
     "category": {
+      "id": "5",
+      "slug": "financial-reports",
+      "nameAr": "التقارير المالية",
+      "nameEn": "Financial reports",
+      "sectionGroup": "governance"
+    },
+    "documents": []
+  },
+  {
+    "category": {
       "id": "3",
-      "slug": "meeting-minutes",
-      "nameAr": "محاضر الاجتماعات",
-      "nameEn": "Meeting minutes"
+      "slug": "general-assembly",
+      "nameAr": "الجمعية العمومية",
+      "nameEn": "General assembly",
+      "sectionGroup": "governance"
     },
     "documents": [
       {
         "id": "3",
         "titleAr": "محضر اجتماع مجلس الإدارة رقم ١",
         "titleEn": "Board meeting minutes no. 1",
+        "metaAr": "[...]",
+        "metaEn": "[...]",
         "docDate": "2024-01-15",
         "asset": {
           "id": "11",
@@ -82,16 +81,39 @@
   },
   {
     "category": {
+      "id": "6",
+      "slug": "strategic-plan",
+      "nameAr": "الخطة الاستراتيجية",
+      "nameEn": "Strategic plan",
+      "sectionGroup": "governance"
+    },
+    "documents": []
+  },
+  {
+    "category": {
+      "id": "7",
+      "slug": "operational-plan",
+      "nameAr": "الخطة التشغيلية",
+      "nameEn": "Operational plan",
+      "sectionGroup": "governance"
+    },
+    "documents": []
+  },
+  {
+    "category": {
       "id": "4",
       "slug": "annual-reports",
       "nameAr": "التقارير السنوية",
-      "nameEn": "Annual reports"
+      "nameEn": "Annual reports",
+      "sectionGroup": "governance"
     },
     "documents": [
       {
         "id": "4",
         "titleAr": "تقرير الأنشطة السنوي 2024",
         "titleEn": "Annual activity report 2024",
+        "metaAr": null,
+        "metaEn": null,
         "docDate": "2024-05-01",
         "asset": {
           "id": "12",
@@ -106,5 +128,35 @@
         "sortOrder": 3
       }
     ]
+  },
+  {
+    "category": {
+      "id": "8",
+      "slug": "project-reports",
+      "nameAr": "تقارير المشاريع",
+      "nameEn": "Project reports",
+      "sectionGroup": "governance"
+    },
+    "documents": []
+  },
+  {
+    "category": {
+      "id": "9",
+      "slug": "committees",
+      "nameAr": "اللجان",
+      "nameEn": "Committees",
+      "sectionGroup": "governance"
+    },
+    "documents": []
+  },
+  {
+    "category": {
+      "id": "10",
+      "slug": "committee-decisions",
+      "nameAr": "قرارات اللجان",
+      "nameEn": "Committee decisions",
+      "sectionGroup": "governance"
+    },
+    "documents": []
   }
 ]

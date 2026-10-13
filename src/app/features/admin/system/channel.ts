@@ -20,7 +20,6 @@ import {
   type MailSettings,
   type MessageLog,
   type MessageTemplate,
-  type SmsSettings,
   SystemApi,
 } from '../../../core/api/admin/system-api';
 import { problemMessageKey, toApiProblem } from '../../../core/api/problem';
@@ -43,7 +42,7 @@ type Tab = (typeof TABS)[number];
 const STATUSES: readonly LogStatus[] = ['queued', 'sent', 'failed', 'skipped'];
 const LOG_PAGE = 50;
 
-/** Settings fields per channel (mail-settings / sms-settings DTOs; the secret is handled apart). */
+/** Settings fields per channel (mail-settings DTO; the secret is handled apart). */
 export const CHANNEL_FIELDS: Record<Channel, readonly CrudField[]> = {
   mail: [
     { key: 'isEnabled', type: 'boolean', label: 'isEnabled' },
@@ -70,61 +69,28 @@ export const CHANNEL_FIELDS: Record<Channel, readonly CrudField[]> = {
       hint: 'notifyEmailHint',
     },
   ],
-  sms: [
-    { key: 'isEnabled', type: 'boolean', label: 'isEnabled' },
-    {
-      key: 'driver',
-      type: 'select',
-      label: 'smsDriver',
-      options: ['log', 'http', 'unifonic'],
-      required: true,
-    },
-    { key: 'providerUrl', type: 'url', label: 'providerUrl', max: 500, nullable: true },
-    {
-      key: 'senderName',
-      type: 'text',
-      label: 'senderName',
-      max: 120,
-      nullable: true,
-      hint: 'senderHint',
-    },
-  ],
 };
 
-/** Template fields (mail has a subject and a Markdown body; SMS bodies are plain, ≤ 480). */
-export function templateFields(channel: Channel): CrudField[] {
+/** Template fields (mail: a subject and a Markdown body). */
+export function templateFields(): CrudField[] {
   return [
     { key: 'name', type: 'text', label: 'templateName', bilingual: true, required: true, max: 191 },
-    ...(channel === 'mail'
-      ? ([
-          {
-            key: 'subject',
-            type: 'text',
-            label: 'subject',
-            bilingual: true,
-            required: true,
-            max: 255,
-          },
-        ] as CrudField[])
-      : []),
-    channel === 'mail'
-      ? {
-          key: 'body',
-          type: 'markdown',
-          label: 'templateBody',
-          bilingual: true,
-          required: true,
-          nullable: true,
-        }
-      : {
-          key: 'body',
-          type: 'textarea',
-          label: 'templateBody',
-          bilingual: true,
-          required: true,
-          max: 480,
-          nullable: true,
-        },
+    {
+      key: 'subject',
+      type: 'text',
+      label: 'subject',
+      bilingual: true,
+      required: true,
+      max: 255,
+    },
+    {
+      key: 'body',
+      type: 'markdown',
+      label: 'templateBody',
+      bilingual: true,
+      required: true,
+      nullable: true,
+    },
     { key: 'isEnabled', type: 'boolean', label: 'templateEnabled' },
   ];
 }
@@ -221,7 +187,7 @@ export class TemplateEditor {
   private readonly api = inject(SystemApi);
   private readonly t = inject(TranslocoService);
   private readonly locale = inject(LocaleService);
-  protected readonly fields = templateFields(this.data.channel);
+  protected readonly fields = templateFields();
   protected readonly model = signal<Record<string, unknown>>(
     modelFromRow(this.fields, this.data.template as never),
   );
@@ -307,9 +273,9 @@ export class TemplateEditor {
 }
 
 /**
- * Mail or SMS (route data `channel`): provider settings with a test send (the password/token is never
- * shown: leave it empty to keep it), templates with their variables and a preview, and the send log
- * (mail rows can be retried; SMS logs never carry the message, so OTP codes stay hidden).
+ * Mail (route data `channel`): provider settings with a test send (the password is never shown: leave
+ * it empty to keep it), templates with their variables and a preview, and the send log (rows with a
+ * stored payload can be retried).
  */
 @Component({
   selector: 'app-admin-channel',
@@ -361,12 +327,7 @@ export class TemplateEditor {
             >
               <app-crud-fields [fields]="fields()" [(model)]="model" [errors]="errors()" />
               <app-field
-                [label]="
-                  (channel() === 'mail'
-                    ? 'admin.system.channel.password'
-                    : 'admin.system.channel.token'
-                  ) | transloco
-                "
+                [label]="'admin.system.channel.password' | transloco"
                 [hint]="
                   (secretSet()
                     ? 'admin.system.channel.secretKept'
@@ -401,18 +362,11 @@ export class TemplateEditor {
               <h2 class="t-h4 m-0 text-heading" id="test-title">
                 {{ 'admin.system.channel.test' | transloco }}
               </h2>
-              <app-field
-                [label]="
-                  (channel() === 'mail'
-                    ? 'admin.system.channel.testTo'
-                    : 'admin.system.channel.testPhone'
-                  ) | transloco
-                "
-              >
+              <app-field [label]="'admin.system.channel.testTo' | transloco">
                 <input
                   appControl
                   dir="ltr"
-                  [attr.type]="channel() === 'mail' ? 'email' : 'tel'"
+                  type="email"
                   [value]="testTo()"
                   (input)="testTo.set($any($event.target).value)"
                 />
@@ -535,7 +489,7 @@ export class TemplateEditor {
                       row.subject ?? row.templateKey
                     }}</span>
                     <span class="t-small text-text-muted"
-                      ><span dir="ltr">{{ row.toEmail ?? row.toPhone }}</span> ·
+                      ><span dir="ltr">{{ row.toEmail }}</span> ·
                       <code dir="ltr">{{ row.templateKey }}</code> ·
                       {{ row.createdAt | localDate: 'datetime' }}</span
                     >
@@ -605,7 +559,7 @@ export class AdminChannel {
 
   protected readonly settings = rxResource({
     params: () => this.channel(),
-    stream: ({ params }) => this.api.channelSettings<MailSettings | SmsSettings>(params),
+    stream: ({ params }) => this.api.channelSettings<MailSettings>(params),
   });
   protected readonly templates = rxResource({
     params: () => this.channel(),
@@ -635,7 +589,7 @@ export class AdminChannel {
   private readonly server = signal<Record<string, string[]>>({});
   protected readonly secretSet = computed(() => {
     const s = this.settings.value();
-    return !!s && ('passwordIsSet' in s ? s.passwordIsSet : (s as SmsSettings).tokenIsSet);
+    return !!s && s.passwordIsSet;
   });
   private readonly client = computed(() => validate(this.fields(), this.model()));
   protected readonly errors = computed<Record<string, FieldErrorLike[]>>(() => {
@@ -666,7 +620,7 @@ export class AdminChannel {
   }
 
   protected canRetry(row: MessageLog): boolean {
-    return this.channel() === 'mail' && row.status !== 'sent' && !!row.hasPayload;
+    return row.status !== 'sent' && !!row.hasPayload;
   }
 
   protected async saveSettings(event: Event): Promise<void> {
@@ -676,12 +630,12 @@ export class AdminChannel {
     this.server.set({});
     if (Object.keys(this.client()).length) return;
     const body = toBody(this.fields(), this.model(), 'update');
-    // The password/token is write-only: send it only when typed (empty keeps the stored one).
-    if (this.secret()) body[this.channel() === 'mail' ? 'password' : 'token'] = this.secret();
+    // The password is write-only: send it only when typed (empty keeps the stored one).
+    if (this.secret()) body['password'] = this.secret();
     this.busy.set(true);
     try {
       const saved = await firstValueFrom(
-        this.api.saveChannelSettings<MailSettings | SmsSettings>(this.channel(), body),
+        this.api.saveChannelSettings<MailSettings>(this.channel(), body),
       );
       this.settings.set(saved);
       this.secret.set('');

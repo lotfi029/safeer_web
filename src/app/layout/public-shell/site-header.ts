@@ -13,6 +13,7 @@ import { LocaleService } from '../../core/i18n/locale.service';
 import { SiteStore } from '../../core/site/site.store';
 import { Button } from '../../shared/ui/button/button';
 import { DrawerService } from '../../shared/ui/drawer/drawer';
+import { GovernanceMenu } from './governance-menu';
 import { Icon } from '../../shared/ui/icon/icon';
 import { Brand } from '../../shared/ui/logo/logo';
 import { LangSwitch } from './lang-switch';
@@ -21,8 +22,9 @@ import { ShellNav } from './nav-links';
 import { ThemeToggle } from './theme-toggle';
 
 /**
- * Sticky site header (prototype `siteNav`): brand, full nav from ≥1100px (F7 `nav` breakpoint),
- * language + theme, portal link (≥1280), apply CTA (≥768), burger → drawer below 1100px.
+ * Sticky site header (prototype `siteNav`): brand, full nav from ≥1100px (F7 `nav` breakpoint, the
+ * governance entry as a dropdown),
+ * language + theme, the contact CTA (≥768), burger → drawer below 1100px.
  */
 @Component({
   selector: 'app-site-header',
@@ -35,6 +37,7 @@ import { ThemeToggle } from './theme-toggle';
     Brand,
     LangSwitch,
     ThemeToggle,
+    GovernanceMenu,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -62,14 +65,18 @@ import { ThemeToggle } from './theme-toggle';
         <ul class="m-0 flex list-none items-center gap-3 p-0 xl:gap-5">
           @for (item of nav.headerLinks(); track item.link) {
             <li>
-              <a
-                class="block border-b-2 border-transparent py-2 text-[15px] font-medium whitespace-nowrap text-text no-underline hover:text-secondary"
-                [routerLink]="item.link"
-                routerLinkActive="!border-secondary !font-semibold !text-heading"
-                [routerLinkActiveOptions]="{ exact: item.exact }"
-                ariaCurrentWhenActive="page"
-                >{{ item.shortLabel }}</a
-              >
+              @if (item.slug === 'governance') {
+                <app-governance-menu [label]="item.shortLabel" />
+              } @else {
+                <a
+                  class="block border-b-2 border-transparent py-2 text-[15px] font-medium whitespace-nowrap text-text no-underline hover:text-secondary"
+                  [routerLink]="item.link"
+                  routerLinkActive="!border-secondary !font-semibold !text-heading"
+                  [routerLinkActiveOptions]="{ exact: item.exact }"
+                  ariaCurrentWhenActive="page"
+                  >{{ item.shortLabel }}</a
+                >
+              }
             </li>
           }
         </ul>
@@ -81,16 +88,11 @@ import { ThemeToggle } from './theme-toggle';
         }
         <app-theme-toggle />
         <a
-          class="hidden text-[15px] font-semibold whitespace-nowrap text-heading no-underline hover:text-secondary xl:inline"
-          [routerLink]="locale.link('/portal')"
-          >{{ 'shell.portal' | transloco }}</a
-        >
-        <a
           appButton
           size="sm"
           class="hidden whitespace-nowrap md:inline-flex"
-          [routerLink]="locale.link('/apply')"
-          >{{ 'shell.applyShort' | transloco }}</a
+          [routerLink]="locale.link('/contact')"
+          >{{ 'shell.contactCta' | transloco }}</a
         >
         <button
           type="button"

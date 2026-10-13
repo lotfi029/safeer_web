@@ -61,8 +61,8 @@ describe('SeoService', () => {
       image: '/files/x',
       jsonLd: [{ '@type': 'NGO' }],
     });
-    seo.noindex('Student portal', 'en');
-    expect(doc.title).toBe('Student portal | Safeer Association');
+    seo.noindex('Admin', 'en');
+    expect(doc.title).toBe('Admin | Safeer Association');
     expect(doc.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
       'noindex, nofollow',
     );

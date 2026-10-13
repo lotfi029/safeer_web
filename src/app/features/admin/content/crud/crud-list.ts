@@ -253,6 +253,24 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
                     <app-icon name="arrow-down" [size]="18" [directional]="false" />
                   </button>
                 }
+                @if (config().flag; as flag) {
+                  @if (row[flag.key]) {
+                    <span class="pill pill-ok" data-testid="row-flag">{{
+                      flag.onLabel | transloco
+                    }}</span>
+                  } @else {
+                    <button
+                      appButton
+                      variant="soft"
+                      size="sm"
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="setFlag(row)"
+                    >
+                      {{ flag.setLabel | transloco }}<span class="sr-only">: {{ title(row) }}</span>
+                    </button>
+                  }
+                }
                 @if (config().link; as link) {
                   <a
                     appButton
@@ -433,6 +451,23 @@ export class CrudList {
     if (saved) {
       this.rows.update((list) => list.map((r) => (r.id === row.id ? { ...r, ...saved } : r)));
       this.toasts.show({ kind: 'success', message: this.t.translate('admin.content.saved') });
+      // A saved flag (a new primary licence) can clear it on another row.
+      if (this.config().flag) await this.load();
+    }
+  }
+
+  protected async setFlag(row: ContentRow): Promise<void> {
+    const flag = this.config().flag;
+    if (!flag) return;
+    this.busy.set(true);
+    try {
+      await firstValueFrom(this.api.action(this.config().endpoint, row.id, flag.path));
+      await this.load();
+      this.announce.set(`${this.title(row)}: ${this.t.translate(flag.onLabel)}`);
+    } catch (error) {
+      this.fail(error);
+    } finally {
+      this.busy.set(false);
     }
   }
 

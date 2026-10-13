@@ -91,7 +91,7 @@ app.use(apiProxy(env.apiInternalUrl));
  * gzip/brotli for what this server renders and serves itself (HTML, JS, CSS, fonts), mounted
  * after the proxy so API and file responses pass through untouched. The edge may compress again;
  * this keeps the origin fast when it doesn't. HTML carries no secrets an attacker could probe with
- * compression side channels (BREACH): the nonce changes on every response, and admin/portal HTML is
+ * compression side channels (BREACH): the nonce changes on every response, and admin HTML is
  * the CSR shell.
  */
 app.use(compression());
@@ -104,7 +104,7 @@ const serveStatic = express.static(browserDistFolder, {
 });
 app.use((req, res, next) => (req.path.endsWith('.html') ? next() : serveStatic(req, res, next)));
 
-/** Everything else is rendered by Angular (SSR, or the CSR shell for admin/portal). */
+/** Everything else is rendered by Angular (SSR, or the CSR shell for admin). */
 app.use((req, res, next) => {
   const nonce = createNonce();
   const context: SsrRequestContext = {

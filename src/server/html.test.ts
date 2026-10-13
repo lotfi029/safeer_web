@@ -30,7 +30,7 @@ describe('finalizeAngularResponse', () => {
     expect(res.headers.has('content-length')).toBe(false);
   });
 
-  it('applies to the CSR shell of admin/portal routes too (R1)', async () => {
+  it('applies to the CSR shell of admin routes too (R1)', async () => {
     const res = await finalizeAngularResponse(
       new Response(page, { status: 200, headers: { 'content-type': 'text/html' } }),
       '/ar/admin',
@@ -127,8 +127,8 @@ describe('deferMainScript (public pages paint before the bundle loads)', () => {
         true,
       ).then((r) => r.text());
     expect(await render('/ar/news')).not.toContain('<script src="main-');
-    expect(await render('/ar/admin/applications')).toContain('<script src="main-ABC123.js"');
-    expect(await render('/en/portal?x=1')).toContain('<script src="main-ABC123.js"');
+    expect(await render('/ar/admin/messages')).toContain('<script src="main-ABC123.js"');
+    expect(await render('/en/admin?x=1')).toContain('<script src="main-ABC123.js"');
   });
 });
 
@@ -160,7 +160,7 @@ describe('font faces on public pages (body faces first, the rest after the first
     expect(html).not.toContain('data-beasties-skip');
   });
 
-  it('admin/portal still get every face inline; public pages only the body faces', async () => {
+  it('admin still gets every face inline; public pages only the body faces', async () => {
     const render = (url: string) =>
       finalizeAngularResponse(
         new Response(page, { headers: { 'content-type': 'text/html' } }),

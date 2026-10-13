@@ -24,12 +24,12 @@ test.describe('staff auth', () => {
 
   test('anonymous → login with returnUrl → back to the page → sign out', async ({ page }) => {
     const admin = await staffAccount('admin', { fresh: true });
-    await page.goto('/en/admin/applications');
-    await expect(page).toHaveURL(/\/en\/admin\/login\?returnUrl=%2Fen%2Fadmin%2Fapplications$/);
+    await page.goto('/en/admin/messages');
+    await expect(page).toHaveURL(/\/en\/admin\/login\?returnUrl=%2Fen%2Fadmin%2Fmessages$/);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
     await page.waitForLoadState('networkidle');
     await submitLogin(page, admin.email, admin.password);
-    await expect(page).toHaveURL(/\/en\/admin\/applications$/);
+    await expect(page).toHaveURL(/\/en\/admin\/messages$/);
     await expect(page.getByTestId('admin-user')).toContainText('Administrator');
     await page.getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/en\/admin\/login$/);
@@ -40,8 +40,8 @@ test.describe('staff auth', () => {
   test('wrong password, disabled and locked accounts all get the same message (A2/C3)', async ({
     page,
   }) => {
-    const active = await staffAccount('reviewer', { fresh: true });
-    const disabled = await staffAccount('reviewer', { status: 'disabled' });
+    const active = await staffAccount('support', { fresh: true });
+    const disabled = await staffAccount('support', { status: 'disabled' });
     const locked = await staffAccount('editor', { locked: true });
     await gotoHydrated(page, '/en/admin/login');
     const messages: string[] = [];
@@ -114,11 +114,11 @@ test.describe('staff auth', () => {
     }
   });
 
-  test('roleGuard: an editor opening applications gets the no-access page (GET /admin/roles)', async ({
+  test('roleGuard: an editor opening the inbox gets the no-access page (GET /admin/roles)', async ({
     page,
   }) => {
     const editor = await staffAccount('editor', { fresh: true });
-    await page.goto('/ar/admin/login?returnUrl=%2Far%2Fadmin%2Fapplications');
+    await page.goto('/ar/admin/login?returnUrl=%2Far%2Fadmin%2Fmessages');
     await page.waitForLoadState('networkidle');
     await submitLogin(page, editor.email, editor.password);
     await expect(page).toHaveURL(/\/ar\/admin\/forbidden$/);

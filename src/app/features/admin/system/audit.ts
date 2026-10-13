@@ -19,17 +19,13 @@ import { AdminPageHead } from '../layout/admin-page-head';
 const PAGE = 50;
 /** Entity types the API audits (audit.interceptor.ts and the services that set auditContext). */
 export const AUDIT_ENTITIES = [
-  'applications',
   'users',
   'sessions',
   'site_settings',
   'mail_settings',
   'mail_templates',
   'mail_log',
-  'sms_settings',
-  'sms_templates',
   'redirects',
-  'interview_slots',
   'newsletter_subscribers',
   'contact_messages',
   'posts',

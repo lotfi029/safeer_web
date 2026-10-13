@@ -1,14 +1,11 @@
 import type { Translation } from './translation';
 import { en as aboutPage } from './pages/about';
 import { en as workPage } from './pages/work';
-import { en as scholarshipsPage } from './pages/scholarships';
 import { en as testimonialsPage } from './pages/testimonials';
 import { en as partnersPage } from './pages/partners';
-import { en as documentsPage } from './pages/documents';
+import { en as governancePage } from './pages/governance';
 import { en as contactPage } from './pages/contact';
 import { en as newsPage } from './pages/news';
-import { en as applyPage } from './pages/apply';
-import { en as portal } from './portal';
 
 /** English UI strings. Must mirror `ar.ts` (type-checked). */
 export const en: Translation = {
@@ -100,7 +97,7 @@ export const en: Translation = {
       searchLabel: 'Search',
     },
     timeline: {
-      label: 'Application progress',
+      label: 'Stages',
       done: 'Completed',
       now: 'In progress',
       pending: 'Not started',
@@ -115,9 +112,9 @@ export const en: Translation = {
     mainNav: 'Main navigation',
     openMenu: 'Open menu',
     menu: 'Menu',
-    apply: 'Apply for a scholarship',
-    portal: 'Student portal',
-    applyShort: 'Apply',
+    contactCta: 'Contact us',
+    governance: 'Governance',
+    governanceMenu: 'Governance menu',
     staff: 'Staff dashboard',
     home: 'Home page',
     footer: {
@@ -127,11 +124,12 @@ export const en: Translation = {
       social: 'Social media',
       about: 'About',
       board: 'Board',
-      documents: 'Licences & policies',
       work: 'Our work',
-      scholarships: 'Scholarships',
-      applyLink: 'Apply for a scholarship',
       news: 'News',
+      contactLink: 'Contact us',
+      governance: 'Governance',
+      licences: 'Licences',
+      licenceNo: 'Licence no.: {{no}}',
     },
     social: {
       facebook: 'Facebook',
@@ -155,13 +153,11 @@ export const en: Translation = {
       allPartners: 'See all partners',
     },
     news: newsPage,
-    apply: applyPage,
     about: aboutPage,
     work: workPage,
-    scholarships: scholarshipsPage,
     testimonials: testimonialsPage,
     partners: partnersPage,
-    documents: documentsPage,
+    governance: governancePage,
     contact: contactPage,
     board: {
       membersEyebrow: 'Members',
@@ -193,27 +189,6 @@ export const en: Translation = {
     contact: 'Contact us',
     retry: 'Try again',
   },
-  status: {
-    draft: 'Draft',
-    new: 'New',
-    under_review: 'Under review',
-    docs_missing: 'Documents missing',
-    interview: 'Interview',
-    accepted: 'Accepted',
-    rejected: 'Rejected',
-  },
-  documentStatus: {
-    under_review: 'Under review',
-    accepted: 'Accepted',
-    rejected: 'Rejected',
-    missing: 'Required',
-  },
-  docType: {
-    id_copy: 'ID copy',
-    certificate: 'Academic certificates',
-    admission_letter: 'Admission letter',
-    other: 'Other document',
-  },
   validation: {
     required: 'This field is required.',
     email: 'Enter a valid email address.',
@@ -233,19 +208,6 @@ export const en: Translation = {
       FORBIDDEN: 'You do not have permission for this action.',
       NOT_FOUND: 'Not found.',
       RATE_LIMITED: 'Too many attempts. Wait a moment and try again.',
-      APPLICATION_LOCKED: 'The application cannot be changed in its current status.',
-      APPLICATION_EXISTS:
-        'An application already exists for these details. We have sent you a link to continue it.',
-      OTP_INVALID: 'The code is wrong or has expired.',
-      DOCUMENTS_INCOMPLETE: 'Some required documents have not been uploaded yet.',
-      SLOT_ALREADY_BOOKED: 'This slot is taken. Please choose another one.',
-      INTERVIEW_NOT_AVAILABLE: 'Interview booking is not available right now.',
-      INVALID_STATUS_TRANSITION: 'The application cannot move to this status.',
-      QUOTA_EXCEEDED:
-        'The upload limit for this application has been reached. Contact us if you need to send more files.',
-      DOCUMENT_NOT_REVIEWABLE: 'This document can no longer be reviewed.',
-      DOCUMENT_SUPERSEDED: 'This document was replaced, so its file is no longer available.',
-      INVALID_ASSIGNEE: 'This person cannot be assigned to the application.',
       REDIRECT_CHAIN: 'This redirect would chain through another redirect.',
       UPSTREAM_UNAVAILABLE: 'The service is temporarily unavailable. Please try again shortly.',
       UPSTREAM_TIMEOUT: 'The request took too long. Please try again.',
@@ -264,7 +226,6 @@ export const en: Translation = {
       INTERNAL_ERROR: 'Something went wrong. Please try again.',
     },
   },
-  portal,
   admin: {
     login: {
       title: 'Staff sign in',
@@ -304,5 +265,12 @@ export const en: Translation = {
   },
   kit: {
     title: 'Component kit',
+    status: {
+      plain: 'Plain',
+      teal: 'Teal',
+      ok: 'OK',
+      warn: 'Warning',
+      solid: 'Solid',
+    },
   },
 };

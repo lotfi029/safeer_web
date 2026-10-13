@@ -55,6 +55,13 @@ export interface SiteSettings {
   /** A12: the pin (−90…90 / −180…180), used for the "open in maps" link. */
   mapLat: number | null;
   mapLng: number | null;
+  /**
+   * The primary published licence's number (footer bar, bylaws aside), written by the API on every
+   * licence write; null (hidden) when there is none.
+   */
+  licenceNo?: string | null;
+  /** That licence's issuer (`licenceIssuerAr`/`En`, collapsed). */
+  licenceIssuer?: string | null;
   enEnabled: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -66,11 +73,10 @@ export type NavSlug =
   | 'about'
   | 'board'
   | 'work'
-  | 'scholarships'
   | 'news'
   | 'testimonials'
   | 'partners'
-  | 'documents'
+  | 'governance'
   | 'contact';
 
 export interface NavItem {
@@ -93,7 +99,7 @@ export interface PageSection {
   /** Sanitized HTML after backend C26 (render via SafeHtml only). */
   body: string | null;
   primaryButtonLabel: string | null;
-  /** Locale-agnostic path (`/apply`) after B9; legacy `#/x` values are mapped client-side. */
+  /** Locale-agnostic path (`/contact`) after B9; legacy `#/x` values are mapped client-side. */
   primaryButtonUrl: string | null;
   secondaryButtonLabel: string | null;
   secondaryButtonUrl: string | null;
@@ -128,8 +134,7 @@ export interface AboutItem {
   sortOrder: number;
 }
 
-export type AboutItemKind =
-  'vision' | 'mission' | 'goal' | 'care_pillar' | 'scholarship_step' | 'requirement';
+export type AboutItemKind = 'vision' | 'mission' | 'goal' | 'care_pillar';
 
 /** B18: `GET /about-items?kind=a,b` → grouped by kind. */
 export type AboutItemsResponse = Partial<Record<AboutItemKind, AboutItem[]>>;
@@ -200,18 +205,52 @@ export interface Partner {
   sortOrder: number;
 }
 
+/** `governance` categories have their own page under `/governance/:slug`. */
+export type DocSectionGroup = 'governance' | 'other';
+
 export interface DocCategory {
   id: Id;
   slug: string;
   name: string;
+  sectionGroup?: DocSectionGroup;
 }
 
 export interface PublicDocument {
   id: Id;
   title: string;
+  /** A short meta line (`metaAr`/`metaEn`, collapsed): e.g. a period or an edition. */
+  meta?: string | null;
   docDate: string | null;
+  /** `null`: the file isn't published yet («قريبًا»). */
   asset: Asset | null;
   sortOrder: number;
+}
+
+/** `GET /documents/sections`: the published governance categories, in order. */
+export interface DocSection {
+  id: Id;
+  slug: string;
+  name: string;
+  sectionGroup: DocSectionGroup;
+  count: number;
+}
+
+/** `GET /documents/sections/:slug` (404 for an unknown or unpublished section). */
+export interface DocSectionResponse {
+  category: DocCategory;
+  documents: PublicDocument[];
+}
+
+/** `GET /licences` (primary first). */
+export interface Licence {
+  id: Id;
+  title: string;
+  number: string | null;
+  issuer: string | null;
+  issuedOn: string | null;
+  expiresOn: string | null;
+  isPrimary: boolean;
+  asset: Asset | null;
 }
 
 export interface DocumentGroup {
@@ -264,7 +303,15 @@ export interface PostDetail extends PostSummary {
 
 // ---------- forms ----------
 
-export type ContactSubject = 'scholarship' | 'partnership' | 'feedback' | 'other';
+export type ContactSubject = 'inquiry' | 'partnership' | 'support' | 'feedback' | 'other';
+
+export const CONTACT_SUBJECTS: readonly ContactSubject[] = [
+  'inquiry',
+  'partnership',
+  'support',
+  'feedback',
+  'other',
+];
 
 export interface ContactRequest {
   name: string;
@@ -299,195 +346,9 @@ export interface Country {
   name: string;
 }
 
-// ---------- applications / portal ----------
-
-export type ApplicationStatus =
-  'draft' | 'new' | 'under_review' | 'docs_missing' | 'interview' | 'accepted' | 'rejected';
-
-export const APPLICATION_STATUSES: readonly ApplicationStatus[] = [
-  'draft',
-  'new',
-  'under_review',
-  'docs_missing',
-  'interview',
-  'accepted',
-  'rejected',
-];
-
-export type Gender = 'male' | 'female';
-export type DegreeLevel = 'bachelor' | 'master' | 'phd';
-export type DocType = 'id_copy' | 'certificate' | 'admission_letter' | 'other';
-export const REQUIRED_DOC_TYPES: readonly DocType[] = [
-  'id_copy',
-  'certificate',
-  'admission_letter',
-];
-
-export interface ApplicationPersonal {
-  firstName: string | null;
-  middleName: string | null;
-  lastName: string | null;
-  birthDate: string | null;
-  phone: string | null;
-  nationality: string | null;
-  idNumber: string | null;
-  email: string | null;
-  currentJob: string | null;
-  gender: Gender | null;
-}
-
-export interface ApplicationStudy {
-  university: string | null;
-  major: string | null;
-  degreeLevel: DegreeLevel | null;
-  scholarshipNote: string | null;
-}
-
-export type TimelineKey = 'received' | 'documents' | 'review' | 'interview' | 'decision';
-export type TimelineState = 'done' | 'now' | 'pending';
-
-export interface ActionNeeded {
-  type: 'document_rejected' | 'documents_requested';
-  docType?: DocType;
-  docTypes?: DocType[];
-  reason?: string | null;
-  message?: string | null;
-}
-
-export interface PortalEvent {
-  id: Id;
-  type: string;
-  data: Record<string, unknown> | null;
-  createdAt: string;
-}
-
-export interface InterviewBooking {
-  id: Id;
-  startsAt: string;
-  endsAt: string;
-  location: string | null;
-}
-
-export interface PortalMe {
-  reference: string;
-  status: ApplicationStatus;
-  currentStep: number;
-  personal: ApplicationPersonal;
-  study: ApplicationStudy;
-  submittedAt: string | null;
-  decidedAt: string | null;
-  timeline: { key: TimelineKey; state: TimelineState }[];
-  actionNeeded: ActionNeeded | null;
-  recentEvents: PortalEvent[];
-  /** C17: the booked slot, or null. */
-  interview: InterviewBooking | null;
-  /** B16: the same token verify-otp issued, so it survives a reload. */
-  csrfToken: string;
-}
-
-/** Step-1 fields (`POST /applications`, strict). */
-export interface ApplicationStep1 {
-  firstName: string;
-  middleName?: string | null;
-  lastName: string;
-  birthDate: string;
-  phone: string;
-  nationality: string;
-  idNumber?: string | null;
-  email: string;
-  currentJob?: string | null;
-  gender: Gender;
-}
-
-/** `PATCH /portal/application`: strict partial. Only these four may be `null` (F4). */
-export type ApplicationPatch = Partial<
-  Omit<ApplicationStep1, 'middleName' | 'idNumber' | 'currentJob'> & {
-    middleName: string | null;
-    idNumber: string | null;
-    currentJob: string | null;
-    university: string;
-    major: string;
-    degreeLevel: DegreeLevel;
-    scholarshipNote: string | null;
-    consent: boolean;
-  }
->;
-
-/**
- * C15: `PATCH /portal/application/corrections` while `docs_missing`. A strict partial of these
- * fields, at least one of them; never email or phone. `middleName`/`idNumber` may be `null`.
- */
-export type ApplicationCorrections = Partial<{
-  firstName: string;
-  middleName: string | null;
-  lastName: string;
-  birthDate: string;
-  nationality: string;
-  idNumber: string | null;
-  university: string;
-  major: string;
-  degreeLevel: DegreeLevel;
-}>;
-
-export interface CorrectApplicationResponse {
-  status: ApplicationStatus;
-  corrected: string[];
-}
-
-export interface CreateApplicationResponse {
-  reference: string;
-  csrfToken: string;
-}
-
-export interface PatchApplicationResponse {
-  status: ApplicationStatus;
-  currentStep: number;
-}
-
-export interface SubmitApplicationResponse {
-  status: 'new';
-  submittedAt: string;
-}
-
-/** B19: only the public fields are typed; `storageKey`/`checksum` are never read. */
-export interface ApplicantDocument {
-  id: Id;
-  docType: DocType;
-  originalName: string;
-  mime: string;
-  sizeBytes: number;
-  status: 'under_review' | 'accepted' | 'rejected';
-  rejectionReason: string | null;
-  createdAt: string;
-}
-
-export interface PortalDocumentsResponse {
-  documents: ApplicantDocument[];
-  completeness: { done: number; required: number; missingTypes: DocType[] };
-}
-
-export interface InterviewSlot {
-  id: Id;
-  startsAt: string;
-  endsAt: string;
-  location: string | null;
-}
-
-export type OtpChannel = 'sms' | 'email';
-
-/**
- * `POST /portal/auth/request-otp` (A4): answered at once, before the identifier is even looked up, and
- * the same whether or not it matches. It never means a message went out: the code arrives a moment
- * later (up to ~5 s when SMS falls back to email). `channelHint` is the channel the request would use.
- */
-export interface RequestOtpResponse {
-  ok: true;
-  channelHint: OtpChannel;
-}
-
 // ---------- staff ----------
 
-export type StaffRole = 'admin' | 'reviewer' | 'editor' | 'support';
+export type StaffRole = 'admin' | 'editor' | 'support';
 
 export interface StaffUser {
   id: Id;
@@ -517,32 +378,22 @@ export interface RolesResponse {
 
 /**
  * `GET /admin/overview` (C20, A5): each block is present only for the roles that own its area.
- * Application figures (`newApplications`, `underReview`, `acceptedThisMonth`, `series`,
- * `latestApplications`) are admin + reviewer. `unreadMessages` is admin + support; editors get no
- * message counts at all. `recentAuditLog` is admin-only (an empty array for other roles).
+ * `unreadMessages` is admin + support; editors get no message counts at all. `recentAuditLog` is
+ * admin-only (an empty array for other roles). The application figures (stat cards, the 6-month
+ * series, the latest applications, `badges.newApplications`) were removed from the API with the
+ * scholarship feature; an older API may still send them, so every block is optional and ignored.
  */
 export interface AdminOverview {
-  statCards: {
-    newApplications?: number;
-    underReview?: number;
-    acceptedThisMonth?: number;
+  statCards?: {
     unreadMessages?: number;
   };
-  series?: { month: string; received: number; accepted: number }[];
-  latestApplications?: {
-    id: Id;
-    reference: string;
-    name: string;
-    status: ApplicationStatus;
-    submittedAt: string | null;
-  }[];
-  contentAlerts: {
+  contentAlerts?: {
     noPublishedPartners: boolean;
     legacyPostsCount: number;
     pagesNeedingReviewCount: number;
   };
-  badges: { newApplications?: number; unreadMessages?: number };
-  recentAuditLog: {
+  badges?: { unreadMessages?: number };
+  recentAuditLog?: {
     id: Id;
     action: string;
     entityType: string;
@@ -552,17 +403,4 @@ export interface AdminOverview {
     actorName: string | null;
     createdAt: string;
   }[];
-}
-
-/** B19 + A11: a document in `GET /admin/applications/:id` (and the review PATCH response). */
-export interface AdminApplicationDocument extends ApplicantDocument {
-  reviewedBy: Id | null;
-  reviewedAt: string | null;
-  supersededAt: string | null;
-  /**
-   * The file route relative to the API base (`admin/applications/{id}/documents/{docId}/file`), or
-   * `null` for a superseded document, whose file was deleted. Show a download link only when it is
-   * set; the route answers 410 `DOCUMENT_SUPERSEDED` for a superseded document.
-   */
-  downloadPath: string | null;
 }

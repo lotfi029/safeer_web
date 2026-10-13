@@ -2,11 +2,9 @@ import { expect, type Page, test } from '@playwright/test';
 import { randomInt } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { signInAs, submitLogin } from '../support/admin';
-import { content, tagOf } from '../support/content';
 import { gotoHydrated } from '../support/hydration';
 import { checkScreen, matrix } from '../support/matrix';
 import {
-  applicationIn,
   authToken,
   disposeSetupAdmin,
   postNewsletter,
@@ -39,11 +37,9 @@ test.describe('admin system', () => {
     ['admin-settings', '/admin/system/settings'],
     ['admin-mail', '/admin/system/mail'],
     ['admin-mail-templates', '/admin/system/mail?tab=templates'],
-    ['admin-sms-log', '/admin/system/sms?tab=log'],
     ['admin-audit', '/admin/system/audit'],
     ['admin-redirects', '/admin/redirects'],
     ['admin-newsletter', '/admin/newsletter'],
-    ['admin-interview-slots', '/admin/interview-slots'],
     ['admin-account', '/admin/account'],
   ] as const;
 
@@ -72,7 +68,7 @@ test.describe('admin system', () => {
     await page.getByRole('button', { name: 'Invite a user' }).click();
     await dialog(page).getByLabel('Name').fill('E2E Invitee');
     await dialog(page).getByLabel('Email').fill(email);
-    await dialog(page).getByLabel('Role').selectOption('reviewer');
+    await dialog(page).getByLabel('Role').selectOption('editor');
     await dialog(page).getByRole('button', { name: 'Send invitation' }).click();
     const row = page.locator(`[data-user="${email}"]`);
     await expect(row.getByTestId('user-status')).toHaveText('Invitation pending');
@@ -83,7 +79,7 @@ test.describe('admin system', () => {
     ).get<Array<{ id: string; email: string }>>('admin/users');
     const invited = users.find((u) => u.email === email)!;
     const token = await authToken(
-      { ...invited, name: 'E2E Invitee', password: '', role: 'reviewer' },
+      { ...invited, name: 'E2E Invitee', password: '', role: 'editor' },
       'invite',
     );
     const other = await browser.newPage();
@@ -135,7 +131,8 @@ test.describe('admin system', () => {
     await dialog(page).getByRole('button', { name: 'Cancel' }).click();
 
     const matrixRows = page.getByTestId('role-matrix').locator('tbody tr');
-    await expect(matrixRows).toHaveCount(9);
+    // Seven areas: the two applications areas left with the reviewer role.
+    await expect(matrixRows).toHaveCount(7);
     // Deleting redirects: admin only.
     const redirectsRow = matrixRows.filter({ hasText: 'Deleting redirects' });
     await expect(redirectsRow.getByText('Allowed', { exact: true })).toHaveCount(1);
@@ -256,34 +253,6 @@ test.describe('admin system', () => {
     await expect(row).toHaveCount(0);
   });
 
-  test('interview slots: times in Riyadh, the end must follow the start', async ({ page }) => {
-    const reviewer = await staffAccount('reviewer', { fresh: true });
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await signInAs(page, reviewer, '/admin/interview-slots');
-    const day = new Date(Date.now() + (30 + randomInt(0, 200)) * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
-    await page.getByRole('button', { name: 'Add slot' }).click();
-    await dialog(page).getByLabel('Starts').fill(`${day}T10:00`);
-    await dialog(page).getByLabel('Ends').fill(`${day}T09:30`);
-    await dialog(page).getByRole('button', { name: 'Save' }).click();
-    await expect(dialog(page).getByText('Must be after the start time.')).toBeVisible();
-    await dialog(page).getByLabel('Ends').fill(`${day}T10:30`);
-    const loc = tagOf('Room');
-    await dialog(page).getByLabel('Location (English)').fill(loc);
-    await dialog(page).getByRole('button', { name: 'Save' }).click();
-    await expect(dialog(page)).toBeHidden();
-    const row = page.locator('[data-row]').filter({ hasText: loc });
-    await expect(row).toContainText('10:00–10:30');
-    await expect(row).toContainText('Open');
-    const slots = await content.list<{ id: string; startsAt: string; locationEn: string }>(
-      'interview-slots',
-    );
-    const slot = slots.data.find((s) => s.locationEn === loc)!;
-    expect(new Date(slot.startsAt).toISOString()).toBe(new Date(`${day}T07:00:00Z`).toISOString());
-    await content.remove('interview-slots', slot.id);
-  });
-
   test('account: wrong current password; sessions on another device can be ended', async ({
     page,
     browser,
@@ -308,38 +277,12 @@ test.describe('admin system', () => {
 
     await page.getByRole('button', { name: 'Sign out other devices' }).click();
     await expect(page.getByTestId('session-rows').locator('li')).toHaveCount(1);
-    await phone.goto('/en/admin/applications');
+    await phone.goto('/en/admin/messages');
     await expect(phone).toHaveURL(/\/en\/admin\/login/);
     await phone.close();
 
     await page.getByLabel('Current password').fill(user.password);
     await page.getByRole('button', { name: 'Change password' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Password changed.' })).toBeVisible();
-  });
-
-  test('anonymise: admins delete an application’s personal data; reviewers don’t see the action', async ({
-    page,
-  }) => {
-    const app = await applicationIn('under_review', `anon${rand()}`);
-    const reviewer = await staffAccount('reviewer', { fresh: true });
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await signInAs(page, reviewer, `/admin/applications/${app.id}`);
-    await expect(page.getByTestId('review-documents')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Delete personal data' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Sign out' }).click();
-
-    await asAdmin(page, `/admin/applications/${app.id}`);
-    await page.getByRole('button', { name: 'Delete personal data' }).click();
-    await page
-      .getByRole('alertdialog')
-      .getByRole('button', { name: 'Delete personal data' })
-      .click();
-    await expect(
-      page
-        .getByRole('status')
-        .filter({ hasText: `Personal data of application ${app.reference} deleted.` }),
-    ).toBeVisible();
-    await expect(page.getByText('No documents uploaded yet.')).toBeVisible();
-    await expect(page.locator('h1')).toHaveText('[—]');
   });
 });

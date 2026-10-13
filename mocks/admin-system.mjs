@@ -1,14 +1,13 @@
 /**
  * Admin system routes of the mock API (Stage 2, Phase 9): users and invitations, site settings and
- * cache, mail/SMS settings, templates, test sends and logs, audit, newsletter export/delete, interview
- * slots, account (password, sessions) and application anonymise. Rules follow safeer_api v1.0.0-rc1
- * (users.service.ts, site-settings.dto.ts, mail/sms services, admin-interview-slots.controller.ts,
- * auth.service.ts); seed values are recorded from the API (fixtures/adminSystem.json) and shapes are
+ * cache, mail settings, templates, test sends and logs, audit, newsletter export/delete and account
+ * (password, sessions). Rules follow safeer_api (users.service.ts, site-settings.dto.ts, the mail
+ * services, auth.service.ts); seed values are recorded from the API (fixtures/adminSystem.json) and shapes are
  * drift-tested (mocks/admin-shapes.test.mjs).
  */
 import { publicStaff } from './backend.mjs';
 
-const ROLES = ['admin', 'reviewer', 'editor', 'support'];
+const ROLES = ['admin', 'editor', 'support'];
 const MAP_EMBED_ALLOW_LIST = [
   { host: 'www.google.com', pathPrefix: '/maps/embed' },
   { host: 'www.openstreetmap.org', pathPrefix: '/' },
@@ -49,7 +48,6 @@ export function systemRoutes(ctx) {
   db.system ??= {
     settings: seed.settings ?? {},
     mail: { settings: seed.mailSettings ?? {}, templates: seed.mailTemplates ?? [], log: [] },
-    sms: { settings: seed.smsSettings ?? {}, templates: seed.smsTemplates ?? [], log: [] },
     cache: { entries: 12, maxEntries: 500, hits: 40, misses: 10, uptimeSeconds: 3600 },
   };
   const staff = () => db.fixtures.staff;
@@ -219,9 +217,9 @@ export function systemRoutes(ctx) {
           return invalid('mapLat', 'Out of range');
         if (b.mapLng !== undefined && b.mapLng !== null && !(b.mapLng >= -180 && b.mapLng <= 180))
           return invalid('mapLng', 'Out of range');
-        if ('applicationRefPrefix' in b && !/^[A-Z]{1,10}$/.test(String(b.applicationRefPrefix))) {
-          return invalid('applicationRefPrefix', 'must be uppercase letters only');
-        }
+        // Written from the primary published licence (admin/licences), never through settings.
+        for (const k of ['licenceNo', 'licenceIssuerAr', 'licenceIssuerEn'])
+          if (k in b) return invalid(k, 'Unrecognized key', 'unrecognized_keys');
         if (b.email && !EMAIL_RE.test(b.email)) return invalid('email', 'Invalid email');
         const before = clone(db.system.settings);
         Object.assign(db.system.settings, b, { updatedBy: g.staff.id, updatedAt: nowIso() });
@@ -386,145 +384,14 @@ export function systemRoutes(ctx) {
         return json(200, { ok: true });
       },
     ],
-
-    // ---------- interview slots (shared with the portal's booking) ----------
-    [
-      'GET',
-      /^\/api\/v1\/admin\/interview-slots$/,
-      ({ req, query }) => {
-        const g = guard(req, 'applications');
-        if (g.error) return g.error;
-        const rows = (db.fixtures.interviewSlots ?? [])
-          .map(adminSlot)
-          .filter(
-            (s) => !query.get('applicationId') || s.applicationId === query.get('applicationId'),
-          )
-          .sort((a, b) => Number(b.id) - Number(a.id));
-        return json(200, paged(rows, query));
-      },
-    ],
-    [
-      'POST',
-      /^\/api\/v1\/admin\/interview-slots$/,
-      ({ req, body }) => {
-        const g = guard(req, 'applications', { write: true });
-        if (g.error) return g.error;
-        const bad = slotProblem(body, null);
-        if (bad) return bad;
-        const at = nowIso();
-        const slot = {
-          id: String(++db.seq),
-          startsAt: new Date(body.startsAt).toISOString(),
-          endsAt: new Date(body.endsAt).toISOString(),
-          locationAr: body.locationAr ?? null,
-          locationEn: body.locationEn ?? null,
-          applicationId: null,
-          createdAt: at,
-          updatedAt: at,
-        };
-        (db.fixtures.interviewSlots ??= []).push(slot);
-        return json(201, adminSlot(slot));
-      },
-    ],
-    [
-      'GET',
-      /^\/api\/v1\/admin\/interview-slots\/([^/]+)$/,
-      ({ req, params }) => {
-        const g = guard(req, 'applications');
-        if (g.error) return g.error;
-        const slot = (db.fixtures.interviewSlots ?? []).find((s) => s.id === params[0]);
-        return slot ? json(200, adminSlot(slot)) : problem(404, 'NOT_FOUND');
-      },
-    ],
-    [
-      'PATCH',
-      /^\/api\/v1\/admin\/interview-slots\/([^/]+)$/,
-      ({ req, params, body }) => {
-        const g = guard(req, 'applications', { write: true });
-        if (g.error) return g.error;
-        const slot = (db.fixtures.interviewSlots ?? []).find((s) => s.id === params[0]);
-        if (!slot) return problem(404, 'NOT_FOUND');
-        const bad = slotProblem(body, slot);
-        if (bad) return bad;
-        for (const k of ['startsAt', 'endsAt'])
-          if (body[k]) slot[k] = new Date(body[k]).toISOString();
-        for (const k of ['locationAr', 'locationEn']) if (k in body) slot[k] = body[k];
-        if (('locationAr' in body || 'locationEn' in body) && 'location' in slot)
-          delete slot.location;
-        slot.updatedAt = nowIso();
-        audit(g.staff, 'update', 'interview_slots', slot.id, null);
-        return json(200, adminSlot(slot));
-      },
-    ],
-    [
-      'DELETE',
-      /^\/api\/v1\/admin\/interview-slots\/([^/]+)$/,
-      ({ req, params }) => {
-        const g = guard(req, 'applications', { write: true });
-        if (g.error) return g.error;
-        const list = db.fixtures.interviewSlots ?? [];
-        const i = list.findIndex((s) => s.id === params[0]);
-        if (i < 0) return problem(404, 'NOT_FOUND');
-        if (list[i].applicationId) {
-          return problem(409, 'RESOURCE_IN_USE', {
-            title: `Interview slot #${params[0]} is already booked and cannot be deleted`,
-          });
-        }
-        list.splice(i, 1);
-        return json(200, { deleted: true });
-      },
-    ],
-
-    // ---------- anonymise ----------
-    [
-      'DELETE',
-      /^\/api\/v1\/admin\/applications\/([^/]+)$/,
-      ({ req, params }) => {
-        const g = guard(req, 'applications.delete', { write: true });
-        if (g.error) return g.error;
-        const app = db.applications.get(params[0]);
-        if (!app) return problem(404, 'NOT_FOUND', { title: 'Application not found' });
-        for (const k of [
-          'firstName',
-          'middleName',
-          'lastName',
-          'birthDate',
-          'phone',
-          'nationality',
-          'idNumber',
-          'email',
-          'currentJob',
-          'gender',
-          'university',
-          'major',
-          'scholarshipNote',
-        ]) {
-          app[k] = null;
-        }
-        const files = (app.documents ?? []).length;
-        Object.assign(app, {
-          documents: [],
-          notes: [],
-          events: [],
-          anonymizedAt: app.anonymizedAt ?? nowIso(),
-        });
-        for (const slot of db.fixtures.interviewSlots ?? [])
-          if (slot.applicationId === app.id) slot.applicationId = null;
-        audit(g.staff, 'delete', 'applications', app.id, app.reference, {
-          before: null,
-          after: { anonymized: true, filesDeleted: files },
-        });
-        return json(200, { anonymized: true, reference: app.reference });
-      },
-    ],
   ];
 
-  // ---------- mail / SMS ----------
-  for (const channel of ['mail', 'sms']) {
+  // ---------- mail ----------
+  for (const channel of ['mail']) {
     const store = db.system[channel];
-    const secretKey = channel === 'mail' ? 'password' : 'token';
-    const secretFlag = channel === 'mail' ? 'passwordIsSet' : 'tokenIsSet';
-    const drivers = channel === 'mail' ? ['smtp', 'log'] : ['log', 'http', 'unifonic'];
+    const secretKey = 'password';
+    const secretFlag = 'passwordIsSet';
+    const drivers = ['smtp', 'log'];
     const base = `/api/v1/admin/${channel}`;
     const re = (tail) => new RegExp(`^${base.replace(/\//g, '\\/')}${tail}$`);
     routes.push(
@@ -571,20 +438,14 @@ export function systemRoutes(ctx) {
           const g = guard(req, 'settings', { write: true });
           if (g.error) return g.error;
           const to = String(body?.to ?? '');
-          if (channel === 'mail' ? !EMAIL_RE.test(to) : to.length < 3 || to.length > 40)
-            return invalid('to', 'Invalid');
+          if (!EMAIL_RE.test(to)) return invalid('to', 'Invalid');
           const configured =
-            channel === 'mail'
-              ? store.settings.driver === 'smtp' && store.settings.host && store.settings.port
-              : store.settings.driver !== 'log';
+            store.settings.driver === 'smtp' && store.settings.host && store.settings.port;
           const result = configured
             ? { ok: true }
             : {
                 ok: false,
-                error:
-                  channel === 'mail'
-                    ? 'SMTP is not configured — set driver to "smtp" with a host and port first'
-                    : 'SMS is not configured — choose a provider first',
+                error: 'SMTP is not configured — set driver to "smtp" with a host and port first',
               };
           Object.assign(store.settings, {
             lastTestAt: nowIso(),
@@ -635,16 +496,11 @@ export function systemRoutes(ctx) {
               (_, n) => body?.vars?.[n] ?? `[${n}]`,
             );
           const bodyText = fill(en && tpl.bodyEn ? tpl.bodyEn : tpl.bodyAr);
-          return json(
-            200,
-            channel === 'mail'
-              ? {
-                  subject: fill(en && tpl.subjectEn ? tpl.subjectEn : tpl.subjectAr),
-                  html: `<p>${bodyText}</p>`,
-                  text: bodyText,
-                }
-              : { message: bodyText },
-          );
+          return json(200, {
+            subject: fill(en && tpl.subjectEn ? tpl.subjectEn : tpl.subjectAr),
+            html: `<p>${bodyText}</p>`,
+            text: bodyText,
+          });
         },
       ],
       [
@@ -668,8 +524,6 @@ export function systemRoutes(ctx) {
           const b = body ?? {};
           for (const k of ['key', 'variables', 'id'])
             if (k in b) return invalid(k, 'Unrecognized key', 'unrecognized_keys');
-          if (channel === 'sms' && b.bodyAr && b.bodyAr.length > 480)
-            return invalid('bodyAr', 'Too big', 'too_big');
           for (const k of ['subjectAr', 'subjectEn', 'bodyAr', 'bodyEn']) {
             for (const m of String(b[k] ?? '').matchAll(/\{\{\s*(\w+)\s*\}\}/g)) {
               if (!tpl.variables.includes(m[1]))
@@ -846,38 +700,6 @@ export function systemRoutes(ctx) {
       },
     ],
   );
-
-  function adminSlot(s) {
-    return {
-      id: s.id,
-      startsAt: s.startsAt,
-      endsAt: s.endsAt,
-      locationAr: s.locationAr ?? s.location ?? null,
-      locationEn: s.locationEn ?? null,
-      applicationId: s.applicationId ?? null,
-      createdAt: s.createdAt ?? '2026-09-01T09:00:00.000Z',
-      updatedAt: s.updatedAt ?? '2026-09-01T09:00:00.000Z',
-    };
-  }
-
-  function slotProblem(body, current) {
-    const b = body ?? {};
-    const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
-    for (const k of ['startsAt', 'endsAt']) {
-      if (!current && !b[k]) return invalid(k, 'Required', 'invalid_type');
-      if (b[k] && !iso.test(b[k])) return invalid(k, 'Invalid ISO datetime', 'invalid_format');
-    }
-    if ('applicationId' in b)
-      return invalid('applicationId', 'Unrecognized key', 'unrecognized_keys');
-    const start = Date.parse(b.startsAt ?? current?.startsAt);
-    const end = Date.parse(b.endsAt ?? current?.endsAt);
-    if (!(end > start)) {
-      return current
-        ? problem(400, 'VALIDATION_FAILED', { title: 'endsAt must be after startsAt' })
-        : invalid('endsAt', 'endsAt must be after startsAt');
-    }
-    return null;
-  }
 
   return routes;
 }

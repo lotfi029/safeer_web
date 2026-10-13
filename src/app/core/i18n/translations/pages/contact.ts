@@ -12,10 +12,11 @@ export const ar = {
   subject: 'الموضوع',
   message: 'الرسالة',
   subjects: {
-    scholarship: 'استفسار عن المنح',
-    partnership: 'طلب شراكة',
-    feedback: 'ملاحظة أو اقتراح',
-    other: 'موضوع آخر',
+    inquiry: 'استفسار',
+    partnership: 'شراكة',
+    support: 'دعم وتبرع',
+    feedback: 'ملاحظات',
+    other: 'أخرى',
   },
   privacy: 'بإرسالك الرسالة فأنت توافق على سياسة الخصوصية الخاصة بالجمعية.',
   send: 'إرسال',
@@ -27,9 +28,6 @@ export const ar = {
   map: 'خريطة موقع المقر — حي السويدي، الرياض',
   openMap: 'فتح الموقع في الخرائط',
   showMap: 'عرض الخريطة التفاعلية',
-  registerTitle: 'للتسجيل في الجمعية',
-  registerBody: 'إن كنت طالب منحة، فالطلب الإلكتروني أسرع من الرسالة.',
-  registerCta: 'تسجيل طلب منحة',
 };
 
 export const en: typeof ar = {
@@ -45,10 +43,11 @@ export const en: typeof ar = {
   subject: 'Subject',
   message: 'Message',
   subjects: {
-    scholarship: 'Scholarship enquiry',
-    partnership: 'Partnership request',
-    feedback: 'Feedback or suggestion',
-    other: 'Something else',
+    inquiry: 'Inquiry',
+    partnership: 'Partnership',
+    support: 'Support and donations',
+    feedback: 'Feedback',
+    other: 'Other',
   },
   privacy: "By sending you agree to the association's privacy policy.",
   send: 'Send',
@@ -60,7 +59,4 @@ export const en: typeof ar = {
   map: 'Map of the office — Al Suwaidi, Riyadh',
   openMap: 'Open the location in maps',
   showMap: 'Show the interactive map',
-  registerTitle: 'Register with us',
-  registerBody: 'If you are a scholarship student, the online form is faster than a message.',
-  registerCta: 'Apply now',
 };

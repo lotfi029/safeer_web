@@ -127,7 +127,7 @@ export { articleResolver, type ArticleData } from './news.resolvers';
           <div class="card band border-0">
             <h2 class="t-h4">{{ 'pages.news.ctaTitle' | transloco }}</h2>
             <p class="mt-3 mb-5 text-band-soft">{{ 'pages.news.ctaBody' | transloco }}</p>
-            <a appButton variant="onband" [block]="true" [routerLink]="locale.link('/apply')">{{
+            <a appButton variant="onband" [block]="true" [routerLink]="locale.link('/contact')">{{
               'pages.news.ctaButton' | transloco
             }}</a>
           </div>

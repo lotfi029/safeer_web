@@ -46,8 +46,10 @@ test.describe('public shell', () => {
     await page.goto('/ar');
     const nav = page.getByRole('navigation', { name: 'القائمة الرئيسية' });
     const links = nav.getByRole('link');
-    // Header bar: the 7 primary pages (prototype NAV) in API order; the drawer lists all 10.
-    await expect(links).toHaveCount(7);
+    // Header bar: the 7 primary pages (prototype NAV) in API order, governance as a menu button
+    // (its links stay hidden until opened); the drawer lists all 9.
+    await expect(links).toHaveCount(6);
+    await expect(nav.getByRole('button', { name: 'الحوكمة' })).toBeVisible();
     await expect(links.first()).toHaveText('الرئيسية');
     await expect(links.first()).toHaveAttribute('aria-current', 'page');
     await expect(nav.getByRole('link', { name: 'مجالات عملنا' })).toHaveAttribute(
@@ -92,9 +94,13 @@ test.describe('public shell', () => {
     await burger.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('link', { name: 'Apply for a scholarship' })).toBeVisible();
+    // W2: the drawer's call to action is the contact page (the apply/portal links are gone).
+    await expect(dialog.locator('a[drawerActions]')).toHaveAttribute('href', '/en/contact');
+    await expect(dialog.locator('a[href*="/portal"], a[href*="/apply"]')).toHaveCount(0);
     if (usingMockApi) {
-      await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(10);
+      // 8 links + the collapsible governance group (a button).
+      await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(8);
+      await expect(dialog.getByRole('button', { name: 'Governance' })).toBeVisible();
     }
     for (let i = 0; i < 20; i++) {
       await page.keyboard.press('Tab');
@@ -103,6 +109,20 @@ test.describe('public shell', () => {
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
     await expect(burger).toBeFocused();
+  });
+
+  test('the header CTA is «تواصل معنا» → contact; no portal or apply link anywhere (W2)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/ar');
+    const header = page.locator('app-site-header');
+    const cta = header.locator('a[appButton]');
+    await expect(cta).toHaveText('تواصل معنا');
+    await expect(cta).toHaveAttribute('href', '/ar/contact');
+    await expect(
+      page.locator('a[href*="/portal"], a[href*="/apply"], a[href*="/scholarships"]'),
+    ).toHaveCount(0);
   });
 
   test('language switch keeps the path and query', async ({ page }) => {
@@ -251,11 +271,12 @@ test.describe('fonts (W13)', () => {
 test('client-side navigation into a private area drops the public page’s SEO tags (W19)', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1024, height: 768 });
   await gotoHydrated(page, '/en/news');
   await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
-  await page.getByRole('link', { name: 'Student portal' }).first().click();
-  await expect(page).toHaveURL(/\/en\/portal\/login/);
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('dialog').getByRole('link', { name: 'Staff dashboard' }).click();
+  await expect(page).toHaveURL(/\/en\/admin\/login/);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   await expect(page.locator('link[rel="canonical"], link[rel="alternate"][hreflang]')).toHaveCount(
     0,
