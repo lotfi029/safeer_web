@@ -1,5 +1,5 @@
 {
-  "_source": "Recorded from safeer_api by scripts/record-admin-shapes.mjs (shapes only, no values) (hand-edited for the governance/contact change; re-record once the API ships it)",
+  "_source": "Recorded from safeer_api by scripts/record-admin-shapes.mjs (shapes only, no values) (hand-edited for the governance/contact and org-chart changes; re-record once the API ships them)",
   "me": {
     "id": "string",
     "name": "string",
@@ -149,7 +149,8 @@
         "isPublished": "boolean",
         "sortOrder": "number",
         "createdAt": "string",
-        "updatedAt": "string"
+        "updatedAt": "string",
+        "orgPositionId": null
       }
     ],
     "total": "number",
@@ -573,6 +574,25 @@
         "expiresOn": "string",
         "assetId": "string",
         "isPrimary": "boolean",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "orgPositions": {
+    "data": [
+      {
+        "id": "string",
+        "nameAr": "string",
+        "nameEn": "string",
+        "parentId": null,
+        "tone": "string",
+        "showHolders": "boolean",
         "isPublished": "boolean",
         "sortOrder": "number",
         "createdAt": "string",

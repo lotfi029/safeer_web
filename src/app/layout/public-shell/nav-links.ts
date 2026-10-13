@@ -1,5 +1,7 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { LocaleService } from '../../core/i18n/locale.service';
+import { aboutLinks, type NavMenuLink } from '../../core/site/about';
+import { governanceLinks } from '../../core/site/governance';
 import { navLabel, pathForNavSlug } from '../../core/site/nav-routes';
 import { SiteStore } from '../../core/site/site.store';
 
@@ -52,4 +54,17 @@ export class ShellNav {
   );
 
   readonly headerLinks = computed(() => this.links().filter((l) => HEADER_SLUGS.has(l.slug)));
+
+  private readonly governance = computed(() => governanceLinks(this.site.sections()));
+  private readonly about = aboutLinks();
+
+  /**
+   * The entries shown as a dropdown (header) / collapsible group (drawer) instead of one link:
+   * «الحوكمة» (its sections, licences and the board) and «من نحن» (about, org structure).
+   */
+  group(slug: string): readonly NavMenuLink[] | null {
+    if (slug === 'governance') return this.governance();
+    if (slug === 'about') return this.about;
+    return null;
+  }
 }

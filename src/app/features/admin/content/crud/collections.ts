@@ -1,4 +1,5 @@
 import type { ContentRow } from '../../../../core/api/admin/content-api';
+import { parentOptions } from '../org-chart/org-tree';
 import { type CrudConfig, pick } from './crud-config';
 
 const bool = (row: ContentRow, key: string) => row[key] === true;
@@ -15,6 +16,49 @@ export const WORK_AREA_ITEMS: CrudConfig = {
     { key: 'text', type: 'text', label: 'text', bilingual: true, required: true, max: 255 },
   ],
   primary: (r, l) => pick(r, 'text', l),
+};
+
+/**
+ * Org-chart positions (023). Edited on their own tree screen (content/org-chart), which opens this
+ * config's form; «يرفع إلى» lists the tree without the position itself and its sub-positions.
+ */
+export const ORG_POSITIONS: CrudConfig = {
+  id: 'orgPositions',
+  endpoint: 'org-positions',
+  area: 'content',
+  publish: 'field',
+  sortable: true,
+  fields: [
+    { key: 'name', type: 'text', label: 'name', bilingual: true, required: true, max: 190 },
+    {
+      key: 'parentId',
+      type: 'select',
+      label: 'reportsTo',
+      nullable: true,
+      hint: 'reportsToHint',
+      optionsFrom: {
+        endpoint: 'org-positions',
+        label: (r) => pick(r, 'name', 'ar'),
+        arrange: parentOptions,
+      },
+    },
+    {
+      key: 'tone',
+      type: 'select',
+      label: 'tone',
+      options: ['auto', 'neutral', 'sky', 'green', 'brand'],
+      defaultValue: 'auto',
+    },
+    { key: 'showHolders', type: 'boolean', label: 'showHolders', defaultValue: true },
+    { key: 'isPublished', type: 'boolean', label: 'isPublished', defaultValue: true },
+  ],
+  primary: (r, l) => pick(r, 'name', l),
+  // The API's tree rules answer 400 naming `parentId` with a `reason`.
+  errorField: (code) => (code === 'VALIDATION_FAILED' ? 'parentId' : null),
+  errorMessage: (code, extra) =>
+    code === 'VALIDATION_FAILED' && typeof extra['reason'] === 'string'
+      ? `admin.content.orgChart.reasons.${extra['reason']}`
+      : null,
 };
 
 /**
@@ -50,6 +94,18 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       { key: 'isLead', type: 'boolean', label: 'isLead' },
       { key: 'bio', type: 'textarea', label: 'bio', bilingual: true, max: 5000, nullable: true },
       { key: 'photoAssetId', type: 'media', label: 'photo', media: 'image', nullable: true },
+      {
+        key: 'orgPositionId',
+        type: 'select',
+        label: 'orgPosition',
+        nullable: true,
+        hint: 'orgPositionHint',
+        optionsFrom: {
+          endpoint: 'org-positions',
+          label: (r) => pick(r, 'name', 'ar'),
+          arrange: (rows) => parentOptions(rows, null),
+        },
+      },
     ],
     primary: (r, l) => pick(r, 'name', l),
     secondary: (r, l, t) =>

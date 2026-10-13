@@ -15,18 +15,17 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { TranslocoPipe } from '@jsverse/transloco';
 import { filter, map } from 'rxjs';
 import { LocaleService } from '../../core/i18n/locale.service';
-import { governanceLinks } from '../../core/site/governance';
-import { SiteStore } from '../../core/site/site.store';
+import type { NavMenuLink } from '../../core/site/about';
 import { Icon } from '../../shared/ui/icon/icon';
 
 /**
- * The header's «الحوكمة» entry (≥1100px): a disclosure button that shows the governance sections,
- * Licences and the board page. The links are always in the SSR HTML (hidden until opened), so
- * crawlers see them. Closes on Escape (focus back on the button), on a click outside, when focus
- * leaves it and after navigating.
+ * A header dropdown (≥1100px) — «الحوكمة» (sections, licences, board) and «من نحن» (about,
+ * organisational structure): a disclosure button that shows its links. The links are always in the
+ * SSR HTML (hidden until opened), so crawlers see them. Closes on Escape (focus back on the button),
+ * on a click outside, when focus leaves it and after navigating.
  */
 @Component({
-  selector: 'app-governance-menu',
+  selector: 'app-nav-menu',
   imports: [RouterLink, RouterLinkActive, TranslocoPipe, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -44,7 +43,7 @@ import { Icon } from '../../shared/ui/icon/icon';
           ? 'border-secondary font-semibold text-heading'
           : 'border-transparent font-medium text-text'
       "
-      aria-controls="governance-menu"
+      [attr.aria-controls]="menuId()"
       [attr.aria-expanded]="open()"
       (click)="open.set(!open())"
     >
@@ -58,7 +57,7 @@ import { Icon } from '../../shared/ui/icon/icon';
       />
     </button>
     <div
-      id="governance-menu"
+      [id]="menuId()"
       class="absolute start-0 top-full z-50 mt-2 w-72 rounded-card border border-border bg-card p-2 shadow-[var(--shadow-md)]"
       [hidden]="!open()"
     >
@@ -69,6 +68,7 @@ import { Icon } from '../../shared/ui/icon/icon';
               class="flex min-h-11 items-center rounded-btn px-3 text-[15px] font-medium text-text no-underline hover:bg-raise"
               [routerLink]="locale.link(l.path)"
               routerLinkActive="bg-secondary-light font-semibold !text-heading"
+              [routerLinkActiveOptions]="{ exact: !!l.exact }"
               ariaCurrentWhenActive="page"
               (click)="open.set(false)"
               >{{ l.label ?? (l.labelKey! | transloco) }}</a
@@ -79,15 +79,18 @@ import { Icon } from '../../shared/ui/icon/icon';
     </div>
   `,
 })
-export class GovernanceMenu {
-  /** The nav label (the API's short `governance` label). */
+export class NavMenu {
+  /** The nav label (the API's short label for this entry). */
   readonly label = input.required<string>();
+  /** The first path segment the menu's pages share (`governance`, `about`): marks the entry active. */
+  readonly section = input.required<string>();
+  readonly links = input.required<readonly NavMenuLink[]>();
+
   protected readonly locale = inject(LocaleService);
-  private readonly site = inject(SiteStore);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly toggle = viewChild.required<ElementRef<HTMLButtonElement>>('toggle');
   protected readonly open = signal(false);
-  protected readonly links = computed(() => governanceLinks(this.site.sections()));
+  protected readonly menuId = computed(() => `${this.section()}-menu`);
 
   private readonly url = toSignal(
     inject(Router).events.pipe(
@@ -96,8 +99,10 @@ export class GovernanceMenu {
     ),
     { initialValue: inject(Router).url },
   );
-  /** On a governance page: the entry is marked like the other active header links. */
-  protected readonly active = computed(() => /^\/(ar|en)\/governance(\/|$|\?)/.test(this.url()));
+  /** On one of the menu's pages: the entry is marked like the other active header links. */
+  protected readonly active = computed(() =>
+    new RegExp(`^/(ar|en)/${this.section()}(/|$|\\?)`).test(this.url()),
+  );
 
   constructor() {
     const doc = inject(DOCUMENT);

@@ -1,0 +1,300 @@
+/* Ported from ta3lom's org chart (CR-01 FE-5): rounded, softly raised boxes, white bold text, tone
+   fills, and connectors from pseudo-elements. Logical properties only, so RTL mirrors (first child
+   on the right in Arabic). Colours are tokens only: --chart-* (tuned for dark in tokens.css). */
+
+:host {
+  display: block;
+  container-type: inline-size;
+
+  --oc-gap: 20px;
+  --oc-line: 2px solid var(--chart-line);
+}
+
+.scroller {
+  /* The tree's own layout queries THIS box, not the host: in list mode (.as-list) the box is held
+     under the 700px breakpoint, so the vertical tree applies at any page width (CR-02). */
+  container-type: inline-size;
+  border-radius: var(--radius-tile);
+}
+
+.scroller.as-list {
+  max-inline-size: 40rem;
+  margin-inline: auto;
+}
+
+.tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tree > li {
+  position: relative;
+}
+
+.box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-inline-size: 8rem;
+  max-inline-size: 14rem;
+  padding: 10px 14px;
+  border-radius: 14px;
+  color: var(--chart-on);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-align: center;
+
+  /* The image's raised look: a darker lip under the box, plus a soft drop shadow. */
+  box-shadow:
+    inset 0 -4px 0 var(--chart-shade),
+    0 6px 14px var(--chart-shade);
+}
+
+/* Arabic titles and names can wrap inside a box: give them the Arabic reading line-height. */
+:host-context([dir='rtl']) .box {
+  line-height: 1.7;
+}
+
+.tone-neutral {
+  background: var(--chart-neutral);
+}
+
+.tone-sky {
+  background: var(--chart-sky);
+}
+
+.tone-green {
+  background: var(--chart-green);
+}
+
+.tone-brand {
+  background: var(--chart-brand);
+}
+
+.holders {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* ---------- Wide: the horizontal tree ---------- */
+@container (width >= 700px) {
+  /* Prerendered fallback only: until the browser has measured, a too-wide tree scrolls. */
+  .scroller {
+    overflow-x: auto;
+    padding-block: 0.5rem 1rem;
+  }
+
+  /* Fitted: never scrolls. The tree is scaled into the column by org-chart.ts (--oc-scale).
+     `clip`, not `visible`, on the inline axis: the scale is re-measured one animation frame AFTER a
+     resize, and in that frame the unscaled max-content tree would widen the whole page (CI caught
+     it at 768 and 1024px). `clip` contains it without making a scroll container — no scrollbar, no
+     tab stop — and the margin keeps the outer boxes' shadows. The block axis stays visible for the
+     scaled tree's negative margin. */
+  .scroller.fitted {
+    overflow: clip visible;
+    overflow-clip-margin: 0.5rem;
+  }
+
+  .forest {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    inline-size: max-content;
+    min-inline-size: 100%;
+  }
+
+  /* Stacked roots (see the stacked rules below) have no connectors: just space between the columns
+     and the stacked boxes. Here, not with them, for stylelint's descending-specificity order. */
+  .stacked .forest {
+    gap: 0.75rem 1.5rem;
+  }
+
+  /* Scaled from the inline-start corner, where an over-wide tree is anchored. transform-origin
+     has no logical keywords, hence the RTL override. */
+  .fitted .forest {
+    transform: scale(var(--oc-scale, 1));
+    transform-origin: top left;
+  }
+
+  :host-context([dir='rtl']) .fitted .forest {
+    transform-origin: top right;
+  }
+
+  .tree .tree {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    padding-block-start: var(--oc-gap);
+  }
+
+  /* Down from the parent box to the sibling bar. */
+  .tree .tree::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 50%;
+    block-size: var(--oc-gap);
+    border-inline-start: var(--oc-line);
+  }
+
+  .tree > li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-inline: 6px;
+  }
+
+  .tree .tree > li {
+    padding-block-start: var(--oc-gap);
+  }
+
+  /* The sibling bar, in two halves, and the drop into each box from the end half's start edge. */
+  .tree .tree > li::before,
+  .tree .tree > li::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inline-size: 50%;
+    block-size: var(--oc-gap);
+    border-block-start: var(--oc-line);
+  }
+
+  .tree .tree > li::before {
+    inset-inline-end: 50%;
+  }
+
+  .tree .tree > li::after {
+    inset-inline-start: 50%;
+    border-inline-start: var(--oc-line);
+  }
+
+  .tree .tree > li:first-child::before,
+  .tree .tree > li:last-child::after {
+    border-block-start: 0;
+  }
+
+  .tree .tree > li:last-child::before {
+    border-inline-end: var(--oc-line);
+  }
+
+  .tree .tree > li:last-child::after {
+    border-inline-start: 0;
+  }
+
+  .tree .tree > li:only-child::before {
+    border: 0;
+  }
+
+  .tree .tree > li:only-child::after {
+    border-block-start: 0;
+    border-inline-start: var(--oc-line);
+  }
+
+  /* Stacked (level 1, org-chart.ts): still root → children, but every run of consecutive sibling
+     leaves shares one column, one box under another, joined by a short centred line. Placement
+     comes from org-chart.layout.ts as inline grid-column/grid-row on each <li>; the DOM is the same
+     nested list as in every other layout.
+
+     Rows: one min-content track per box of the tallest stack, then a 1fr track. A branch spans all
+     of them (`1 / -1`), and an item that crosses a flexible track is sized by that track alone, so
+     a tall subtree never stretches the leaf rows (no gaps open between stacked boxes). */
+  .stacked .tree {
+    display: grid;
+    grid-template-rows: repeat(var(--oc-rows, 1), min-content) 1fr;
+    justify-content: center;
+    align-items: start;
+  }
+
+  .stacked .tree > li:not(.branch) {
+    align-items: stretch;
+  }
+
+  /* The sibling bar is drawn by row-1 items only, trimmed by visual column (.first-col/.last-col)
+     rather than :first-child/:last-child, which no longer match the columns. The drop into each box
+     is always ::after's start border, at 50%. */
+  .stacked .tree .tree > li::before,
+  .stacked .tree .tree > li::after {
+    border: 0;
+    border-block-start: var(--oc-line);
+  }
+
+  .stacked .tree .tree > li::after {
+    border-inline-start: var(--oc-line);
+  }
+
+  .stacked .tree .tree > li.first-col::before,
+  .stacked .tree .tree > li.last-col::after {
+    border-block-start: 0;
+  }
+
+  .stacked .tree .tree > li.in-stack {
+    padding-block-start: 10px;
+  }
+
+  .stacked .tree .tree > li.in-stack::before {
+    display: none;
+  }
+
+  .stacked .tree .tree > li.in-stack::after {
+    inset-inline: 50% auto;
+    inline-size: 0;
+    block-size: 10px;
+    border: 0;
+    border-inline-start: var(--oc-line);
+  }
+}
+
+/* ---------- Narrow (or .as-list): a vertical indented tree, connector on inline-start ----------
+   The indent shrinks with the column so deep branches still fit at 320px. */
+@container (width < 700px) {
+  .tree {
+    --oc-indent: clamp(10px, 4cqi, 22px);
+  }
+
+  .tree .tree {
+    margin-inline-start: var(--oc-indent);
+    padding-inline-start: var(--oc-indent);
+  }
+
+  .tree > li {
+    padding-block-start: 10px;
+  }
+
+  .box {
+    display: flex;
+    align-items: flex-start;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    text-align: start;
+  }
+
+  /* The vertical rail down the children's inline-start … */
+  .tree .tree > li::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: calc(-1 * var(--oc-indent));
+    border-inline-start: var(--oc-line);
+  }
+
+  .tree .tree > li:last-child::after {
+    inset-block-end: auto;
+    block-size: 34px;
+  }
+
+  /* … and a short arm from it into each box. */
+  .tree .tree > li::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 34px;
+    inset-inline-start: calc(-1 * var(--oc-indent));
+    inline-size: var(--oc-indent);
+    border-block-start: var(--oc-line);
+  }
+}

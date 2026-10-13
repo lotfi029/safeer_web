@@ -124,6 +124,8 @@ export class CrudFields {
   readonly errors = input<Record<string, FieldErrorLike[]>>({});
   /** Hide create-only fields (editing an existing row). */
   readonly editing = input(false);
+  /** The row being edited (null on create), for options that depend on it (a tree's parent). */
+  readonly rowId = input<string | null>(null);
 
   private readonly api = inject(ContentApi);
   private readonly t = inject(TranslocoService);
@@ -156,7 +158,9 @@ export class CrudFields {
     const res = await firstValueFrom(this.api.list(source.endpoint, { limit: 100 }));
     this.options.update((o) => ({
       ...o,
-      [f.key]: res.data.map((row) => ({ value: row.id, label: source.label(row) })),
+      [f.key]: source.arrange
+        ? source.arrange(res.data, this.rowId())
+        : res.data.map((row) => ({ value: row.id, label: source.label(row) })),
     }));
   }
 

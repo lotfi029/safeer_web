@@ -26,6 +26,7 @@ export const DEFAULT_GOVERNANCE_SECTIONS = [
 export const STATIC_ROUTES = [
   '/',
   '/about',
+  '/about/org-structure',
   '/board',
   '/work-areas',
   '/news',

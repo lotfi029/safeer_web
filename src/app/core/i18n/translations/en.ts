@@ -6,6 +6,7 @@ import { en as partnersPage } from './pages/partners';
 import { en as governancePage } from './pages/governance';
 import { en as contactPage } from './pages/contact';
 import { en as newsPage } from './pages/news';
+import { en as orgStructurePage } from './pages/org-structure';
 
 /** English UI strings. Must mirror `ar.ts` (type-checked). */
 export const en: Translation = {
@@ -42,6 +43,10 @@ export const en: Translation = {
     },
   },
   ui: {
+    orgChart: {
+      caption: 'Organisation chart: each body is followed by the bodies that report to it.',
+      under: 'Under {{name}}',
+    },
     pagination: {
       label: 'Pagination',
       previous: 'Previous page',
@@ -115,6 +120,9 @@ export const en: Translation = {
     contactCta: 'Contact us',
     governance: 'Governance',
     governanceMenu: 'Governance menu',
+    aboutMenu: 'About menu',
+    aboutLink: 'About the association',
+    orgStructure: 'Organisational structure',
     home: 'Home page',
     footer: {
       keyLinks: 'Key links',
@@ -122,6 +130,7 @@ export const en: Translation = {
       contact: 'Get in touch',
       social: 'Social media',
       about: 'About',
+      orgStructure: 'Organisational structure',
       board: 'Board',
       work: 'Our work',
       news: 'News',
@@ -157,6 +166,7 @@ export const en: Translation = {
     testimonials: testimonialsPage,
     partners: partnersPage,
     governance: governancePage,
+    orgStructure: orgStructurePage,
     contact: contactPage,
     board: {
       membersEyebrow: 'Members',

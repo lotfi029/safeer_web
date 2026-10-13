@@ -169,7 +169,8 @@
       "isPublished": true,
       "sortOrder": 0,
       "createdAt": "2026-09-27T14:21:56.631Z",
-      "updatedAt": "2026-09-27T14:21:56.631Z"
+      "updatedAt": "2026-09-27T14:21:56.631Z",
+      "orgPositionId": "9002"
     },
     {
       "id": "6",
@@ -185,7 +186,8 @@
       "isPublished": true,
       "sortOrder": 0,
       "createdAt": "2026-09-27T14:21:56.631Z",
-      "updatedAt": "2026-09-27T14:21:56.631Z"
+      "updatedAt": "2026-09-27T14:21:56.631Z",
+      "orgPositionId": "9003"
     },
     {
       "id": "2",
@@ -201,7 +203,8 @@
       "isPublished": true,
       "sortOrder": 1,
       "createdAt": "2026-09-27T14:21:56.631Z",
-      "updatedAt": "2026-09-27T14:21:56.631Z"
+      "updatedAt": "2026-09-27T14:21:56.631Z",
+      "orgPositionId": null
     },
     {
       "id": "3",
@@ -217,7 +220,8 @@
       "isPublished": true,
       "sortOrder": 2,
       "createdAt": "2026-09-27T14:21:56.631Z",
-      "updatedAt": "2026-09-27T14:21:56.631Z"
+      "updatedAt": "2026-09-27T14:21:56.631Z",
+      "orgPositionId": null
     },
     {
       "id": "4",
@@ -233,7 +237,8 @@
       "isPublished": true,
       "sortOrder": 3,
       "createdAt": "2026-09-27T14:21:56.631Z",
-      "updatedAt": "2026-09-27T14:21:56.631Z"
+      "updatedAt": "2026-09-27T14:21:56.631Z",
+      "orgPositionId": null
     },
     {
       "id": "5",
@@ -249,7 +254,8 @@
       "isPublished": true,
       "sortOrder": 4,
       "createdAt": "2026-09-27T14:21:56.631Z",
-      "updatedAt": "2026-09-27T14:21:56.631Z"
+      "updatedAt": "2026-09-27T14:21:56.631Z",
+      "orgPositionId": null
     }
   ],
   "testimonials": [
@@ -1587,6 +1593,44 @@
       "sortOrder": 1,
       "createdAt": "2026-09-27T14:21:56.658Z",
       "updatedAt": "2026-09-27T14:21:56.658Z"
+    }
+  ],
+  "org-positions": [
+    {
+      "id": "9001",
+      "nameAr": "الجمعية العمومية",
+      "nameEn": "General assembly",
+      "parentId": null,
+      "tone": "auto",
+      "showHolders": true,
+      "isPublished": true,
+      "sortOrder": 0,
+      "createdAt": "2026-10-13T09:00:00.000Z",
+      "updatedAt": "2026-10-13T09:00:00.000Z"
+    },
+    {
+      "id": "9002",
+      "nameAr": "مجلس الإدارة",
+      "nameEn": "Board of directors",
+      "parentId": "9001",
+      "tone": "auto",
+      "showHolders": true,
+      "isPublished": true,
+      "sortOrder": 0,
+      "createdAt": "2026-10-13T09:00:00.000Z",
+      "updatedAt": "2026-10-13T09:00:00.000Z"
+    },
+    {
+      "id": "9003",
+      "nameAr": "المدير التنفيذي",
+      "nameEn": "Executive director",
+      "parentId": "9002",
+      "tone": "auto",
+      "showHolders": true,
+      "isPublished": true,
+      "sortOrder": 0,
+      "createdAt": "2026-10-13T09:00:00.000Z",
+      "updatedAt": "2026-10-13T09:00:00.000Z"
     }
   ]
 }

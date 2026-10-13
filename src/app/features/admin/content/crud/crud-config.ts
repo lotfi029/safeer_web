@@ -31,7 +31,15 @@ export interface CrudField {
   /** `select`: fixed values (labels at `admin.content.options.<key>.<value>`). */
   options?: readonly string[];
   /** `select`: options from another collection. */
-  optionsFrom?: { endpoint: string; label: (row: ContentRow) => string };
+  optionsFrom?: {
+    endpoint: string;
+    label: (row: ContentRow) => string;
+    /**
+     * Orders and filters the options with the whole list in hand (a tree: indent by depth, leave out
+     * the row being edited and everything under it). `rowId` is the edited row, null on create.
+     */
+    arrange?: (rows: ContentRow[], rowId: string | null) => { value: string; label: string }[];
+  };
   /** `media`: which kind of asset may be picked. */
   media?: 'image' | 'pdf';
   /** Only sent on create (e.g. a page slug, which update rejects). */
@@ -89,6 +97,11 @@ export interface CrudConfig {
   deleteArea?: StaffArea;
   /** A problem code (and title) → the field its message belongs next to. */
   errorField?: (code: string, title: string) => string | null;
+  /**
+   * A problem → a more specific message (i18n key) than the code's generic one, e.g. the org chart's
+   * `reason` (CYCLE, TOO_DEEP …) for a refused «يرفع إلى». Shown on the field and above the buttons.
+   */
+  errorMessage?: (code: string, extra: Record<string, unknown>) => string | null;
 }
 
 /** `titleAr`/`titleEn` → the value for the UI language, falling back to Arabic. */

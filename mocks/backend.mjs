@@ -50,6 +50,39 @@ const problem = (status, code, extra = {}) =>
     },
     { 'content-type': 'application/problem+json' },
   );
+const ORG_TONES = ['neutral', 'sky', 'green', 'brand'];
+
+/** GET /org-chart from the admin content tables (safeer_api org-chart/public-org-chart.ts). */
+function orgForest(db) {
+  const positions = (db.content?.['org-positions'] ?? []).filter((p) => p.isPublished !== false);
+  const members = (db.content?.board ?? []).filter(
+    (m) => m.isPublished !== false && m.orgPositionId,
+  );
+  const ids = new Set(positions.map((p) => p.id));
+  const bySort = (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || Number(a.id) - Number(b.id);
+  const build = (parent, depth) =>
+    depth >= 5
+      ? []
+      : positions
+          .filter((p) => (p.parentId ?? null) === parent && (parent === null || ids.has(parent)))
+          .sort(bySort)
+          .map((p) => ({
+            id: p.id,
+            nameAr: p.nameAr,
+            nameEn: p.nameEn ?? null,
+            tone: p.tone && p.tone !== 'auto' ? p.tone : ORG_TONES[Math.min(depth, 3)],
+            holders:
+              p.showHolders === false
+                ? []
+                : members
+                    .filter((m) => m.orgPositionId === p.id)
+                    .sort(bySort)
+                    .map((m) => ({ id: m.id, nameAr: m.nameAr, nameEn: m.nameEn ?? null })),
+            children: build(p.id, depth + 1),
+          }));
+  return build(null, 0);
+}
+
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const nowIso = () => new Date().toISOString();
 
@@ -186,6 +219,14 @@ export function createMockBackend(fixtures) {
         );
         return group ? json(200, collapse(group, lang)) : problem(404, 'NOT_FOUND');
       },
+    ],
+    [
+      'GET',
+      /^\/api\/v1\/org-chart$/,
+      // Built from the admin tables (mocks/admin-content.mjs), so a dashboard edit shows on the page —
+      // with the API's rules: published positions only (a branch under a hidden one is dropped),
+      // `auto` tones by depth, holders only where shown and only published members.
+      ({ lang }) => json(200, collapse(orgForest(db), lang)),
     ],
     [
       'GET',

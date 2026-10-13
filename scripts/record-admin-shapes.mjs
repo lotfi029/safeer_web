@@ -34,6 +34,7 @@ export const ADMIN_SHAPES = {
   docCategories: '/admin/doc-categories?limit=5',
   documents: '/admin/documents?limit=5',
   licences: '/admin/licences?limit=5',
+  orgPositions: '/admin/org-positions?limit=5',
   stats: '/admin/stats?limit=5',
   aboutItems: '/admin/about-items?limit=5',
   pages: '/admin/pages?limit=5',

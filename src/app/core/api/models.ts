@@ -253,6 +253,24 @@ export interface Licence {
   asset: Asset | null;
 }
 
+/** One holder of an org-chart position (a published board/executive member). */
+export interface OrgHolder {
+  id: Id;
+  name: string;
+}
+
+export type OrgTone = 'neutral' | 'sky' | 'green' | 'brand';
+
+/** `GET /org-chart`: one box of the organisational structure (023). */
+export interface OrgNode {
+  id: Id;
+  name: string;
+  /** Already resolved by depth when the editor left it on `auto`. */
+  tone: OrgTone;
+  holders: OrgHolder[];
+  children: OrgNode[];
+}
+
 export interface DocumentGroup {
   category: DocCategory;
   documents: PublicDocument[];

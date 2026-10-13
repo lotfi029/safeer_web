@@ -34,6 +34,7 @@ export interface CrudFormData {
           [(model)]="model"
           [errors]="errors()"
           [editing]="mode === 'update'"
+          [rowId]="data.row?.id ?? null"
         />
         @if (errorKey(); as key) {
           <p class="note note-warn m-0" role="alert">{{ key | transloco }}</p>
@@ -116,14 +117,13 @@ export class CrudForm {
       const problem = toApiProblem(error);
       const errors = { ...problem.fieldErrors };
       const onField = this.config.errorField?.(problem.code, problem.title);
+      const messageKey =
+        this.config.errorMessage?.(problem.code, problem.extra) ?? problemMessageKey(problem);
       if (onField) {
-        errors[onField] = [
-          ...(errors[onField] ?? []),
-          this.t.translate(problemMessageKey(problem)),
-        ];
+        errors[onField] = [...(errors[onField] ?? []), this.t.translate(messageKey)];
       }
       this.server.set({ model: this.model(), errors });
-      this.errorKey.set(problemMessageKey(problem));
+      this.errorKey.set(messageKey);
     } finally {
       this.busy.set(false);
     }

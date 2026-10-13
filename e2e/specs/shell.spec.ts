@@ -46,10 +46,11 @@ test.describe('public shell', () => {
     await page.goto('/ar');
     const nav = page.getByRole('navigation', { name: 'القائمة الرئيسية' });
     const links = nav.getByRole('link');
-    // Header bar: the 7 primary pages (prototype NAV) in API order, governance as a menu button
-    // (its links stay hidden until opened); the drawer lists all 9.
-    await expect(links).toHaveCount(6);
+    // Header bar: the 7 primary pages (prototype NAV) in API order, «من نحن» and governance as menu
+    // buttons (their links stay hidden until opened); the drawer lists all 9.
+    await expect(links).toHaveCount(5);
     await expect(nav.getByRole('button', { name: 'الحوكمة' })).toBeVisible();
+    await expect(nav.getByRole('button', { name: 'من نحن' })).toBeVisible();
     await expect(links.first()).toHaveText('الرئيسية');
     await expect(links.first()).toHaveAttribute('aria-current', 'page');
     await expect(nav.getByRole('link', { name: 'مجالات عملنا' })).toHaveAttribute(
@@ -98,9 +99,10 @@ test.describe('public shell', () => {
     await expect(dialog.locator('a[drawerActions]')).toHaveAttribute('href', '/en/contact');
     await expect(dialog.locator('a[href*="/portal"], a[href*="/apply"]')).toHaveCount(0);
     if (usingMockApi) {
-      // 8 links + the collapsible governance group (a button).
-      await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(8);
+      // 7 links + the collapsible «About» and governance groups (buttons).
+      await expect(dialog.getByRole('navigation').getByRole('link')).toHaveCount(7);
       await expect(dialog.getByRole('button', { name: 'Governance' })).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'About' })).toBeVisible();
     }
     for (let i = 0; i < 20; i++) {
       await page.keyboard.press('Tab');
