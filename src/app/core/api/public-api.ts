@@ -17,6 +17,7 @@ import type {
   NewsletterRequest,
   NewsletterTokenRequest,
   OkResponse,
+  OrgNode,
   Page,
   Paged,
   Partner,
@@ -98,6 +99,11 @@ export class PublicApi {
   /** Published licences, the primary one first. */
   licences(): Observable<Licence[]> {
     return this.http.get<Licence[]>(`${API_PREFIX}/licences`);
+  }
+
+  /** The organisational structure: published positions with their holders (023). */
+  orgChart(): Observable<OrgNode[]> {
+    return this.http.get<OrgNode[]>(`${API_PREFIX}/org-chart`);
   }
 
   news(query: NewsQuery = {}): Observable<Paged<PostSummary>> {

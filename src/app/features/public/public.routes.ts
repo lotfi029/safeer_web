@@ -3,6 +3,7 @@ import { Router, Routes } from '@angular/router';
 import { boardResolver } from './board/board.resolver';
 import { homeResolver } from './home/home.resolver';
 import { aboutResolver } from './about/about.resolver';
+import { orgStructureResolver } from './org-structure/org-structure.resolver';
 import { workAreasResolver } from './work-areas/work-areas.resolver';
 import { testimonialsResolver } from './testimonials/testimonials.resolver';
 import { partnersResolver } from './partners/partners.resolver';
@@ -53,6 +54,11 @@ export const PUBLIC_ROUTES: Routes = [
     path: 'board',
     resolve: { data: boardResolver },
     loadComponent: () => import('./board/board').then((m) => m.BoardPage),
+  },
+  {
+    path: 'about/org-structure',
+    resolve: { data: orgStructureResolver },
+    loadComponent: () => import('./org-structure/org-structure').then((m) => m.OrgStructurePage),
   },
   {
     path: 'about',

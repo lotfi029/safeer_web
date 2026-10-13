@@ -5,6 +5,7 @@ import { ar as partnersPage } from './pages/partners';
 import { ar as governancePage } from './pages/governance';
 import { ar as contactPage } from './pages/contact';
 import { ar as newsPage } from './pages/news';
+import { ar as orgStructurePage } from './pages/org-structure';
 
 /**
  * Arabic UI strings (default locale). Content (pages, news, …) comes from the API, never from here.
@@ -44,6 +45,10 @@ export const ar = {
     },
   },
   ui: {
+    orgChart: {
+      caption: 'الهيكل التنظيمي: كل جهة تتبعها الجهات التي ترفع إليها.',
+      under: 'تحت {{name}}',
+    },
     pagination: {
       label: 'ترقيم الصفحات',
       previous: 'الصفحة السابقة',
@@ -117,6 +122,9 @@ export const ar = {
     contactCta: 'تواصل معنا',
     governance: 'الحوكمة',
     governanceMenu: 'قائمة الحوكمة',
+    aboutMenu: 'قائمة من نحن',
+    aboutLink: 'عن الجمعية',
+    orgStructure: 'الهيكل التنظيمي',
     home: 'الصفحة الرئيسية',
     footer: {
       keyLinks: 'روابط مهمة',
@@ -124,6 +132,7 @@ export const ar = {
       contact: 'للتواصل السريع',
       social: 'حسابات التواصل الاجتماعي',
       about: 'من نحن',
+      orgStructure: 'الهيكل التنظيمي',
       board: 'مجلس الإدارة',
       work: 'مجالات عملنا',
       news: 'الأخبار',
@@ -159,6 +168,7 @@ export const ar = {
     testimonials: testimonialsPage,
     partners: partnersPage,
     governance: governancePage,
+    orgStructure: orgStructurePage,
     contact: contactPage,
     board: {
       membersEyebrow: 'الأعضاء',

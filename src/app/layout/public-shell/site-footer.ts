@@ -152,6 +152,7 @@ export class SiteFooter {
 
   protected readonly keyLinks = [
     { key: 'shell.footer.about', path: '/about' },
+    { key: 'shell.footer.orgStructure', path: '/about/org-structure' },
     { key: 'shell.footer.board', path: '/board' },
     { key: 'shell.footer.work', path: '/work-areas' },
   ];

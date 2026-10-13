@@ -1,19 +1,17 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LocaleService } from '../../core/i18n/locale.service';
-import { governanceLinks } from '../../core/site/governance';
-import { SiteStore } from '../../core/site/site.store';
 import { Icon } from '../../shared/ui/icon/icon';
 import { Button } from '../../shared/ui/button/button';
 import { DrawerFrame } from '../../shared/ui/drawer/drawer';
 import { ShellNav } from './nav-links';
 
 /**
- * Mobile/tablet navigation (< 1100px): full nav (governance as a collapsible group, open on a
- * governance page) + contact CTA. The staff dashboard has no public link: it is reached by URL
- * only (/ar/admin, /en/admin).
+ * Mobile/tablet navigation (< 1100px): full nav («الحوكمة» and «من نحن» as collapsible groups,
+ * each open on one of its own pages) + contact CTA. The staff dashboard has no public link: it is
+ * reached by URL only (/ar/admin, /en/admin).
  */
 @Component({
   selector: 'app-nav-drawer',
@@ -25,14 +23,14 @@ import { ShellNav } from './nav-links';
         <ul class="m-0 flex list-none flex-col gap-1 p-0">
           @for (item of nav.links(); track item.link) {
             <li>
-              @if (item.slug === 'governance') {
-                <!-- W4: the governance pages as a collapsible group. -->
+              @if (nav.group(item.slug); as links) {
+                <!-- W4: «الحوكمة» and «من نحن» as collapsible groups. -->
                 <button
                   type="button"
                   class="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-btn px-3 text-start font-semibold text-text hover:bg-raise"
-                  aria-controls="drawer-governance"
-                  [attr.aria-expanded]="governanceOpen()"
-                  (click)="governanceOpen.set(!governanceOpen())"
+                  [attr.aria-controls]="'drawer-' + item.slug"
+                  [attr.aria-expanded]="isOpen(item.slug)"
+                  (click)="toggle(item.slug)"
                 >
                   {{ item.label }}
                   <app-icon
@@ -40,21 +38,22 @@ import { ShellNav } from './nav-links';
                     [size]="18"
                     [directional]="false"
                     class="transition-transform duration-200"
-                    [class.rotate-180]="governanceOpen()"
+                    [class.rotate-180]="isOpen(item.slug)"
                   />
                 </button>
                 <ul
-                  id="drawer-governance"
+                  [id]="'drawer-' + item.slug"
                   class="m-0 ms-4 flex list-none flex-col gap-1 border-s-2 border-border ps-3"
-                  [hidden]="!governanceOpen()"
+                  [hidden]="!isOpen(item.slug)"
                 >
-                  @if (governanceOpen()) {
-                    @for (g of governance(); track g.key) {
+                  @if (isOpen(item.slug)) {
+                    @for (g of links; track g.key) {
                       <li>
                         <a
                           class="flex min-h-11 items-center rounded-btn px-3 font-medium text-text no-underline hover:bg-raise"
                           [routerLink]="locale.link(g.path)"
                           routerLinkActive="bg-secondary-light !text-heading"
+                          [routerLinkActiveOptions]="{ exact: !!g.exact }"
                           ariaCurrentWhenActive="page"
                           (click)="close()"
                           >{{ g.label ?? (g.labelKey! | transloco) }}</a
@@ -93,11 +92,27 @@ export class NavDrawer {
   protected readonly nav = inject(ShellNav);
   protected readonly locale = inject(LocaleService);
   private readonly ref = inject(DialogRef);
-  private readonly site = inject(SiteStore);
-  protected readonly governance = computed(() => governanceLinks(this.site.sections()));
-  protected readonly governanceOpen = signal(
-    /^\/(ar|en)\/governance(\/|$|\?)/.test(inject(Router).url),
+  private readonly url = inject(Router).url;
+  /** The groups shown open: the one whose pages the drawer was opened on. */
+  private readonly opened = signal<ReadonlySet<string>>(
+    new Set(
+      ['governance', 'about'].filter((section) =>
+        new RegExp(`^/(ar|en)/${section}(/|$|\\?)`).test(this.url),
+      ),
+    ),
   );
+
+  protected isOpen(slug: string): boolean {
+    return this.opened().has(slug);
+  }
+
+  protected toggle(slug: string): void {
+    this.opened.update((set) => {
+      const next = new Set(set);
+      if (!next.delete(slug)) next.add(slug);
+      return next;
+    });
+  }
 
   protected close(): void {
     this.ref.close();

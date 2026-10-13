@@ -13,17 +13,17 @@ import { LocaleService } from '../../core/i18n/locale.service';
 import { SiteStore } from '../../core/site/site.store';
 import { Button } from '../../shared/ui/button/button';
 import { DrawerService } from '../../shared/ui/drawer/drawer';
-import { GovernanceMenu } from './governance-menu';
 import { Icon } from '../../shared/ui/icon/icon';
 import { Brand } from '../../shared/ui/logo/logo';
 import { LangSwitch } from './lang-switch';
 import { NavDrawer } from './nav-drawer';
+import { NavMenu } from './nav-menu';
 import { ShellNav } from './nav-links';
 import { ThemeToggle } from './theme-toggle';
 
 /**
  * Sticky site header (prototype `siteNav`): brand, full nav from ≥1100px (F7 `nav` breakpoint, the
- * governance entry as a dropdown),
+ * governance and «من نحن» entries as dropdowns),
  * language + theme, the contact CTA (≥768), burger → drawer below 1100px.
  */
 @Component({
@@ -37,7 +37,7 @@ import { ThemeToggle } from './theme-toggle';
     Brand,
     LangSwitch,
     ThemeToggle,
-    GovernanceMenu,
+    NavMenu,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -65,8 +65,8 @@ import { ThemeToggle } from './theme-toggle';
         <ul class="m-0 flex list-none items-center gap-3 p-0 xl:gap-5">
           @for (item of nav.headerLinks(); track item.link) {
             <li>
-              @if (item.slug === 'governance') {
-                <app-governance-menu [label]="item.shortLabel" />
+              @if (nav.group(item.slug); as links) {
+                <app-nav-menu [label]="item.shortLabel" [section]="item.slug" [links]="links" />
               } @else {
                 <a
                   class="block border-b-2 border-transparent py-2 text-[15px] font-medium whitespace-nowrap text-text no-underline hover:text-secondary"

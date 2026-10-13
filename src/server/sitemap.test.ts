@@ -34,6 +34,7 @@ describe('sitemap.xml', () => {
 
   it('lists the governance pages: licences and each section (seeded ones without the API)', () => {
     expect(xml).toContain('<loc>https://safeer-sa.org/ar/governance/licences</loc>');
+    expect(xml).toContain('<loc>https://safeer-sa.org/ar/about/org-structure</loc>');
     expect(xml).toContain('<loc>https://safeer-sa.org/en/governance/bylaws-policies</loc>');
     expect(xml).toContain('<loc>https://safeer-sa.org/ar/governance/committee-decisions</loc>');
     const fromApi = buildSitemap('https://safeer-sa.org', {
