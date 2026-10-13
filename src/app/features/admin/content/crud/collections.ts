@@ -190,7 +190,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
         type: 'text',
         label: 'docMeta',
         bilingual: true,
-        max: 255,
+        max: 190,
         nullable: true,
         hint: 'docMetaHint',
       },
@@ -216,9 +216,9 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     publish: 'route',
     sortable: true,
     fields: [
-      { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 255 },
-      { key: 'number', type: 'text', label: 'licenceNumber', max: 64, nullable: true },
-      { key: 'issuer', type: 'text', label: 'issuer', bilingual: true, max: 191, nullable: true },
+      { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },
+      { key: 'number', type: 'text', label: 'licenceNumber', max: 100, nullable: true },
+      { key: 'issuer', type: 'text', label: 'issuer', bilingual: true, max: 190, nullable: true },
       { key: 'issuedOn', type: 'date', label: 'issuedOn', nullable: true },
       { key: 'expiresOn', type: 'date', label: 'expiresOn', nullable: true },
       {
@@ -265,7 +265,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
     sortable: true,
     tabs: {
       param: 'kind',
-      values: ['vision', 'mission', 'goal', 'care_pillar', 'requirement'],
+      values: ['vision', 'mission', 'goal', 'care_pillar'],
       label: 'admin.content.options.kind',
     },
     fields: [
@@ -273,7 +273,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
         key: 'kind',
         type: 'select',
         label: 'kind',
-        options: ['vision', 'mission', 'goal', 'care_pillar', 'requirement'],
+        options: ['vision', 'mission', 'goal', 'care_pillar'],
         hidden: true,
       },
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },

@@ -249,8 +249,6 @@ export const en: AdminTranslation = {
       issuedOn: 'Issued on',
       expiresOn: 'Expires on',
       isPrimary: 'Main licence',
-      licenceNo: 'Association licence number',
-      licenceIssuer: 'Licensing authority',
       value: 'Figure',
       label: 'Label',
       sub: 'Short description',
@@ -286,9 +284,7 @@ export const en: AdminTranslation = {
         'Governance sections appear in the governance menu, each with its own page.',
       docMetaHint: 'A short line under the document title (e.g. a period or an edition).',
       isPrimaryHint:
-        'The main licence is shown first on the licences page. Only one licence is the main one.',
-      licenceHint:
-        'Shown in the site footer and on the bylaws and policies page. Leave empty to hide them.',
+        'The main licence is shown first on the licences page; its number and issuer appear in the site footer and on the bylaws and policies page. Only one licence is the main one.',
       valueHint: 'Digits only. Leave empty to show “—”.',
       sectionKeyHint:
         'A fixed id the site uses to place the section; don’t change it on existing sections.',
@@ -324,7 +320,6 @@ export const en: AdminTranslation = {
         mission: 'Mission',
         goal: 'Goals',
         care_pillar: 'Care pillars',
-        requirement: 'Requirements',
       },
     },
     workAreas: {
@@ -489,7 +484,6 @@ export const en: AdminTranslation = {
         seo: 'Search engines (SEO)',
         social: 'Social links',
         map: 'Map',
-        licence: 'Licence',
         cache: 'Cache',
       },
       languagesLead:

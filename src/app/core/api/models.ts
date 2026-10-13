@@ -55,9 +55,12 @@ export interface SiteSettings {
   /** A12: the pin (−90…90 / −180…180), used for the "open in maps" link. */
   mapLat: number | null;
   mapLng: number | null;
-  /** The association's licence number (footer bar, bylaws aside). Null hides it. */
+  /**
+   * The primary published licence's number (footer bar, bylaws aside), written by the API on every
+   * licence write; null (hidden) when there is none.
+   */
   licenceNo?: string | null;
-  /** The licensing authority (`licenceIssuerAr`/`En`, collapsed). */
+  /** That licence's issuer (`licenceIssuerAr`/`En`, collapsed). */
   licenceIssuer?: string | null;
   enEnabled: boolean;
   seoTitle: string | null;
@@ -131,7 +134,7 @@ export interface AboutItem {
   sortOrder: number;
 }
 
-export type AboutItemKind = 'vision' | 'mission' | 'goal' | 'care_pillar' | 'requirement';
+export type AboutItemKind = 'vision' | 'mission' | 'goal' | 'care_pillar';
 
 /** B18: `GET /about-items?kind=a,b` → grouped by kind. */
 export type AboutItemsResponse = Partial<Record<AboutItemKind, AboutItem[]>>;

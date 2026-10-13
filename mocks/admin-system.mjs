@@ -217,8 +217,9 @@ export function systemRoutes(ctx) {
           return invalid('mapLat', 'Out of range');
         if (b.mapLng !== undefined && b.mapLng !== null && !(b.mapLng >= -180 && b.mapLng <= 180))
           return invalid('mapLng', 'Out of range');
-        if (b.licenceNo !== undefined && b.licenceNo !== null && String(b.licenceNo).length > 64)
-          return invalid('licenceNo', 'Too big', 'too_big');
+        // Written from the primary published licence (admin/licences), never through settings.
+        for (const k of ['licenceNo', 'licenceIssuerAr', 'licenceIssuerEn'])
+          if (k in b) return invalid(k, 'Unrecognized key', 'unrecognized_keys');
         if (b.email && !EMAIL_RE.test(b.email)) return invalid('email', 'Invalid email');
         const before = clone(db.system.settings);
         Object.assign(db.system.settings, b, { updatedBy: g.staff.id, updatedAt: nowIso() });

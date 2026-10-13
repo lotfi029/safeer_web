@@ -133,7 +133,7 @@ test.describe('contact page', () => {
     await page.waitForLoadState('networkidle');
     await expect(page.getByLabel('Subject')).toHaveValue('support');
     await expect(page.getByLabel('Subject').locator('option:checked')).toHaveText(
-      'Support & donation',
+      'Support and donations',
     );
   });
 

@@ -101,39 +101,5 @@
       "bodyEn": "<p>Encouraging students into volunteering and service to Saudi society, strengthening belonging and integration.</p>\n",
       "sortOrder": 3
     }
-  ],
-  "requirement": [
-    {
-      "id": "17",
-      "icon": null,
-      "titleAr": "صورة الهوية أو جواز السفر",
-      "titleEn": "ID or passport copy",
-      "body": null,
-      "sortOrder": 0
-    },
-    {
-      "id": "18",
-      "icon": null,
-      "titleAr": "الشهادات الدراسية",
-      "titleEn": "Academic certificates",
-      "body": null,
-      "sortOrder": 1
-    },
-    {
-      "id": "19",
-      "icon": null,
-      "titleAr": "اسم الجامعة والمرحلة الدراسية",
-      "titleEn": "University name and degree level",
-      "body": null,
-      "sortOrder": 2
-    },
-    {
-      "id": "20",
-      "icon": null,
-      "titleAr": "بريد إلكتروني ورقم هاتف فعّالان",
-      "titleEn": "A working email and phone number",
-      "body": null,
-      "sortOrder": 3
-    }
   ]
 }

@@ -40,7 +40,7 @@ export interface SiteSettings {
   seoTitleEn: string | null;
   seoDescriptionAr: string | null;
   seoDescriptionEn: string | null;
-  /** The association's licence (footer bar, bylaws aside). */
+  /** Read-only: copied by the API from the primary published licence (PUT refuses them). */
   licenceNo: string | null;
   licenceIssuerAr: string | null;
   licenceIssuerEn: string | null;

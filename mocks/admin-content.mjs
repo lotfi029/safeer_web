@@ -279,7 +279,7 @@ export function contentRoutes(ctx) {
     return { data: rows.slice((page - 1) * limit, page * limit), total: rows.length, page, limit };
   }
 
-  function checkBody(endpoint, body, { create }) {
+  function checkBody(endpoint, body, { create, id = null }) {
     const spec = KERNEL[endpoint];
     if (create) {
       for (const f of spec.required ?? []) {
@@ -323,6 +323,11 @@ export function contentRoutes(ctx) {
         if (v !== undefined && v !== null && !/^\d{4}-\d{2}-\d{2}$/.test(String(v)))
           return invalid(key, 'Invalid date');
       }
+      const current = id ? table('licences').find((r) => r.id === id) : {};
+      const issued = body?.issuedOn !== undefined ? body.issuedOn : current?.issuedOn;
+      const expires = body?.expiresOn !== undefined ? body.expiresOn : current?.expiresOn;
+      if (issued && expires && expires < issued)
+        return invalid('expiresOn', 'expiresOn must not be before issuedOn');
     }
     if (
       endpoint === 'stats' &&
@@ -351,10 +356,22 @@ export function contentRoutes(ctx) {
     return null;
   }
 
-  /** One primary licence: making a row primary clears the flag everywhere else. */
+  /**
+   * One primary licence: making a row primary clears the flag everywhere else. Every licence write
+   * copies the primary published licence's number/issuer into the site settings (null without one).
+   */
   function onPrimary(endpoint, row) {
-    if (endpoint !== 'licences' || !row.isPrimary) return;
-    for (const other of table('licences')) if (other.id !== row.id) other.isPrimary = false;
+    if (endpoint !== 'licences') return;
+    if (row?.isPrimary)
+      for (const other of table('licences')) if (other.id !== row.id) other.isPrimary = false;
+    const primary = table('licences').find((l) => l.isPrimary && l.isPublished);
+    const site = ctx.fixtures.site?.settings;
+    if (site)
+      Object.assign(site, {
+        licenceNo: primary?.number ?? null,
+        licenceIssuerAr: primary?.issuerAr ?? null,
+        licenceIssuerEn: primary?.issuerEn ?? null,
+      });
   }
 
   function onPublish(endpoint, row, wasPublished) {
@@ -562,6 +579,7 @@ export function contentRoutes(ctx) {
           row.isPublished = body?.isPublished ?? true;
           row.updatedAt = nowIso();
           onPublish(endpoint, row, was);
+          onPrimary(endpoint, null);
           return json(200, withWarnings(endpoint, row));
         },
       ]);
@@ -619,7 +637,8 @@ export function contentRoutes(ctx) {
           const row = table(endpoint).find((r) => r.id === params[0]);
           if (!row) return problem(404, 'NOT_FOUND');
           const bad =
-            checkBody(endpoint, body, { create: false }) ?? conflict(endpoint, body, row.id);
+            checkBody(endpoint, body, { create: false, id: row.id }) ??
+            conflict(endpoint, body, row.id);
           if (bad) return bad;
           if (
             endpoint === 'news' &&
@@ -649,6 +668,7 @@ export function contentRoutes(ctx) {
               return problem(409, 'RESOURCE_IN_USE');
           }
           table(endpoint).splice(i, 1);
+          onPrimary(endpoint, null);
           if (endpoint === 'work-areas')
             db.content['work-area-items'] = table('work-area-items').filter(
               (r) => r.workAreaId !== params[0],

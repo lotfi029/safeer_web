@@ -212,6 +212,9 @@ test.describe('admin content', () => {
       await list.getByRole('button', { name: 'Add licence' }).click();
       await dialog(page).getByLabel('Title (Arabic)').fill(title);
       await dialog(page).getByLabel('Licence number').fill('[...]');
+      // The API copies the primary licence's number/issuer into the site settings: keep them as the
+      // seed's while this test holds the primary flag.
+      await dialog(page).getByLabel('Issued by (Arabic)').fill('[جهة الترخيص]');
       await dialog(page).getByLabel('Issued on').fill('2020-01-01');
       await dialog(page).getByLabel('Expires on').fill('2030-01-01');
       await dialog(page).getByRole('button', { name: 'Save' }).click();

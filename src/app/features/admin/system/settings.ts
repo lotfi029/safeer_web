@@ -78,21 +78,6 @@ export const SETTINGS_SECTIONS: readonly { id: string; fields: readonly CrudFiel
     ],
   },
   {
-    id: 'licence',
-    fields: [
-      { key: 'licenceNo', type: 'text', label: 'licenceNo', max: 64, nullable: true },
-      {
-        key: 'licenceIssuer',
-        type: 'text',
-        label: 'licenceIssuer',
-        bilingual: true,
-        max: 191,
-        nullable: true,
-        hint: 'licenceHint',
-      },
-    ],
-  },
-  {
     id: 'languages',
     fields: [{ key: 'enEnabled', type: 'boolean', label: 'enEnabled' }],
   },
@@ -169,8 +154,9 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
 
 /**
  * Site settings (prototype `aSettings`, `PUT admin/settings`): organisation details, languages, SEO,
- * the licence (shown in the footer and on the governance pages), social links and the map (Google
- * Maps embed or OpenStreetMap only, like the API's allow-list); plus the API cache.
+ * social links and the map (Google Maps embed or OpenStreetMap only, like the API's allow-list); plus
+ * the API cache. The licence number/issuer in the site settings are written by the API from the
+ * primary published licence (`/admin/licences`), so they are not edited here.
  */
 @Component({
   selector: 'app-admin-settings',

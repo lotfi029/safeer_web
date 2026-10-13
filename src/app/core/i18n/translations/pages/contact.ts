@@ -45,7 +45,7 @@ export const en: typeof ar = {
   subjects: {
     inquiry: 'Inquiry',
     partnership: 'Partnership',
-    support: 'Support & donation',
+    support: 'Support and donations',
     feedback: 'Feedback',
     other: 'Other',
   },

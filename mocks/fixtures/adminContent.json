@@ -655,19 +655,6 @@
       "updatedAt": "2026-09-27T14:21:56.628Z"
     },
     {
-      "id": "17",
-      "kind": "requirement",
-      "icon": null,
-      "titleAr": "صورة الهوية أو جواز السفر",
-      "titleEn": "ID or passport copy",
-      "bodyAr": null,
-      "bodyEn": null,
-      "isPublished": true,
-      "sortOrder": 0,
-      "createdAt": "2026-09-27T14:21:56.628Z",
-      "updatedAt": "2026-09-27T14:21:56.628Z"
-    },
-    {
       "id": "4",
       "kind": "goal",
       "icon": null,
@@ -688,19 +675,6 @@
       "titleEn": "Psychological and counselling support",
       "bodyAr": "مستشارون متخصصون، وجلسات توعية وورش عمل حول مهارات التكيّف وإدارة الضغوط بعيداً عن الأهل والوطن.",
       "bodyEn": "Specialist counsellors, awareness sessions and workshops on adapting and managing pressure far from home.",
-      "isPublished": true,
-      "sortOrder": 1,
-      "createdAt": "2026-09-27T14:21:56.628Z",
-      "updatedAt": "2026-09-27T14:21:56.628Z"
-    },
-    {
-      "id": "18",
-      "kind": "requirement",
-      "icon": null,
-      "titleAr": "الشهادات الدراسية",
-      "titleEn": "Academic certificates",
-      "bodyAr": null,
-      "bodyEn": null,
       "isPublished": true,
       "sortOrder": 1,
       "createdAt": "2026-09-27T14:21:56.628Z",
@@ -733,19 +707,6 @@
       "updatedAt": "2026-09-27T14:21:56.628Z"
     },
     {
-      "id": "19",
-      "kind": "requirement",
-      "icon": null,
-      "titleAr": "اسم الجامعة والمرحلة الدراسية",
-      "titleEn": "University name and degree level",
-      "bodyAr": null,
-      "bodyEn": null,
-      "isPublished": true,
-      "sortOrder": 2,
-      "createdAt": "2026-09-27T14:21:56.628Z",
-      "updatedAt": "2026-09-27T14:21:56.628Z"
-    },
-    {
       "id": "6",
       "kind": "goal",
       "icon": null,
@@ -766,19 +727,6 @@
       "titleEn": "Empowerment and community participation",
       "bodyAr": "تشجيع الطلاب على الأنشطة التطوعية وخدمة المجتمع السعودي، بما يعزّز شعور الانتماء والاندماج.",
       "bodyEn": "Encouraging students into volunteering and service to Saudi society, strengthening belonging and integration.",
-      "isPublished": true,
-      "sortOrder": 3,
-      "createdAt": "2026-09-27T14:21:56.628Z",
-      "updatedAt": "2026-09-27T14:21:56.628Z"
-    },
-    {
-      "id": "20",
-      "kind": "requirement",
-      "icon": null,
-      "titleAr": "بريد إلكتروني ورقم هاتف فعّالان",
-      "titleEn": "A working email and phone number",
-      "bodyAr": null,
-      "bodyEn": null,
       "isPublished": true,
       "sortOrder": 3,
       "createdAt": "2026-09-27T14:21:56.628Z",
