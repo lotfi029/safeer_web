@@ -55,6 +55,15 @@
   --shadow-sm: 0 2px 16px rgb(11 67 67 / 0.07);
   --shadow-md: 0 14px 34px rgb(11 67 67 / 0.1);
   --lines-opacity: 0.18;
+  /* Org chart boxes (white bold text, AA ≥ 4.5:1): neutral 5.76 · sky 5.37 · green 6.51 ·
+     brand 11.06:1. Connectors carry the hierarchy: 3.50:1 on --bg, 3.33:1 on --surface. */
+  --chart-neutral: #4f6b6b;
+  --chart-sky: #197679;
+  --chart-green: #1e6b3c;
+  --chart-brand: #0b4343;
+  --chart-on: #ffffff;
+  --chart-line: #6f8f8e;
+  --chart-shade: rgb(0 0 0 / 0.22);
   color-scheme: light;
 }
 
@@ -102,6 +111,13 @@
   --shadow-sm: 0 2px 16px rgb(0 0 0 / 0.45);
   --shadow-md: 0 16px 40px rgb(0 0 0 / 0.55);
   --lines-opacity: 0.34;
+  /* Org chart on a dark page: white text 6.42–8.31:1; connectors 4.43:1 on --bg. */
+  --chart-neutral: #45605f;
+  --chart-sky: #18696b;
+  --chart-green: #1c6339;
+  --chart-brand: #0e5759;
+  --chart-line: #5d8584;
+  --chart-shade: rgb(0 0 0 / 0.4);
   color-scheme: dark;
 }
 
@@ -148,6 +164,13 @@
     --shadow-sm: 0 2px 16px rgb(0 0 0 / 0.45);
     --shadow-md: 0 16px 40px rgb(0 0 0 / 0.55);
     --lines-opacity: 0.34;
+    /* Org chart on a dark page: white text 6.42–8.31:1; connectors 4.43:1 on --bg. */
+    --chart-neutral: #45605f;
+    --chart-sky: #18696b;
+    --chart-green: #1c6339;
+    --chart-brand: #0e5759;
+    --chart-line: #5d8584;
+    --chart-shade: rgb(0 0 0 / 0.4);
     color-scheme: dark;
   }
 }

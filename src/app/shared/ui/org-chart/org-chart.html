@@ -1,0 +1,68 @@
+@if (!empty()) {
+  <p class="sr-only" [id]="captionId">{{ 'ui.orgChart.caption' | transloco }}</p>
+  <!-- Never a scroll region once fitted: the whole tree is scaled into its column, stacked, or drawn
+       vertically when scaling would make it too small to read. -->
+  <div
+    #scroller
+    class="scroller"
+    [class.fitted]="fitted()"
+    [class.stacked]="stacked()"
+    [class.as-list]="asList()"
+  >
+    <ul
+      #forest
+      class="tree forest"
+      role="list"
+      data-testid="org-chart"
+      [attr.aria-labelledby]="captionId"
+      [style.--oc-scale]="scale()"
+      [style.--oc-rows]="rows(rootKey)"
+      [style.margin-block-end.px]="collapse()"
+    >
+      <ng-container
+        [ngTemplateOutlet]="branch"
+        [ngTemplateOutletContext]="{ $implicit: nodes(), key: rootKey }"
+      />
+    </ul>
+  </div>
+}
+
+<!-- The grid placement (inline styles, first-col/last-col/in-stack) is only read by the stacked layout
+     (org-chart.css); every position is an <li> of its parent's <ul> in every layout. -->
+<ng-template #branch let-nodes let-key="key">
+  @for (node of nodes; track node.id; let i = $index) {
+    @let place = slot(key, i);
+    <li
+      [class.branch]="place?.branch"
+      [class.first-col]="place?.firstCol"
+      [class.last-col]="place?.lastCol"
+      [class.in-stack]="place?.stacked"
+      [style.grid-column]="place?.col"
+      [style.grid-row]="place?.branch ? '1 / -1' : place?.row"
+    >
+      <div class="box" [class]="'tone-' + node.tone">
+        <span class="box-label">{{ node.name }}</span>
+        @if (node.holders.length) {
+          <ul class="holders" role="list">
+            @for (holder of node.holders; track holder.id) {
+              <li>{{ holder.name }}</li>
+            }
+          </ul>
+        }
+      </div>
+      @if (node.children.length > 0) {
+        <ul
+          class="tree"
+          role="list"
+          [style.--oc-rows]="rows(idOf(node))"
+          [attr.aria-label]="'ui.orgChart.under' | transloco: { name: node.name }"
+        >
+          <ng-container
+            [ngTemplateOutlet]="branch"
+            [ngTemplateOutletContext]="{ $implicit: node.children, key: idOf(node) }"
+          />
+        </ul>
+      }
+    </li>
+  }
+</ng-template>
