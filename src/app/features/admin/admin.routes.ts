@@ -109,6 +109,13 @@ export const ADMIN_ROUTES: Routes = [
           },
           ...crud('work-areas', ['workAreas'], 'workAreas', 'workAreas.note'),
           ...crud('board', ['board'], 'board'),
+          {
+            path: 'org-chart',
+            canActivate: [roleGuard],
+            data: { area: 'content' },
+            loadComponent: () =>
+              import('./content/org-chart/org-chart-admin').then((m) => m.OrgChartAdmin),
+          },
           ...crud(
             'testimonials',
             ['themes', 'testimonials'],

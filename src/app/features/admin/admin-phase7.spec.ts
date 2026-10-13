@@ -42,6 +42,7 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       'news',
       'workAreas',
       'board',
+      'orgChart',
       'partners',
       'documents',
       'licences',
@@ -49,7 +50,7 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       'aboutItems',
       'media',
     ];
-    const withTestimonials = [...content.slice(0, 4), 'testimonials', ...content.slice(4)];
+    const withTestimonials = [...content.slice(0, 5), 'testimonials', ...content.slice(5)];
     expect(labels('admin')).toEqual([
       'overview',
       'messages',
