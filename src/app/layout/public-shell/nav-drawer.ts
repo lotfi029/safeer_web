@@ -12,7 +12,8 @@ import { ShellNav } from './nav-links';
 
 /**
  * Mobile/tablet navigation (< 1100px): full nav (governance as a collapsible group, open on a
- * governance page) + staff link + contact CTA.
+ * governance page) + contact CTA. The staff dashboard has no public link: it is reached by URL
+ * only (/ar/admin, /en/admin).
  */
 @Component({
   selector: 'app-nav-drawer',
@@ -77,17 +78,6 @@ import { ShellNav } from './nav-links';
           }
         </ul>
       </nav>
-      <hr class="divider my-3" />
-      <ul class="m-0 flex list-none flex-col gap-1 p-0">
-        <li>
-          <a
-            class="flex min-h-12 items-center rounded-btn px-3 font-semibold text-text no-underline hover:bg-raise"
-            [routerLink]="locale.link('/admin')"
-            (click)="close()"
-            >{{ 'shell.staff' | transloco }}</a
-          >
-        </li>
-      </ul>
       <a
         drawerActions
         appButton

@@ -115,7 +115,6 @@ export const en: Translation = {
     contactCta: 'Contact us',
     governance: 'Governance',
     governanceMenu: 'Governance menu',
-    staff: 'Staff dashboard',
     home: 'Home page',
     footer: {
       keyLinks: 'Key links',
