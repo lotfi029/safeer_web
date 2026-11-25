@@ -181,6 +181,15 @@ export class SystemApi {
   assignableRoles(): Observable<StaffRoleRef[]> {
     return this.http.get<StaffRoleRef[]>(`${A}/users/assignable-roles`);
   }
+  /** v1.2.0: an active account with an admin-set password; no mail (`users.manage`). */
+  createUser(body: {
+    email: string;
+    name: string;
+    roleId: Id;
+    password: string;
+  }): Observable<StaffUser> {
+    return this.http.post<StaffUser>(`${A}/users`, body);
+  }
   invite(body: { email: string; name: string; roleId: Id }): Observable<StaffUser> {
     return this.http.post<StaffUser>(`${A}/auth/invite`, body);
   }

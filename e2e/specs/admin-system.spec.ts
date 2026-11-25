@@ -115,6 +115,37 @@ test.describe('admin system', () => {
     await expect(row).toHaveCount(0);
   });
 
+  test('users: add a user with a password (no invitation); they sign in with it', async ({
+    page,
+    browser,
+  }) => {
+    await asAdmin(page, '/admin/system/users');
+    const email = `e2e-create-${rand()}@e2e.invalid`;
+    const password = `created-pw-${rand()}`;
+    await page.getByTestId('user-create').click();
+    await expect(dialog(page).getByRole('heading', { name: 'Add a user' })).toBeVisible();
+    await dialog(page).getByLabel('Name').fill('E2E Created');
+    await dialog(page).getByLabel('Email').fill(email);
+    await dialog(page).getByLabel('Role').selectOption({ label: 'Editor' });
+    // Too short first: the dialog refuses it before calling the API.
+    await dialog(page).getByTestId('user-password').fill('short');
+    await dialog(page).getByRole('button', { name: 'Create user' }).click();
+    await expect(dialog(page)).toContainText('At least 8 characters.');
+    await dialog(page).getByTestId('user-password').fill(password);
+    await dialog(page).getByRole('button', { name: 'Create user' }).click();
+    await expect(dialog(page)).toHaveCount(0);
+
+    const row = page.locator(`[data-user="${email}"]`);
+    await expect(row.getByTestId('user-status')).toHaveText('Active');
+    await expect(row.getByTestId('user-role-name')).toHaveText('Editor');
+
+    const other = await browser.newPage();
+    await gotoHydrated(other, '/en/admin/login');
+    await submitLogin(other, email, password);
+    await expect(other).toHaveURL(/\/en\/admin$/);
+    await other.close();
+  });
+
   test('users: unlock a locked account; your own role is fixed; roles live on their own screen', async ({
     page,
   }) => {

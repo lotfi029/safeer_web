@@ -19,17 +19,20 @@ import { Icon } from '../../../shared/ui/icon/icon';
 import { ToastService } from '../../../shared/ui/toast/toast';
 import { AdminPageHead } from '../layout/admin-page-head';
 import { confirmAction } from '../shared/confirm-dialog';
+import { MIN_PASSWORD_LENGTH } from '../auth/set-password';
 
 export interface UserFormData {
-  /** Absent → invite. */
+  /** Absent → a new user: invite (mail) or, with `create`, an admin-set password (no mail). */
   user?: StaffUser;
+  /** v1.2.0 `POST admin/users`: an active account with the password typed here; no mail is sent. */
+  create?: boolean;
   self: boolean;
   /** `GET admin/users/assignable-roles`: the roles the signed-in user may hand out (v1.1.0). */
   roles: readonly StaffRoleRef[];
 }
 
 /**
- * Invite (`POST admin/auth/invite`) or edit (`PATCH admin/users/:id`: name, email, roleId, status).
+ * Invite (`POST admin/auth/invite`), create with a password (`POST admin/users`, v1.2.0, no mail) or edit (`PATCH admin/users/:id`: name, email, roleId, status).
  * The role picker lists only assignable roles; a user's current role stays selectable even when it
  * isn't one of them, so saving other fields never changes it.
  */
@@ -39,7 +42,14 @@ export interface UserFormData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-dialog-frame
-      [heading]="(data.user ? 'admin.system.users.edit' : 'admin.system.users.invite') | transloco"
+      [heading]="
+        (data.user
+          ? 'admin.system.users.edit'
+          : data.create
+            ? 'admin.system.users.create'
+            : 'admin.system.users.invite'
+        ) | transloco
+      "
       headingId="user-form-title"
     >
       <form class="flex flex-col gap-5" id="user-form" novalidate (submit)="save($event)">
@@ -86,6 +96,26 @@ export interface UserFormData {
             }
           </select>
         </app-field>
+        @if (data.create) {
+          <app-field
+            [label]="'admin.system.users.password' | transloco"
+            [hint]="'admin.setPassword.hint' | transloco: { min: min }"
+            [required]="true"
+            [errors]="passwordErrors()"
+            [forceErrors]="true"
+          >
+            <input
+              appControl
+              type="password"
+              dir="ltr"
+              autocomplete="new-password"
+              maxlength="200"
+              data-testid="user-password"
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+            />
+          </app-field>
+        }
         @if (data.user && data.user.status !== 'invited') {
           <label class="check">
             <input
@@ -98,7 +128,10 @@ export interface UserFormData {
         }
         @if (!data.user) {
           <p class="t-small m-0 text-text-muted">
-            {{ 'admin.system.users.inviteLead' | transloco }}
+            {{
+              (data.create ? 'admin.system.users.createLead' : 'admin.system.users.inviteLead')
+                | transloco
+            }}
           </p>
         }
         @if (errorKey(); as key) {
@@ -116,7 +149,14 @@ export interface UserFormData {
         [busy]="busy()"
         [disabled]="busy()"
       >
-        {{ (data.user ? 'common.save' : 'admin.system.users.sendInvite') | transloco }}
+        {{
+          (data.user
+            ? 'common.save'
+            : data.create
+              ? 'admin.system.users.createSubmit'
+              : 'admin.system.users.sendInvite'
+          ) | transloco
+        }}
       </button>
     </app-dialog-frame>
   `,
@@ -141,6 +181,8 @@ export class UserForm {
       '',
   );
   protected readonly disabled = signal(this.data.user?.status === 'disabled');
+  protected readonly password = signal('');
+  protected readonly min = MIN_PASSWORD_LENGTH;
   protected readonly busy = signal(false);
   protected readonly tried = signal(false);
   protected readonly errorKey = signal<string | null>(null);
@@ -159,12 +201,29 @@ export class UserForm {
     return [...out, ...(this.server()[key] ?? []).map((message) => ({ kind: 'server', message }))];
   }
 
+  protected passwordErrors(): FieldErrorLike[] {
+    const out: FieldErrorLike[] = [];
+    const v = this.password();
+    if (this.tried() && !v) out.push({ kind: 'required' });
+    else if (this.tried() && v.length < MIN_PASSWORD_LENGTH)
+      out.push({ kind: 'minLength', minLength: MIN_PASSWORD_LENGTH } as FieldErrorLike);
+    return [
+      ...out,
+      ...(this.server()['password'] ?? []).map((message) => ({ kind: 'server', message })),
+    ];
+  }
+
   protected async save(event: Event): Promise<void> {
     event.preventDefault();
     this.tried.set(true);
     this.errorKey.set(null);
     this.server.set({});
-    if (this.err('name').length || this.err('email').length) return;
+    if (
+      this.err('name').length ||
+      this.err('email').length ||
+      (this.data.create && this.passwordErrors().length)
+    )
+      return;
     this.busy.set(true);
     try {
       const u = this.data.user;
@@ -179,13 +238,22 @@ export class UserForm {
                 : {}),
             } as never),
           )
-        : await firstValueFrom(
-            this.api.invite({
-              name: this.name().trim(),
-              email: this.email().trim(),
-              roleId: this.roleId(),
-            }),
-          );
+        : this.data.create
+          ? await firstValueFrom(
+              this.api.createUser({
+                name: this.name().trim(),
+                email: this.email().trim(),
+                roleId: this.roleId(),
+                password: this.password(),
+              }),
+            )
+          : await firstValueFrom(
+              this.api.invite({
+                name: this.name().trim(),
+                email: this.email().trim(),
+                roleId: this.roleId(),
+              }),
+            );
       this.ref.close(saved);
     } catch (error) {
       const problem = toApiProblem(error);
@@ -234,12 +302,27 @@ export class UserForm {
         <button
           pageActions
           appButton
+          variant="soft"
           size="sm"
           type="button"
           [disabled]="!assignable.value()"
           (click)="invite()"
         >
-          <app-icon name="user-plus" [size]="18" />{{ 'admin.system.users.invite' | transloco }}
+          <app-icon name="send" [size]="18" />{{ 'admin.system.users.invite' | transloco }}
+        </button>
+      }
+      <!-- One root per block: a block with two roots isn't projected into [pageActions]. -->
+      @if (canManage()) {
+        <button
+          pageActions
+          appButton
+          size="sm"
+          type="button"
+          data-testid="user-create"
+          [disabled]="!assignable.value()"
+          (click)="invite(true)"
+        >
+          <app-icon name="user-plus" [size]="18" />{{ 'admin.system.users.create' | transloco }}
         </button>
       }
     </app-admin-page-head>
@@ -380,9 +463,10 @@ export class AdminUsers {
     this.users.update((list) => (list ?? []).map((u) => (u.id === saved.id ? saved : u)));
   }
 
-  protected async invite(): Promise<void> {
+  /** A new user: by invitation (mail), or with `create` an admin-set password (no mail). */
+  protected async invite(create = false): Promise<void> {
     const ref = this.dialogs.open<StaffUser, UserFormData>(UserForm, {
-      data: { self: false, roles: this.assignable.value() ?? [] },
+      data: { self: false, create, roles: this.assignable.value() ?? [] },
       ariaLabelledBy: 'user-form-title',
       disableClose: true,
     });
@@ -391,7 +475,10 @@ export class AdminUsers {
       this.users.update((list) => [...(list ?? []), created]);
       this.toasts.show({
         kind: 'success',
-        message: this.t.translate('admin.system.users.invited', { email: created.email }),
+        message: this.t.translate(
+          create ? 'admin.system.users.created' : 'admin.system.users.invited',
+          { email: created.email },
+        ),
       });
     }
   }

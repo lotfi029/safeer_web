@@ -488,6 +488,12 @@ export const en: AdminTranslation = {
       ownRole: 'You cannot change your own role.',
       disableAccount: 'Disable the account (ends its sessions at once)',
       inviteLead: 'The user gets an activation link, valid for 48 hours, to choose a password.',
+      create: 'Add a user',
+      createLead:
+        'The account is active at once and no email is sent. Give the user the password yourself; they can change it from “My account”.',
+      createSubmit: 'Create user',
+      created: 'User {{email}} created.',
+      password: 'Password',
       sendInvite: 'Send invitation',
       exists: 'A user with this email already exists.',
       invited: 'Invitation sent to {{email}}.',

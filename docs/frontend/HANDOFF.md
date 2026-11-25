@@ -178,7 +178,7 @@ Mocked admin endpoints: **none**.
 
 **System area (Phase 9)**
 - `core/api/admin/system-api.ts`: users, invite, settings, cache, mail/SMS (settings, templates, preview, test, log, retry), audit, newsletter (+ CSV), account (password, sessions), anonymise.
-- **Users** (`system/users.ts`): status active/disabled/invited + the brute-force lock (unlock), invite (48 h link), edit (own role locked; the API guards the last active admin: `LAST_ADMIN`), delete (not yourself), and the role matrix from `GET /admin/roles`. There is no "resend invite" in the API.
+- **Users** (`system/users.ts`): status active/disabled/invited + the brute-force lock (unlock), invite (48 h link), **add a user with a password** (`POST admin/users`, safeer_api v1.2.0: active at once, no mail; the dialog checks the 8-character minimum), edit (own role locked; the API guards the last active admin: `LAST_ADMIN`), delete (not yourself), and the role matrix from `GET /admin/roles`. There is no "resend invite" in the API.
 - **Settings** (`system/settings.ts`): the whole `PUT admin/settings` DTO in sections (a partial is sent: only changed fields); `mapEmbedAllowed()` mirrors `MAP_EMBED_ALLOW_LIST`; plus cache stats/purge.
 - **Mail/SMS** (`system/channel.ts`, route data `channel`): settings (the password/token is write-only: empty keeps it), test send (`{ ok, error }` is shown, not thrown), templates (variables listed; unknown `{{ x }}` refused client-side and on `UNKNOWN_VARIABLE`; server preview), log with status/template filters in the URL (mail rows with `hasPayload` can be retried; SMS logs never carry the message).
 - **Audit** (`system/audit.ts`): entity/actor filters (the API's only two), changed-field diff per row.
@@ -654,7 +654,7 @@ To run the real-API suite locally, see the README ("Run e2e against the real API
 | Admin documents | `/:lang/admin/documents` | `admin/documents`, `admin/doc-categories`, `admin/media` | `admin-content.spec.ts` | Done (Phase 8) |
 | Admin figures / about items | `/:lang/admin/stats`, `/about-items` | `admin/stats`, `admin/about-items` | `admin-content.spec.ts` | Done (Phase 8) |
 | Media library | `/:lang/admin/media` | `GET/POST admin/media`, `PATCH` (alt), `DELETE` | `admin-content.spec.ts` | Done (Phase 8) |
-| Users and permissions | `/:lang/admin/system/users` | `admin/users` (GET, PATCH, DELETE), `POST admin/auth/invite`, `GET admin/roles` | `admin-system.spec.ts` | Done (Phase 9) |
+| Users and permissions | `/:lang/admin/system/users` | `admin/users` (GET, POST (v1.2.0), PATCH, DELETE), `POST admin/auth/invite`, `GET admin/roles` | `admin-system.spec.ts` | Done (Phase 9) |
 | Settings | `/:lang/admin/system/settings` | `GET/PUT admin/settings`, `admin/cache/stats`, `DELETE admin/cache` | `admin-system.spec.ts` | Done (Phase 9) |
 | Email / SMS | `/:lang/admin/system/mail`, `/system/sms` | `admin/{mail,sms}/settings`, `/test`, `/templates[/:key[/preview]]`, `/log`, `mail/log/:id/retry` | `admin-system.spec.ts` | Done (Phase 9) |
 | Activity log | `/:lang/admin/system/audit` | `GET admin/audit` | `admin-system.spec.ts` | Done (Phase 9) |
