@@ -15,6 +15,7 @@ import { COLLECTIONS } from '../crud/collections';
 import { pick } from '../crud/crud-config';
 import { CrudForm, type CrudFormData } from '../crud/crud-form';
 import { CrudList } from '../crud/crud-list';
+import { StaffSessionStore } from '../../../../core/auth/staff-session.store';
 
 /** CMS page slug → its public path (the site's routes; `home` is the root, `work` is /work-areas). */
 export function publicPathOf(slug: string): string {
@@ -45,16 +46,18 @@ export function publicPathOf(slug: string): string {
         [heading]="'admin.content.pages.editing' | transloco: { title: titleOf(p) }"
         [sub]="'/' + p['slug']"
       >
-        <button
-          pageActions
-          appButton
-          variant="line"
-          size="sm"
-          type="button"
-          (click)="editDetails(p)"
-        >
-          <app-icon name="pencil" [size]="16" />{{ 'admin.content.pages.details' | transloco }}
-        </button>
+        @if (canManage()) {
+          <button
+            pageActions
+            appButton
+            variant="line"
+            size="sm"
+            type="button"
+            (click)="editDetails(p)"
+          >
+            <app-icon name="pencil" [size]="16" />{{ 'admin.content.pages.details' | transloco }}
+          </button>
+        }
         <a
           pageActions
           appButton
@@ -83,6 +86,8 @@ export function publicPathOf(slug: string): string {
   `,
 })
 export class PageEditor {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canManage = computed(() => this.store.can('pages.manage'));
   readonly id = input.required<string>();
   private readonly api = inject(ContentApi);
   private readonly dialogs = inject(DialogService);

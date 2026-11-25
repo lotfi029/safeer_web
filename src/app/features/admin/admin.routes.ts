@@ -1,27 +1,28 @@
 import { Routes } from '@angular/router';
-import { roleGuard, staffGuard, staffLoginGuard } from '../../core/auth/guards';
-import type { StaffArea } from '../../core/auth/role-matrix';
+import { permissionGuard, staffGuard, staffLoginGuard } from '../../core/auth/guards';
+import type { PermissionKey } from '../../core/auth/permissions';
 import { adminStringsGuard } from '../../core/i18n/admin-strings';
 
 /**
  * Admin (client-rendered, `no-store` + `noindex`). Signed-out pages sit beside the shell; every
- * dashboard page is a shell child with `canActivate: [roleGuard]` and `data: { area }` from the
- * `GET /admin/roles` matrix (no area = any staff member). `adminStringsGuard` loads the admin
- * dictionary for the current locale first.
+ * dashboard page is a shell child with `canActivate: [permissionGuard]` and
+ * `data: { permission }` — the `<module>.view` key from `GET /admin/me` → `permissions` (v1.1.0;
+ * none = any staff member). `adminStringsGuard` loads the admin dictionary for the current locale
+ * first.
  */
 /** A config-driven content screen (CrudPage) for the given CRUD collections. */
 function crud(
   path: string,
   collections: string[],
   title: string,
+  permission: PermissionKey,
   note: string | null = null,
-  area: StaffArea = 'content',
 ): Routes {
   return [
     {
       path,
-      canActivate: [roleGuard],
-      data: { area, collections, title, note },
+      canActivate: [permissionGuard],
+      data: { permission, collections, title, note },
       loadComponent: () => import('./content/crud/crud-page').then((m) => m.CrudPage),
     },
   ];
@@ -70,49 +71,49 @@ export const ADMIN_ROUTES: Routes = [
           },
           {
             path: 'messages',
-            canActivate: [roleGuard],
-            data: { area: 'inbox' },
+            canActivate: [permissionGuard],
+            data: { permission: 'messages.view' },
             loadComponent: () => import('./messages/messages').then((m) => m.MessagesPage),
           },
           {
             path: 'messages/:id',
-            canActivate: [roleGuard],
-            data: { area: 'inbox' },
+            canActivate: [permissionGuard],
+            data: { permission: 'messages.view' },
             loadComponent: () => import('./messages/messages').then((m) => m.MessagesPage),
           },
           // ---------- content (Phase 8) ----------
-          ...crud('pages', ['pages'], 'pages'),
+          ...crud('pages', ['pages'], 'pages', 'pages.view'),
           {
             path: 'pages/:id',
-            canActivate: [roleGuard],
-            data: { area: 'content' },
+            canActivate: [permissionGuard],
+            data: { permission: 'pages.view' },
             loadComponent: () => import('./content/pages/page-editor').then((m) => m.PageEditor),
           },
           {
             path: 'news',
-            canActivate: [roleGuard],
-            data: { area: 'content' },
+            canActivate: [permissionGuard],
+            data: { permission: 'news.view' },
             loadComponent: () => import('./content/news/news-list').then((m) => m.AdminNewsList),
           },
-          ...crud('news/categories', ['newsCategories'], 'newsCategories'),
+          ...crud('news/categories', ['newsCategories'], 'newsCategories', 'news.view'),
           {
             path: 'news/new',
-            canActivate: [roleGuard],
-            data: { area: 'content' },
+            canActivate: [permissionGuard],
+            data: { permission: 'news.manage' },
             loadComponent: () => import('./content/news/news-editor').then((m) => m.NewsEditor),
           },
           {
             path: 'news/:id',
-            canActivate: [roleGuard],
-            data: { area: 'content' },
+            canActivate: [permissionGuard],
+            data: { permission: 'news.view' },
             loadComponent: () => import('./content/news/news-editor').then((m) => m.NewsEditor),
           },
-          ...crud('work-areas', ['workAreas'], 'workAreas', 'workAreas.note'),
-          ...crud('board', ['board'], 'board'),
+          ...crud('work-areas', ['workAreas'], 'workAreas', 'workAreas.view', 'workAreas.note'),
+          ...crud('board', ['board'], 'board', 'board.view'),
           {
             path: 'org-chart',
-            canActivate: [roleGuard],
-            data: { area: 'content' },
+            canActivate: [permissionGuard],
+            data: { permission: 'orgChart.view' },
             loadComponent: () =>
               import('./content/org-chart/org-chart-admin').then((m) => m.OrgChartAdmin),
           },
@@ -120,51 +121,63 @@ export const ADMIN_ROUTES: Routes = [
             'testimonials',
             ['themes', 'testimonials'],
             'testimonials',
+            'testimonials.view',
             'testimonials.note',
-            'inbox',
           ),
-          ...crud('partners', ['partners'], 'partners'),
-          ...crud('documents', ['documents', 'docCategories'], 'documents', 'documents.note'),
-          ...crud('licences', ['licences'], 'licences', 'licences.note'),
-          ...crud('stats', ['stats'], 'stats', 'stats.note'),
-          ...crud('about-items', ['aboutItems'], 'aboutItems'),
+          ...crud('partners', ['partners'], 'partners', 'partners.view'),
+          ...crud(
+            'documents',
+            ['documents', 'docCategories'],
+            'documents',
+            'documents.view',
+            'documents.note',
+          ),
+          ...crud('licences', ['licences'], 'licences', 'licences.view', 'licences.note'),
+          ...crud('stats', ['stats'], 'stats', 'stats.view', 'stats.note'),
+          ...crud('about-items', ['aboutItems'], 'aboutItems', 'aboutItems.view'),
           {
             path: 'media',
-            canActivate: [roleGuard],
-            data: { area: 'content' },
+            canActivate: [permissionGuard],
+            data: { permission: 'media.view' },
             loadComponent: () =>
               import('./content/media/media-library').then((m) => m.MediaLibrary),
           },
           // ---------- system (Phase 9) ----------
-          ...crud('redirects', ['redirects'], 'redirects', 'redirects.note'),
+          ...crud('redirects', ['redirects'], 'redirects', 'redirects.view', 'redirects.note'),
           {
             path: 'newsletter',
-            canActivate: [roleGuard],
-            data: { area: 'inbox' },
+            canActivate: [permissionGuard],
+            data: { permission: 'newsletter.view' },
             loadComponent: () => import('./system/newsletter').then((m) => m.AdminNewsletter),
           },
           {
             path: 'system/users',
-            canActivate: [roleGuard],
-            data: { area: 'users' },
+            canActivate: [permissionGuard],
+            data: { permission: 'users.view' },
             loadComponent: () => import('./system/users').then((m) => m.AdminUsers),
           },
           {
+            path: 'system/roles',
+            canActivate: [permissionGuard],
+            data: { permission: 'roles.view' },
+            loadComponent: () => import('./system/roles').then((m) => m.AdminRoles),
+          },
+          {
             path: 'system/settings',
-            canActivate: [roleGuard],
-            data: { area: 'settings' },
+            canActivate: [permissionGuard],
+            data: { permission: 'settings.view' },
             loadComponent: () => import('./system/settings').then((m) => m.AdminSettings),
           },
           {
             path: 'system/mail',
-            canActivate: [roleGuard],
-            data: { area: 'settings', channel: 'mail' },
+            canActivate: [permissionGuard],
+            data: { permission: 'mail.view', channel: 'mail' },
             loadComponent: () => import('./system/channel').then((m) => m.AdminChannel),
           },
           {
             path: 'system/audit',
-            canActivate: [roleGuard],
-            data: { area: 'audit' },
+            canActivate: [permissionGuard],
+            data: { permission: 'audit.view' },
             loadComponent: () => import('./system/audit').then((m) => m.AdminAudit),
           },
           {

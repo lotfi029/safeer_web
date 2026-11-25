@@ -1,5 +1,5 @@
 import type { ContentRow } from '../../../../core/api/admin/content-api';
-import type { StaffArea } from '../../../../core/auth/role-matrix';
+import type { PermissionModule } from '../../../../core/auth/permissions';
 
 export type CrudFieldType =
   | 'text'
@@ -69,7 +69,11 @@ export interface CrudConfig {
   /** Route + i18n id (`admin.content.<id>.*`). */
   id: string;
   endpoint: string;
-  area: StaffArea;
+  /**
+   * The permission module behind the endpoint (v1.1.0): the list needs `<module>.view`; New, Edit,
+   * publish, reorder and flag buttons need `.manage`; Delete needs `.delete`. Hidden, not disabled.
+   */
+  module: PermissionModule;
   /**
    * How visibility changes: `route` = `PATCH :id/publish`, `field` = `PATCH :id {isPublished}`
    * (collections with the column but no publish route), `status` = testimonials' status routes.
@@ -93,8 +97,6 @@ export interface CrudConfig {
    * show a pill, the others a button. Setting it re-reads the list (the API clears the previous one).
    */
   flag?: { key: string; path: string; setLabel: string; onLabel: string };
-  /** Area for delete buttons when it differs from `area` (`redirects.delete`). */
-  deleteArea?: StaffArea;
   /** A problem code (and title) → the field its message belongs next to. */
   errorField?: (code: string, title: string) => string | null;
   /**

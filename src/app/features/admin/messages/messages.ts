@@ -232,78 +232,88 @@ export function messageStatusParam(value: string | null | undefined): MessageSta
                 </div>
               }
 
-              <div class="flex flex-col gap-2">
-                <label class="field-label" for="message-reply">{{
-                  'admin.messages.reply.label' | transloco
-                }}</label>
-                <textarea
-                  id="message-reply"
-                  class="control"
-                  rows="5"
-                  maxlength="5000"
-                  [placeholder]="'admin.messages.reply.placeholder' | transloco"
-                  [value]="reply()"
-                  (input)="reply.set($any($event.target).value)"
-                ></textarea>
-              </div>
+              @if (canManage()) {
+                <div class="flex flex-col gap-2">
+                  <label class="field-label" for="message-reply">{{
+                    'admin.messages.reply.label' | transloco
+                  }}</label>
+                  <textarea
+                    id="message-reply"
+                    class="control"
+                    rows="5"
+                    maxlength="5000"
+                    [placeholder]="'admin.messages.reply.placeholder' | transloco"
+                    [value]="reply()"
+                    (input)="reply.set($any($event.target).value)"
+                  ></textarea>
+                </div>
+              }
               <div class="flex flex-wrap items-center gap-3">
-                <button
-                  appButton
-                  type="button"
-                  [busy]="busy()"
-                  [disabled]="busy() || !reply().trim()"
-                  (click)="sendReply(m)"
-                >
-                  <app-icon name="send" [size]="18" />{{ 'admin.messages.reply.send' | transloco }}
-                </button>
-                @if (m.status === 'archived') {
+                @if (canManage()) {
                   <button
                     appButton
-                    variant="line"
                     type="button"
-                    [disabled]="busy()"
-                    (click)="setStatus(m, 'read')"
+                    [busy]="busy()"
+                    [disabled]="busy() || !reply().trim()"
+                    (click)="sendReply(m)"
                   >
-                    <app-icon name="archive-restore" [size]="18" />{{
-                      'admin.messages.unarchive' | transloco
-                    }}
-                  </button>
-                } @else {
-                  <button
-                    appButton
-                    variant="line"
-                    type="button"
-                    [disabled]="busy()"
-                    (click)="setStatus(m, 'archived')"
-                  >
-                    <app-icon name="archive" [size]="18" />{{
-                      'admin.messages.archive' | transloco
-                    }}
-                  </button>
-                  <button
-                    appButton
-                    variant="ghost"
-                    type="button"
-                    [disabled]="busy()"
-                    (click)="setStatus(m, 'unread')"
-                  >
-                    <app-icon name="mail" [size]="18" />{{
-                      'admin.messages.markUnread' | transloco
+                    <app-icon name="send" [size]="18" />{{
+                      'admin.messages.reply.send' | transloco
                     }}
                   </button>
                 }
+                @if (canManage()) {
+                  @if (m.status === 'archived') {
+                    <button
+                      appButton
+                      variant="line"
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="setStatus(m, 'read')"
+                    >
+                      <app-icon name="archive-restore" [size]="18" />{{
+                        'admin.messages.unarchive' | transloco
+                      }}
+                    </button>
+                  } @else {
+                    <button
+                      appButton
+                      variant="line"
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="setStatus(m, 'archived')"
+                    >
+                      <app-icon name="archive" [size]="18" />{{
+                        'admin.messages.archive' | transloco
+                      }}
+                    </button>
+                    <button
+                      appButton
+                      variant="ghost"
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="setStatus(m, 'unread')"
+                    >
+                      <app-icon name="mail" [size]="18" />{{
+                        'admin.messages.markUnread' | transloco
+                      }}
+                    </button>
+                  }
+                }
                 <span class="grow"></span>
-                <button
-                  appButton
-                  variant="soft"
-                  type="button"
-                  [disabled]="busy()"
-                  (click)="convert(m)"
-                >
-                  <app-icon name="quote" [size]="18" />{{
-                    'admin.messages.convert.button' | transloco
-                  }}
-                </button>
+                @if (canConvert()) {
+                  <button
+                    appButton
+                    variant="soft"
+                    type="button"
+                    [disabled]="busy()"
+                    (click)="convert(m)"
+                  >
+                    <app-icon name="quote" [size]="18" />{{
+                      'admin.messages.convert.button' | transloco
+                    }}
+                  </button>
+                }
                 @if (canDelete()) {
                   <button
                     appButton
@@ -373,7 +383,12 @@ export class MessagesPage {
 
   protected readonly reply = signal('');
   protected readonly busy = signal(false);
-  protected readonly canDelete = computed(() => this.store.can('inbox.delete'));
+  /** v1.1.0: reply, status changes need `messages.manage`; convert also `testimonials.manage`. */
+  protected readonly canManage = computed(() => this.store.can('messages.manage'));
+  protected readonly canConvert = computed(
+    () => this.canManage() && this.store.can('testimonials.manage'),
+  );
+  protected readonly canDelete = computed(() => this.store.can('messages.delete'));
   protected readonly messageErrorKey = computed(() => {
     const err = this.message.error();
     return err ? problemMessageKey(toApiProblem(err)) : 'admin.common.loadError';

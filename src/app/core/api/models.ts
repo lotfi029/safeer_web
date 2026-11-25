@@ -366,13 +366,22 @@ export interface Country {
 
 // ---------- staff ----------
 
-export type StaffRole = 'admin' | 'editor' | 'support';
+/** The seeded system roles (safeer_api migration 024). Custom roles have other keys. */
+export type SystemRoleKey = 'admin' | 'editor' | 'support';
+
+/** A user's role as user responses carry it (v1.1.0: was the key string). */
+export interface StaffRoleRef {
+  id: Id;
+  key: string;
+  nameAr: string;
+  nameEn: string | null;
+}
 
 export interface StaffUser {
   id: Id;
   name: string;
   email: string;
-  role: StaffRole;
+  role: StaffRoleRef;
   /** C12: a brute-force lock is running (`lockedUntil` is in the future, at most an hour ahead: A3). */
   isLocked: boolean;
   lockedUntil: string | null;
@@ -386,18 +395,42 @@ export interface StaffUser {
 
 export interface StaffMe extends StaffUser {
   csrfToken: string;
+  /** v1.1.0: the role's permission keys, `["*"]` for admin (core/auth/permissions.ts). */
+  permissions: string[];
 }
 
-/** B17: `GET /admin/roles` (any staff). */
-export interface RolesResponse {
-  roles: StaffRole[];
-  matrix: Record<string, StaffRole[]>;
+/** `GET /admin/roles[/:id]` (`roles.view`; safeer_api src/roles/public-role.ts). */
+export interface StaffRoleDetail extends StaffRoleRef {
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  isSystem: boolean;
+  /** Catalog keys in catalog order, or `["*"]` for admin. */
+  permissions: string[];
+  userCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** `GET /admin/permissions` (any staff): the grid the role editor draws. */
+export interface PermissionCatalog {
+  actions: ('view' | 'manage' | 'delete')[];
+  groups: {
+    key: string;
+    labelAr: string;
+    labelEn: string;
+    modules: {
+      key: string;
+      labelAr: string;
+      labelEn: string;
+      actions: ('view' | 'manage' | 'delete')[];
+    }[];
+  }[];
 }
 
 /**
- * `GET /admin/overview` (C20, A5): each block is present only for the roles that own its area.
- * `unreadMessages` is admin + support; editors get no message counts at all. `recentAuditLog` is
- * admin-only (an empty array for other roles). The application figures (stat cards, the 6-month
+ * `GET /admin/overview` (C20, A5): each block is present only for callers with the permission behind
+ * it. `unreadMessages` needs `messages.view`; without it there are no message counts at all.
+ * `recentAuditLog` needs `audit.view` (an empty array otherwise). The application figures (stat cards, the 6-month
  * series, the latest applications, `badges.newApplications`) were removed from the API with the
  * scholarship feature; an older API may still send them, so every block is optional and ignored.
  */

@@ -22,6 +22,7 @@ import { ToastService } from '../../../shared/ui/toast/toast';
 import { type CrudField, modelFromRow, toBody, validate } from '../content/crud/crud-config';
 import { CrudFields, toFieldErrors } from '../content/crud/crud-fields';
 import { AdminPageHead } from '../layout/admin-page-head';
+import { StaffSessionStore } from '../../../core/auth/staff-session.store';
 
 /** safeer_api `MAP_EMBED_ALLOW_LIST`: exact host + path prefix, https, no port or userinfo. */
 export const MAP_EMBED_ALLOW_LIST = [
@@ -218,22 +219,24 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
           @if (errorKey(); as key) {
             <p class="note note-warn m-0" role="alert">{{ key | transloco }}</p>
           }
-          <div
-            class="sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-3 border-t border-border bg-app-bg px-4 py-3 md:mx-0 md:rounded-card md:border md:bg-card"
-          >
-            <button appButton type="submit" [busy]="busy()" [disabled]="busy() || !dirty()">
-              {{ 'admin.system.settings.save' | transloco }}
-            </button>
-            <button
-              appButton
-              variant="ghost"
-              type="button"
-              [disabled]="busy() || !dirty()"
-              (click)="reset()"
+          @if (canManage()) {
+            <div
+              class="sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-3 border-t border-border bg-app-bg px-4 py-3 md:mx-0 md:rounded-card md:border md:bg-card"
             >
-              {{ 'admin.system.settings.discard' | transloco }}
-            </button>
-          </div>
+              <button appButton type="submit" [busy]="busy()" [disabled]="busy() || !dirty()">
+                {{ 'admin.system.settings.save' | transloco }}
+              </button>
+              <button
+                appButton
+                variant="ghost"
+                type="button"
+                [disabled]="busy() || !dirty()"
+                (click)="reset()"
+              >
+                {{ 'admin.system.settings.discard' | transloco }}
+              </button>
+            </div>
+          }
         </form>
       </div>
 
@@ -261,16 +264,20 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
             }}
           </p>
         }
-        <button
-          appButton
-          variant="line"
-          type="button"
-          class="self-start"
-          [disabled]="busy()"
-          (click)="purge()"
-        >
-          <app-icon name="refresh-cw" [size]="16" />{{ 'admin.system.settings.purge' | transloco }}
-        </button>
+        @if (canPurge()) {
+          <button
+            appButton
+            variant="line"
+            type="button"
+            class="self-start"
+            [disabled]="busy()"
+            (click)="purge()"
+          >
+            <app-icon name="refresh-cw" [size]="16" />{{
+              'admin.system.settings.purge' | transloco
+            }}
+          </button>
+        }
       </section>
     } @else {
       <span class="skeleton block h-80" aria-hidden="true"></span>
@@ -278,6 +285,9 @@ export function settingsErrors(model: Record<string, unknown>): Record<string, s
   `,
 })
 export class AdminSettings {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canManage = computed(() => this.store.can('settings.manage'));
+  protected readonly canPurge = computed(() => this.store.can('settings.delete'));
   private readonly api = inject(SystemApi);
   private readonly toasts = inject(ToastService);
   private readonly t = inject(TranslocoService);
@@ -349,6 +359,10 @@ export class AdminSettings {
   }
 
   protected async save(event: Event): Promise<void> {
+    if (!this.canManage()) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
     this.tried.set(true);
     this.errorKey.set(null);

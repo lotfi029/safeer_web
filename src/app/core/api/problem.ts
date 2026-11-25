@@ -103,6 +103,10 @@ const KNOWN_CODES = new Set([
   'UNKNOWN_VARIABLE',
   'FEATURE_DISABLED',
   'NOT_IMPLEMENTED',
+  // safeer_api v1.1.0 (roles)
+  'ROLE_IN_USE',
+  'ROLE_IMMUTABLE',
+  'ROLE_KEY_TAKEN',
 ]);
 
 /** Transloco key for a problem code (`errors.codes.X`), or the generic/network message. */

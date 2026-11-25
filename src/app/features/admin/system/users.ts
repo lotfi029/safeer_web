@@ -1,13 +1,14 @@
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { SystemApi } from '../../../core/api/admin/system-api';
-import type { StaffRole, StaffUser } from '../../../core/api/models';
+import type { StaffRoleRef, StaffUser } from '../../../core/api/models';
 import { problemMessageKey, toApiProblem } from '../../../core/api/problem';
 import { StaffSessionStore } from '../../../core/auth/staff-session.store';
-import type { StaffArea } from '../../../core/auth/role-matrix';
+import { roleName } from '../../../core/auth/role-name';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { SeoService } from '../../../core/seo/seo.service';
 import { DigitsPipe, LocalDatePipe, RelTimePipe } from '../../../shared/pipes/format';
@@ -19,24 +20,19 @@ import { ToastService } from '../../../shared/ui/toast/toast';
 import { AdminPageHead } from '../layout/admin-page-head';
 import { confirmAction } from '../shared/confirm-dialog';
 
-const ROLES: readonly StaffRole[] = ['admin', 'editor', 'support'];
-const AREAS: readonly StaffArea[] = [
-  'content',
-  'redirects.delete',
-  'inbox',
-  'inbox.delete',
-  'users',
-  'settings',
-  'audit',
-];
-
 export interface UserFormData {
   /** Absent → invite. */
   user?: StaffUser;
   self: boolean;
+  /** `GET admin/users/assignable-roles`: the roles the signed-in user may hand out (v1.1.0). */
+  roles: readonly StaffRoleRef[];
 }
 
-/** Invite (`POST admin/auth/invite`) or edit (`PATCH admin/users/:id`: name, email, role, status). */
+/**
+ * Invite (`POST admin/auth/invite`) or edit (`PATCH admin/users/:id`: name, email, roleId, status).
+ * The role picker lists only assignable roles; a user's current role stays selectable even when it
+ * isn't one of them, so saving other fields never changes it.
+ */
 @Component({
   selector: 'app-user-form',
   imports: [TranslocoPipe, Button, DialogFrame, Field, Control],
@@ -79,11 +75,14 @@ export interface UserFormData {
           [label]="'admin.system.users.role' | transloco"
           [hint]="data.self ? ('admin.system.users.ownRole' | transloco) : null"
         >
-          <select appControl [disabled]="data.self" (change)="role.set($any($event.target).value)">
-            @for (r of roles; track r) {
-              <option [value]="r" [selected]="r === role()">
-                {{ 'admin.shell.roles.' + r | transloco }}
-              </option>
+          <select
+            appControl
+            data-testid="user-role"
+            [disabled]="data.self"
+            (change)="roleId.set($any($event.target).value)"
+          >
+            @for (r of roles; track r.id) {
+              <option [value]="r.id" [selected]="r.id === roleId()">{{ label(r) }}</option>
             }
           </select>
         </app-field>
@@ -126,15 +125,30 @@ export class UserForm {
   protected readonly data = inject<UserFormData>(DIALOG_DATA);
   protected readonly ref = inject<DialogRef<StaffUser>>(DialogRef);
   private readonly api = inject(SystemApi);
-  protected readonly roles = ROLES;
+  private readonly locale = inject(LocaleService);
+  protected readonly roles: readonly StaffRoleRef[] = (() => {
+    const current = this.data.user?.role;
+    return current && !this.data.roles.some((r) => r.id === current.id)
+      ? [current, ...this.data.roles]
+      : this.data.roles;
+  })();
   protected readonly name = signal(this.data.user?.name ?? '');
   protected readonly email = signal(this.data.user?.email ?? '');
-  protected readonly role = signal<StaffRole>(this.data.user?.role ?? 'editor');
+  /** Invite default: `editor` when it can be assigned, else the first assignable role. */
+  protected readonly roleId = signal<string>(
+    this.data.user?.role.id ??
+      (this.data.roles.find((r) => r.key === 'editor') ?? this.data.roles[0])?.id ??
+      '',
+  );
   protected readonly disabled = signal(this.data.user?.status === 'disabled');
   protected readonly busy = signal(false);
   protected readonly tried = signal(false);
   protected readonly errorKey = signal<string | null>(null);
   private readonly server = signal<Record<string, string[]>>({});
+
+  protected label(role: StaffRoleRef): string {
+    return roleName(role, this.locale.lang());
+  }
 
   protected err(key: 'name' | 'email'): FieldErrorLike[] {
     const out: FieldErrorLike[] = [];
@@ -159,7 +173,7 @@ export class UserForm {
             this.api.updateUser(u.id, {
               ...(this.name().trim() !== u.name ? { name: this.name().trim() } : {}),
               ...(this.email().trim() !== u.email ? { email: this.email().trim() } : {}),
-              ...(this.role() !== u.role ? { role: this.role() } : {}),
+              ...(this.roleId() !== u.role.id ? { roleId: this.roleId() } : {}),
               ...(u.status !== 'invited' && (this.disabled() ? 'disabled' : 'active') !== u.status
                 ? { status: this.disabled() ? 'disabled' : 'active' }
                 : {}),
@@ -169,7 +183,7 @@ export class UserForm {
             this.api.invite({
               name: this.name().trim(),
               email: this.email().trim(),
-              role: this.role(),
+              roleId: this.roleId(),
             }),
           );
       this.ref.close(saved);
@@ -188,13 +202,23 @@ export class UserForm {
 }
 
 /**
- * Users and permissions (prototype `aUsers`): staff with role, status (active / disabled / invited)
- * and brute-force lock; invite, edit, unlock, delete; and the role matrix from `GET /admin/roles`.
- * The API guards the last active admin (LAST_ADMIN) and your own role and account.
+ * Users (prototype `aUsers`): staff with role, status (active / disabled / invited) and brute-force
+ * lock; invite, edit and unlock need `users.manage`, delete `users.delete` (v1.1.0). What each role
+ * may do lives on System → Roles. The API guards the last active admin (LAST_ADMIN), your own role
+ * and account, and users whose role holds more than yours (403).
  */
 @Component({
   selector: 'app-admin-users',
-  imports: [TranslocoPipe, DigitsPipe, LocalDatePipe, RelTimePipe, Button, Icon, AdminPageHead],
+  imports: [
+    TranslocoPipe,
+    RouterLink,
+    DigitsPipe,
+    LocalDatePipe,
+    RelTimePipe,
+    Button,
+    Icon,
+    AdminPageHead,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
@@ -206,9 +230,18 @@ export class UserForm {
           : null
       "
     >
-      <button pageActions appButton size="sm" type="button" (click)="invite()">
-        <app-icon name="user-plus" [size]="18" />{{ 'admin.system.users.invite' | transloco }}
-      </button>
+      @if (canManage()) {
+        <button
+          pageActions
+          appButton
+          size="sm"
+          type="button"
+          [disabled]="!assignable.value()"
+          (click)="invite()"
+        >
+          <app-icon name="user-plus" [size]="18" />{{ 'admin.system.users.invite' | transloco }}
+        </button>
+      }
     </app-admin-page-head>
 
     @if (users.error()) {
@@ -225,7 +258,7 @@ export class UserForm {
               <span class="t-small truncate text-text-muted" dir="ltr">{{ u.email }}</span>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <span class="pill pill-plain">{{ 'admin.shell.roles.' + u.role | transloco }}</span>
+              <span class="pill pill-plain" data-testid="user-role-name">{{ label(u.role) }}</span>
               <span
                 class="pill"
                 [class.pill-ok]="u.status === 'active'"
@@ -251,7 +284,7 @@ export class UserForm {
               }}</span>
             </div>
             <div class="flex flex-wrap items-center gap-1">
-              @if (u.isLocked) {
+              @if (u.isLocked && canManage()) {
                 <button
                   appButton
                   variant="soft"
@@ -265,11 +298,13 @@ export class UserForm {
                   }}<span class="sr-only">: {{ u.name }}</span>
                 </button>
               }
-              <button appButton variant="link" size="sm" type="button" (click)="edit(u)">
-                {{ 'admin.content.editShort' | transloco
-                }}<span class="sr-only">: {{ u.name }}</span>
-              </button>
-              @if (u.id !== meId()) {
+              @if (canManage()) {
+                <button appButton variant="link" size="sm" type="button" (click)="edit(u)">
+                  {{ 'admin.content.editShort' | transloco
+                  }}<span class="sr-only">: {{ u.name }}</span>
+                </button>
+              }
+              @if (canDelete() && u.id !== meId()) {
                 <button
                   type="button"
                   class="icon-btn size-11 text-alert"
@@ -288,52 +323,19 @@ export class UserForm {
       <span class="skeleton block h-40" aria-hidden="true"></span>
     }
 
-    <section class="mt-10 flex flex-col gap-4" aria-labelledby="matrix-title">
-      <h2 class="t-h4 m-0 text-heading" id="matrix-title">
-        {{ 'admin.system.users.matrix' | transloco }}
-      </h2>
-      <div
-        class="card card-flush relative overflow-x-auto"
-        tabindex="0"
-        role="region"
-        [attr.aria-label]="'admin.system.users.matrix' | transloco"
-      >
-        <table class="w-full border-collapse text-start" data-testid="role-matrix">
-          <thead class="bg-thead">
-            <tr>
-              <th scope="col" class="t-small px-4 py-3 text-start font-semibold text-text-muted">
-                {{ 'admin.system.users.permission' | transloco }}
-              </th>
-              @for (r of roles; track r) {
-                <th scope="col" class="t-small px-4 py-3 text-center font-semibold text-text-muted">
-                  {{ 'admin.shell.roles.' + r | transloco }}
-                </th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of areas; track a) {
-              <tr class="border-t border-border">
-                <th scope="row" class="px-4 py-3 text-start font-medium">
-                  {{ 'admin.system.areas.' + a | transloco }}
-                </th>
-                @for (r of roles; track r) {
-                  <td class="px-4 py-3 text-center">
-                    @if (allowed(a, r)) {
-                      <app-icon name="check" [size]="18" class="text-success" />
-                      <span class="sr-only">{{ 'admin.system.users.allowed' | transloco }}</span>
-                    } @else {
-                      <app-icon name="x" [size]="18" class="text-decor" />
-                      <span class="sr-only">{{ 'admin.system.users.denied' | transloco }}</span>
-                    }
-                  </td>
-                }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+    @if (canViewRoles()) {
+      <p class="mt-8">
+        <a
+          class="link inline-flex min-h-11 items-center gap-2"
+          data-testid="roles-link"
+          [routerLink]="locale.link('/admin/system/roles')"
+        >
+          <app-icon name="shield-check" [size]="18" />{{
+            'admin.system.users.rolesLink' | transloco
+          }}
+        </a>
+      </p>
+    }
   `,
 })
 export class AdminUsers {
@@ -342,19 +344,22 @@ export class AdminUsers {
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
   private readonly t = inject(TranslocoService);
-  private readonly locale = inject(LocaleService);
-  protected readonly roles = ROLES;
-  protected readonly areas = AREAS;
+  protected readonly locale = inject(LocaleService);
   protected readonly busy = signal(false);
   protected readonly meId = computed(() => this.store.me()?.id ?? null);
+  protected readonly canManage = computed(() => this.store.can('users.manage'));
+  protected readonly canDelete = computed(() => this.store.can('users.delete'));
+  protected readonly canViewRoles = computed(() => this.store.can('roles.view'));
   protected readonly users = rxResource({ stream: () => this.api.users() });
+  /** The invite/edit picker (v1.1.0): only roles the signed-in user may assign. */
+  protected readonly assignable = rxResource({ stream: () => this.api.assignableRoles() });
 
   constructor() {
     inject(SeoService).noindex('Admin', this.locale.lang());
   }
 
-  protected allowed(area: StaffArea, role: StaffRole): boolean {
-    return (this.store.matrix()[area] ?? []).includes(role);
+  protected label(role: StaffRoleRef): string {
+    return roleName(role, this.locale.lang());
   }
 
   protected initial(name: string): string {
@@ -375,7 +380,7 @@ export class AdminUsers {
 
   protected async invite(): Promise<void> {
     const ref = this.dialogs.open<StaffUser, UserFormData>(UserForm, {
-      data: { self: false },
+      data: { self: false, roles: this.assignable.value() ?? [] },
       ariaLabelledBy: 'user-form-title',
       disableClose: true,
     });
@@ -391,7 +396,7 @@ export class AdminUsers {
 
   protected async edit(u: StaffUser): Promise<void> {
     const ref = this.dialogs.open<StaffUser, UserFormData>(UserForm, {
-      data: { user: u, self: u.id === this.meId() },
+      data: { user: u, self: u.id === this.meId(), roles: this.assignable.value() ?? [] },
       ariaLabelledBy: 'user-form-title',
       disableClose: true,
     });

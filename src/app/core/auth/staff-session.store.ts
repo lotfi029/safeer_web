@@ -1,17 +1,19 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { StaffMe, StaffRole } from '../api/models';
+import type { StaffMe } from '../api/models';
 import { ApiError } from '../api/problem';
 import { StaffApi } from '../api/staff-api';
 import { CsrfTokens } from './csrf-tokens';
-import { ROLE_MATRIX, type StaffArea } from './role-matrix';
+import { holds, type PermissionKey } from './permissions';
 import { SessionExpiry } from './session-expiry';
 
 export type SessionStatus = 'unknown' | 'loading' | 'authenticated' | 'anonymous';
 
 /**
- * Staff session (cookie `sf_sid`): `me` + CSRF token from `GET /admin/me` or login, and the role
- * matrix from `GET /admin/roles` (B17) with the typed fallback in role-matrix.ts.
+ * Staff session (cookie `sf_sid`): `me` + CSRF token from `GET /admin/me`, and with it the role and
+ * its `permissions` (safeer_api v1.1.0; `["*"]` for admin). Login answers without permissions, so it
+ * reads `GET /admin/me` right after. If that read fails nothing is granted: `can()` is false for
+ * every key (there is no fallback matrix).
  */
 @Injectable({ providedIn: 'root' })
 export class StaffSessionStore {
@@ -20,8 +22,9 @@ export class StaffSessionStore {
 
   readonly me = signal<StaffMe | null>(null);
   readonly status = signal<SessionStatus>('unknown');
-  readonly matrix = signal<Readonly<Record<string, readonly StaffRole[]>>>(ROLE_MATRIX);
   readonly role = computed(() => this.me()?.role ?? null);
+  /** The current role's permission keys (`*` = all); empty when signed out or unknown. */
+  readonly permissions = computed<ReadonlySet<string>>(() => new Set(this.me()?.permissions ?? []));
   readonly isAuthenticated = computed(() => this.status() === 'authenticated');
 
   private inflight: Promise<boolean> | null = null;
@@ -44,9 +47,26 @@ export class StaffSessionStore {
   async login(email: string, password: string): Promise<void> {
     const res = await firstValueFrom(this.api.login(email, password));
     this.tokens.staff.set(res.csrfToken);
-    this.me.set({ ...res.user, csrfToken: res.csrfToken });
+    // The login answer has no `permissions`: until `GET /admin/me` says otherwise, nothing is granted.
+    this.me.set({ ...res.user, csrfToken: res.csrfToken, permissions: [] });
     this.status.set('authenticated');
-    await this.loadMatrix();
+    await this.refresh();
+  }
+
+  /** Re-reads `GET /admin/me` (role and permissions). On failure keeps the session with no permissions. */
+  async refresh(): Promise<void> {
+    try {
+      const me = await firstValueFrom(this.api.me());
+      this.me.set(me);
+      this.tokens.staff.set(me.csrfToken);
+    } catch (error) {
+      if (error instanceof ApiError && error.problem.status === 401) {
+        this.clear();
+        return;
+      }
+      const current = this.me();
+      if (current) this.me.set({ ...current, permissions: [] });
+    }
   }
 
   async logout(): Promise<void> {
@@ -57,10 +77,9 @@ export class StaffSessionStore {
     }
   }
 
-  /** Whether the current role may use an area of the matrix (`content`, `inbox`, …). */
-  can(area: StaffArea): boolean {
-    const role = this.role();
-    return !!role && (this.matrix()[area] ?? []).includes(role);
+  /** Whether the current role holds a permission (`news.view`, `users.manage`, …). */
+  can(permission: PermissionKey): boolean {
+    return holds(this.permissions(), permission);
   }
 
   clear(): void {
@@ -76,7 +95,6 @@ export class StaffSessionStore {
       this.me.set(me);
       this.tokens.staff.set(me.csrfToken);
       this.status.set('authenticated');
-      await this.loadMatrix();
       return true;
     } catch (error) {
       if (error instanceof ApiError && error.problem.status !== 401) {
@@ -84,15 +102,6 @@ export class StaffSessionStore {
       }
       this.clear();
       return false;
-    }
-  }
-
-  private async loadMatrix(): Promise<void> {
-    try {
-      const res = await firstValueFrom(this.api.roles());
-      this.matrix.set(res.matrix);
-    } catch {
-      this.matrix.set(ROLE_MATRIX);
     }
   }
 }

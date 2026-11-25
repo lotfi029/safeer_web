@@ -2,8 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoService, TranslocoTestingModule } from '@jsverse/transloco';
 import { StaffSessionStore } from '../../core/auth/staff-session.store';
-import { ROLE_MATRIX } from '../../core/auth/role-matrix';
-import type { StaffRole } from '../../core/api/models';
+import { holds, type PermissionKey } from '../../core/auth/permissions';
 import { AdminStrings } from '../../core/i18n/admin-strings';
 import { LocaleService } from '../../core/i18n/locale.service';
 import { ar as adminAr } from '../../core/i18n/translations/admin/ar';
@@ -13,12 +12,43 @@ import { AdminBadges } from './layout/admin-badges';
 import { AdminNav } from './layout/admin-nav';
 import { messageStatusParam } from './messages/messages';
 
-function navFor(role: StaffRole, badges: Record<string, number> = {}) {
-  const me = signal({ role });
+const CONTENT_MODULES = [
+  'pages',
+  'news',
+  'workAreas',
+  'board',
+  'orgChart',
+  'partners',
+  'documents',
+  'licences',
+  'stats',
+  'aboutItems',
+  'media',
+  'redirects',
+];
+/** The seeded system roles (safeer_api migration 024), plus a custom news-only role. */
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ['*'],
+  editor: CONTENT_MODULES.flatMap((m) =>
+    ['view', 'manage', ...(m === 'redirects' ? [] : ['delete'])].map((a) => `${m}.${a}`),
+  ),
+  support: [
+    'messages.view',
+    'messages.manage',
+    'testimonials.view',
+    'testimonials.manage',
+    'testimonials.delete',
+    'newsletter.view',
+    'newsletter.delete',
+  ],
+  newsOnly: ['news.view', 'news.manage', 'news.delete'],
+};
+
+function navFor(role: string, badges: Record<string, number> = {}) {
+  const permissions = signal<ReadonlySet<string>>(new Set(ROLE_PERMISSIONS[role]));
   const store = {
-    role: () => me().role,
-    matrix: () => ROLE_MATRIX,
-    can: (area: keyof typeof ROLE_MATRIX) => ROLE_MATRIX[area].includes(me().role),
+    permissions,
+    can: (key: PermissionKey) => holds(permissions(), key),
   };
   TestBed.configureTestingModule({
     imports: [TranslocoTestingModule.forRoot({ langs: { ar: {}, en: {} } })],
@@ -30,13 +60,13 @@ function navFor(role: StaffRole, badges: Record<string, number> = {}) {
   return TestBed.inject(AdminNav);
 }
 
-describe('admin shell menu (GET /admin/roles areas)', () => {
-  const labels = (role: StaffRole) =>
+describe('admin shell menu (GET /admin/me permissions)', () => {
+  const labels = (role: string) =>
     navFor(role)
       .groups()
       .flatMap((g) => g.items.map((i) => i.label));
 
-  it('shows each role only the areas the matrix gives it', () => {
+  it('shows each role only the screens its permissions open', () => {
     const content = [
       'pages',
       'news',
@@ -58,6 +88,7 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
       ...withTestimonials,
       'redirects',
       'users',
+      'roles',
       'settings',
       'mail',
       'audit',
@@ -66,6 +97,8 @@ describe('admin shell menu (GET /admin/roles areas)', () => {
     expect(labels('support')).toEqual(['overview', 'messages', 'newsletter', 'testimonials']);
     TestBed.resetTestingModule();
     expect(labels('editor')).toEqual(['overview', ...content, 'redirects']);
+    TestBed.resetTestingModule();
+    expect(labels('newsOnly')).toEqual(['overview', 'news']);
   });
 
   it('links carry the locale and badges come from the overview counts', () => {

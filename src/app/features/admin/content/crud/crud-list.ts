@@ -20,6 +20,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { ContentApi, type ContentRow, mediaUrl } from '../../../../core/api/admin/content-api';
 import { problemMessageKey, toApiProblem } from '../../../../core/api/problem';
+import type { PermissionKey } from '../../../../core/auth/permissions';
 import { StaffSessionStore } from '../../../../core/auth/staff-session.store';
 import { LocaleService } from '../../../../core/i18n/locale.service';
 import { DigitsPipe } from '../../../../shared/pipes/format';
@@ -78,12 +79,14 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
             <span class="t-small font-normal text-text-muted">({{ total() | digits }})</span>
           }
         </h2>
-        <button appButton size="sm" type="button" (click)="add()">
-          <app-icon name="plus" [size]="18" />{{
-            'admin.content.add'
-              | transloco: { item: ('admin.content.' + config().id + '.item' | transloco) }
-          }}
-        </button>
+        @if (canManage()) {
+          <button appButton size="sm" type="button" (click)="add()">
+            <app-icon name="plus" [size]="18" />{{
+              'admin.content.add'
+                | transloco: { item: ('admin.content.' + config().id + '.item' | transloco) }
+            }}
+          </button>
+        }
       </div>
       @if (config().searchable) {
         <label class="relative block sm:max-w-80">
@@ -184,7 +187,7 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
                   >
                     {{ 'admin.content.options.status.' + row['status'] | transloco }}
                   </span>
-                  @if (row['status'] !== 'published') {
+                  @if (canManage() && row['status'] !== 'published') {
                     <button
                       appButton
                       variant="soft"
@@ -196,7 +199,7 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
                       {{ 'admin.content.testimonials.publish' | transloco }}
                     </button>
                   }
-                  @if (row['status'] !== 'hidden') {
+                  @if (canManage() && row['status'] !== 'hidden') {
                     <button
                       appButton
                       variant="line"
@@ -208,6 +211,15 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
                       {{ 'admin.content.testimonials.hide' | transloco }}
                     </button>
                   }
+                } @else if (config().publish && !canManage()) {
+                  <span
+                    class="pill"
+                    [class.pill-ok]="isLive(row)"
+                    [class.pill-plain]="!isLive(row)"
+                    >{{
+                      (isLive(row) ? 'admin.content.published' : 'admin.content.hidden') | transloco
+                    }}</span
+                  >
                 } @else if (config().publish) {
                   <button
                     type="button"
@@ -258,7 +270,7 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
                     <span class="pill pill-ok" data-testid="row-flag">{{
                       flag.onLabel | transloco
                     }}</span>
-                  } @else {
+                  } @else if (canManage()) {
                     <button
                       appButton
                       variant="soft"
@@ -281,10 +293,12 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
                     {{ link.label | transloco }}<span class="sr-only">: {{ title(row) }}</span>
                   </a>
                 }
-                <button appButton variant="link" size="sm" type="button" (click)="edit(row)">
-                  {{ 'admin.content.editShort' | transloco
-                  }}<span class="sr-only">: {{ title(row) }}</span>
-                </button>
+                @if (canManage()) {
+                  <button appButton variant="link" size="sm" type="button" (click)="edit(row)">
+                    {{ 'admin.content.editShort' | transloco
+                    }}<span class="sr-only">: {{ title(row) }}</span>
+                  </button>
+                }
                 @if (canDelete()) {
                   <button
                     type="button"
@@ -313,7 +327,7 @@ export function isLive(config: CrudConfig, row: ContentRow): boolean {
         <p class="t-small m-0 text-text-muted">{{ note | transloco }}</p>
       }
     }
-    @if (child()) {
+    @if (child() && canManage()) {
       <button appButton variant="soft" size="sm" type="button" class="self-start" (click)="add()">
         <app-icon name="plus" [size]="16" />{{
           'admin.content.add'
@@ -348,11 +362,15 @@ export class CrudList {
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly contextKey = computed(() => JSON.stringify(this.context()));
 
-  protected readonly canReorder = computed(
-    () => !!this.config().sortable && !this.q() && (this.total() ?? 0) <= PAGE,
+  /** v1.1.0: New, Edit, publish, reorder and flag need `<module>.manage`; Delete `<module>.delete`. */
+  protected readonly canManage = computed(() =>
+    this.store.can(`${this.config().module}.manage` as PermissionKey),
   );
   protected readonly canDelete = computed(() =>
-    this.store.can(this.config().deleteArea ?? this.config().area),
+    this.store.can(`${this.config().module}.delete` as PermissionKey),
+  );
+  protected readonly canReorder = computed(
+    () => this.canManage() && !!this.config().sortable && !this.q() && (this.total() ?? 0) <= PAGE,
   );
   protected readonly reorderNote = computed(() =>
     this.config().sortable && this.rows().length > 1 && !this.child()

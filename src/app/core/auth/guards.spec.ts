@@ -4,7 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { LocaleService } from '../i18n/locale.service';
-import { roleGuard, staffGuard } from './guards';
+import { permissionGuard, staffGuard } from './guards';
 import { StaffSessionStore } from './staff-session.store';
 
 @Component({ template: 'ok' })
@@ -27,8 +27,8 @@ describe('guards', () => {
           { path: 'ar/admin', canActivate: [staffGuard], component: Page },
           {
             path: 'ar/admin/news',
-            canActivate: [staffGuard, roleGuard],
-            data: { area: 'content' },
+            canActivate: [staffGuard, permissionGuard],
+            data: { permission: 'news.view' },
             component: Page,
           },
           { path: 'ar/admin/login', component: Page },
@@ -46,11 +46,12 @@ describe('guards', () => {
     expect(TestBed.inject(Router).url).toBe('/ar/admin/login?returnUrl=%2Far%2Fadmin');
   });
 
-  it('roleGuard sends users without the area to the no-access page', async () => {
+  it('permissionGuard sends users without the permission to the no-access page', async () => {
     staff.ensureLoaded.mockResolvedValue(true);
     staff.can.mockReturnValue(false);
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/ar/admin/news');
+    expect(staff.can).toHaveBeenCalledWith('news.view');
     expect(TestBed.inject(Router).url).toBe('/ar/admin/forbidden');
     staff.can.mockReturnValue(true);
     await harness.navigateByUrl('/ar/admin/news');

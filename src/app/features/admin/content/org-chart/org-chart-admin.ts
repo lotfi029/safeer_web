@@ -17,6 +17,7 @@ import { ORG_POSITIONS } from '../crud/collections';
 import { pick } from '../crud/crud-config';
 import { CrudForm, type CrudFormData } from '../crud/crud-form';
 import { flattenTree, ORG_MAX_DEPTH, previewForest } from './org-tree';
+import { StaffSessionStore } from '../../../../core/auth/staff-session.store';
 
 interface Usage {
   entity: string;
@@ -48,9 +49,11 @@ interface Usage {
             {{ 'admin.content.orgChart.tree' | transloco }}
             <span class="t-small font-normal text-text-muted">({{ rows().length | digits }})</span>
           </h2>
-          <button appButton size="sm" type="button" [disabled]="busy()" (click)="add(null)">
-            <app-icon name="plus" [size]="18" />{{ 'admin.content.orgChart.addRoot' | transloco }}
-          </button>
+          @if (canManage()) {
+            <button appButton size="sm" type="button" [disabled]="busy()" (click)="add(null)">
+              <app-icon name="plus" [size]="18" />{{ 'admin.content.orgChart.addRoot' | transloco }}
+            </button>
+          }
         </div>
 
         @if (usages(); as u) {
@@ -107,66 +110,74 @@ interface Usage {
                   </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-1">
-                  <button
-                    appButton
-                    variant="soft"
-                    size="sm"
-                    type="button"
-                    [disabled]="busy() || item.depth + 1 >= maxDepth"
-                    [attr.title]="
-                      item.depth + 1 >= maxDepth
-                        ? ('admin.content.orgChart.depthLimit' | transloco)
-                        : null
-                    "
-                    [attr.aria-label]="
-                      'admin.content.orgChart.addChildTo' | transloco: { title: name(item.row) }
-                    "
-                    (click)="add(item.row)"
-                  >
-                    <app-icon name="plus" [size]="16" />{{
-                      'admin.content.orgChart.addChild' | transloco
-                    }}
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    [disabled]="busy() || !canMove(item.row, -1)"
-                    [attr.aria-label]="('admin.content.moveUp' | transloco) + ': ' + name(item.row)"
-                    (click)="move(item.row, -1)"
-                  >
-                    <app-icon name="arrow-up" [size]="18" />
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    [disabled]="busy() || !canMove(item.row, 1)"
-                    [attr.aria-label]="
-                      ('admin.content.moveDown' | transloco) + ': ' + name(item.row)
-                    "
-                    (click)="move(item.row, 1)"
-                  >
-                    <app-icon name="arrow-down" [size]="18" />
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    [disabled]="busy()"
-                    [attr.aria-label]="
-                      ('admin.content.editShort' | transloco) + ': ' + name(item.row)
-                    "
-                    (click)="edit(item.row)"
-                  >
-                    <app-icon name="pencil" [size]="18" />
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    [disabled]="busy()"
-                    [attr.aria-label]="('admin.common.delete' | transloco) + ': ' + name(item.row)"
-                    (click)="remove(item.row)"
-                  >
-                    <app-icon name="trash-2" [size]="18" />
-                  </button>
+                  @if (canManage()) {
+                    <button
+                      appButton
+                      variant="soft"
+                      size="sm"
+                      type="button"
+                      [disabled]="busy() || item.depth + 1 >= maxDepth"
+                      [attr.title]="
+                        item.depth + 1 >= maxDepth
+                          ? ('admin.content.orgChart.depthLimit' | transloco)
+                          : null
+                      "
+                      [attr.aria-label]="
+                        'admin.content.orgChart.addChildTo' | transloco: { title: name(item.row) }
+                      "
+                      (click)="add(item.row)"
+                    >
+                      <app-icon name="plus" [size]="16" />{{
+                        'admin.content.orgChart.addChild' | transloco
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="busy() || !canMove(item.row, -1)"
+                      [attr.aria-label]="
+                        ('admin.content.moveUp' | transloco) + ': ' + name(item.row)
+                      "
+                      (click)="move(item.row, -1)"
+                    >
+                      <app-icon name="arrow-up" [size]="18" />
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="busy() || !canMove(item.row, 1)"
+                      [attr.aria-label]="
+                        ('admin.content.moveDown' | transloco) + ': ' + name(item.row)
+                      "
+                      (click)="move(item.row, 1)"
+                    >
+                      <app-icon name="arrow-down" [size]="18" />
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="busy()"
+                      [attr.aria-label]="
+                        ('admin.content.editShort' | transloco) + ': ' + name(item.row)
+                      "
+                      (click)="edit(item.row)"
+                    >
+                      <app-icon name="pencil" [size]="18" />
+                    </button>
+                  }
+                  @if (canDelete()) {
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      [disabled]="busy()"
+                      [attr.aria-label]="
+                        ('admin.common.delete' | transloco) + ': ' + name(item.row)
+                      "
+                      (click)="remove(item.row)"
+                    >
+                      <app-icon name="trash-2" [size]="18" />
+                    </button>
+                  }
                 </div>
               </li>
             }
@@ -194,6 +205,9 @@ interface Usage {
   `,
 })
 export class OrgChartAdmin {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canManage = computed(() => this.store.can('orgChart.manage'));
+  protected readonly canDelete = computed(() => this.store.can('orgChart.delete'));
   private readonly api = inject(ContentApi);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);

@@ -155,7 +155,7 @@ describe('datetime fields and redirects', () => {
     expect(r.errorField?.('REDIRECT_CHAIN', 'A redirect from /a already exists')).toBe('fromPath');
     expect(r.errorField?.('REDIRECT_CHAIN', 'Redirects must not chain')).toBe('toPath');
     expect(r.errorField?.('CONFLICT', '')).toBeNull();
-    expect(r.deleteArea).toBe('redirects.delete');
+    expect(r.module).toBe('redirects');
   });
 });
 

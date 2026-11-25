@@ -2,7 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { API_PREFIX } from '../../config/api-base-url';
-import type { Id, Paged, StaffRole, StaffUser } from '../models';
+import type {
+  Id,
+  Paged,
+  PermissionCatalog,
+  StaffRoleDetail,
+  StaffRoleRef,
+  StaffUser,
+} from '../models';
 import { attachmentName, queryParams } from './admin-api';
 import type { CsvExport } from './admin-models';
 
@@ -149,6 +156,15 @@ export interface CacheStats {
   uptimeSeconds: number;
 }
 
+/** `POST/PATCH /admin/roles` body (v1.1.0). `permissions` are closed under delete ⇒ manage ⇒ view by the API. */
+export interface RoleInput {
+  nameAr: string;
+  nameEn: string | null;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  permissions: string[];
+}
+
 /** The message channel (SMS was removed with the student portal). */
 export type Channel = 'mail';
 
@@ -161,7 +177,11 @@ export class SystemApi {
   users(): Observable<StaffUser[]> {
     return this.http.get<StaffUser[]>(`${A}/users`);
   }
-  invite(body: { email: string; name: string; role: StaffRole }): Observable<StaffUser> {
+  /** v1.1.0: the roles the caller may assign (invite and edit pickers; `users.view`). */
+  assignableRoles(): Observable<StaffRoleRef[]> {
+    return this.http.get<StaffRoleRef[]>(`${A}/users/assignable-roles`);
+  }
+  invite(body: { email: string; name: string; roleId: Id }): Observable<StaffUser> {
     return this.http.post<StaffUser>(`${A}/auth/invite`, body);
   }
   updateUser(
@@ -169,7 +189,7 @@ export class SystemApi {
     body: Partial<{
       name: string;
       email: string;
-      role: StaffRole;
+      roleId: Id;
       status: 'active' | 'disabled';
       unlock: true;
     }>,
@@ -178,6 +198,23 @@ export class SystemApi {
   }
   deleteUser(id: Id): Observable<{ deleted: true }> {
     return this.http.delete<{ deleted: true }>(`${A}/users/${enc(id)}`);
+  }
+
+  // ---------- roles (v1.1.0) ----------
+  permissionCatalog(): Observable<PermissionCatalog> {
+    return this.http.get<PermissionCatalog>(`${A}/permissions`);
+  }
+  roles(): Observable<StaffRoleDetail[]> {
+    return this.http.get<StaffRoleDetail[]>(`${A}/roles`);
+  }
+  createRole(body: RoleInput & { key?: string }): Observable<StaffRoleDetail> {
+    return this.http.post<StaffRoleDetail>(`${A}/roles`, body);
+  }
+  updateRole(id: Id, body: Partial<RoleInput>): Observable<StaffRoleDetail> {
+    return this.http.patch<StaffRoleDetail>(`${A}/roles/${enc(id)}`, body);
+  }
+  deleteRole(id: Id): Observable<{ deleted: true }> {
+    return this.http.delete<{ deleted: true }>(`${A}/roles/${enc(id)}`);
   }
 
   // ---------- settings ----------
