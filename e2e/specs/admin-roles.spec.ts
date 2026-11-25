@@ -102,6 +102,9 @@ test.describe('roles and permissions', () => {
     await expect(docs.locator('[data-permission="documents.manage"]')).toBeChecked();
     const partners = dialog(page).locator('[data-module="partners"]');
     await partners.locator('[data-permission="partners.manage"]').check();
+    // Wait for the implied tick to render first: uncheck() on a box not yet re-rendered as checked
+    // is a no-op (the CI race this line fixes).
+    await expect(partners.locator('[data-permission="partners.view"]')).toBeChecked();
     await partners.locator('[data-permission="partners.view"]').uncheck();
     await expect(partners.locator('[data-permission="partners.manage"]')).not.toBeChecked();
     // Newsletter has no "manage" column entry.
