@@ -2,7 +2,7 @@
 /**
  * Stage 2: records the response *shapes* (keys and value types, never values) of the admin endpoints
  * from a running safeer_api into mocks/fixtures/admin-shapes.json. mocks/admin-shapes.test.mjs then
- * checks the mock's admin responses against them, so the mock can't drift from rc1. No admin data
+ * checks the mock's admin responses against them, so the mock can't drift from the pinned API. No admin data
  * is hand-written: the mock builds its responses from its own state; this file only pins the shape.
  *
  * Usage: node scripts/record-admin-shapes.mjs [--api http://127.0.0.1:3900] [--only overview,messages]
@@ -19,7 +19,10 @@ import { pathToFileURL } from 'node:url';
  */
 export const ADMIN_SHAPES = {
   me: '/admin/me',
+  // v1.1.0: roles and permissions.
   roles: '/admin/roles',
+  permissions: '/admin/permissions',
+  assignableRoles: '/admin/users/assignable-roles',
   overview: '/admin/overview',
   messages: '/admin/messages?limit=5',
   message: '/admin/messages/{message}',

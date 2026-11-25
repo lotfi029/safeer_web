@@ -326,7 +326,9 @@ export class UserForm {
     @if (canViewRoles()) {
       <p class="mt-8">
         <a
-          class="link inline-flex min-h-11 items-center gap-2"
+          appButton
+          variant="line"
+          size="sm"
           data-testid="roles-link"
           [routerLink]="locale.link('/admin/system/roles')"
         >

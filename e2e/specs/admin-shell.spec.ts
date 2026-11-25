@@ -23,8 +23,9 @@ const CONTENT = [
 const CONTENT_AND_INBOX = [...CONTENT.slice(0, 5), 'Testimonials', ...CONTENT.slice(5)];
 
 /**
- * The menu and the overview blocks each role gets (GET /admin/roles + GET /admin/overview, A5). The
- * application blocks (stat cards, chart, latest list) were removed with the scholarship feature.
+ * The menu and the overview blocks each seeded role gets (GET /admin/me permissions + GET
+ * /admin/overview, A5). The application blocks (stat cards, chart, latest list) were removed with the
+ * scholarship feature.
  */
 const EXPECT: Record<StaffRole, { menu: string[]; stats: string[]; audit: boolean }> = {
   admin: {
@@ -35,6 +36,7 @@ const EXPECT: Record<StaffRole, { menu: string[]; stats: string[]; audit: boolea
       ...CONTENT_AND_INBOX,
       'Redirects',
       'Users',
+      'Roles and permissions',
       'Settings',
       'Email',
       'Activity log',

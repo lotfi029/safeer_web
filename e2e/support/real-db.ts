@@ -10,7 +10,11 @@
  * build the API verifies with. Rows are written the way the API writes them (auth.service.ts,
  * session-token.util.ts), with every datetime from MySQL's UTC_TIMESTAMP(3): the API runs in UTC.
  *
- * Seeded users all have an `@e2e.invalid` email, and cleanup only ever matches on that domain.
+ * Seeded users all have an `@e2e.invalid` email, seeded roles an `e2e-` key, and cleanup only ever
+ * matches on those.
+ *
+ * safeer_api v1.1.0 (migration 024): a user's role is `users.role_id` → `roles`; the old `users.role`
+ * enum is kept, in step, for the rollback window (the system key, or NULL for a custom role).
  */
 import { createHash, randomBytes } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -18,7 +22,10 @@ import { join, resolve } from 'node:path';
 import type { TestType } from '@playwright/test';
 import { apiEnv } from '../../scripts/api-env.mjs';
 
+/** The seeded system roles; `seedRole()` makes custom ones (any `e2e-…` key). */
 export type StaffRole = 'admin' | 'editor' | 'support';
+const SYSTEM_ROLES: readonly string[] = ['admin', 'editor', 'support'];
+export const E2E_ROLE_PREFIX = 'e2e-';
 export type StaffStatus = 'active' | 'disabled' | 'invited';
 export type TokenPurpose = 'invite' | 'reset';
 
@@ -27,7 +34,7 @@ export interface SeededStaff {
   name: string;
   email: string;
   password: string;
-  role: StaffRole;
+  role: string;
 }
 
 /** Mirrors safeer_api src/auth/argon2-options.ts (drift-tested against docs/api/src/auth/argon2-options.ts). */
@@ -51,7 +58,7 @@ export function newRawToken(): string {
   return randomBytes(32).toString('base64url');
 }
 
-export function seededIdentity(role: StaffRole, rand = randomBytes(4).toString('hex')) {
+export function seededIdentity(role: string, rand = randomBytes(4).toString('hex')) {
   return { name: `E2E ${role} ${rand}`, email: `e2e-${role}-${rand}@${E2E_EMAIL_DOMAIN}` };
 }
 
@@ -62,6 +69,7 @@ interface Conn {
 
 let conn: Promise<Conn> | undefined;
 const created = new Set<number>();
+const createdRoles = new Set<number>();
 
 function apiRequire() {
   const apiDir = resolve(process.env['SAFEER_API_DIR'] ?? '../safeer_api');
@@ -95,20 +103,51 @@ async function argonHash(password: string): Promise<string> {
 }
 
 /**
- * A temporary staff user with a known password. `locked` sets a brute-force lock one hour out
- * (locked_until/lock_count, migration 008); `status` covers disabled and invited accounts.
+ * A temporary custom role (key `e2e-…`) holding exactly `permissions` (write them closed:
+ * delete ⇒ manage ⇒ view, as the API stores them). Returns its key, for `seedStaff()`.
+ */
+export async function seedRole(permissions: string[], label = 'role'): Promise<string> {
+  const c = await db();
+  const key = `${E2E_ROLE_PREFIX}${label}-${randomBytes(3).toString('hex')}`;
+  const [res] = await c.execute(
+    'INSERT INTO roles (role_key, name_ar, name_en, is_system) VALUES (?, ?, ?, 0)',
+    [key, `دور ${label}`, `E2E ${label}`],
+  );
+  const id = Number((res as { insertId: number }).insertId);
+  createdRoles.add(id);
+  for (const permission of permissions) {
+    await c.execute('INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)', [
+      id,
+      permission,
+    ]);
+  }
+  return key;
+}
+
+/**
+ * A temporary staff user with a known password, holding the role `role` (a system key or one from
+ * `seedRole()`). `locked` sets a brute-force lock one hour out (locked_until/lock_count, migration
+ * 008); `status` covers disabled and invited accounts.
  */
 export async function seedStaff(
-  role: StaffRole,
+  role: StaffRole | (string & {}),
   { status = 'active', locked = false }: { status?: StaffStatus; locked?: boolean } = {},
 ): Promise<SeededStaff> {
   const c = await db();
   const { name, email } = seededIdentity(role);
   const password = `e2e-${randomBytes(12).toString('base64url')}`;
   const [res] = await c.execute(
-    `INSERT INTO users (name, email, password_hash, role, status, failed_logins, locked_until, lock_count)
-     VALUES (?, ?, ?, ?, ?, 0, ${locked ? 'UTC_TIMESTAMP(3) + INTERVAL 1 HOUR' : 'NULL'}, ?)`,
-    [name, email, await argonHash(password), role, status, locked ? 1 : 0],
+    `INSERT INTO users (name, email, password_hash, role, role_id, status, failed_logins, locked_until, lock_count)
+     VALUES (?, ?, ?, ?, (SELECT id FROM roles WHERE role_key = ?), ?, 0, ${locked ? 'UTC_TIMESTAMP(3) + INTERVAL 1 HOUR' : 'NULL'}, ?)`,
+    [
+      name,
+      email,
+      await argonHash(password),
+      SYSTEM_ROLES.includes(role) ? role : null,
+      role,
+      status,
+      locked ? 1 : 0,
+    ],
   );
   const id = Number((res as { insertId: number }).insertId);
   created.add(id);
@@ -155,22 +194,39 @@ export async function insertAuthToken(
  * sessions cascade; notes, events and replies they wrote keep their rows with the author set to NULL.
  */
 export async function cleanupRealDb(): Promise<void> {
-  if (!realDbEnabled || !conn) return;
-  const c = await conn;
+  if (!realDbEnabled) return;
+  // Global teardown runs in its own process, where nothing has opened the connection yet: open it
+  // (it used to return early here, so the sweep never ran).
+  const c = await db();
   await c.execute('DELETE FROM users WHERE email LIKE ?', [`%@${E2E_EMAIL_DOMAIN}`]);
+  // Roles made in the dashboard by a spec (`e2e-…` keys) or by seedRole(); users first (FK).
+  await c.execute('DELETE FROM roles WHERE role_key LIKE ? AND is_system = 0', [
+    `${E2E_ROLE_PREFIX}%`,
+  ]);
   created.clear();
+  createdRoles.clear();
 }
 
 /** Deletes only the users this worker seeded (safe while other workers are still running). */
 export async function cleanupSeeded(): Promise<void> {
-  if (!realDbEnabled || !conn || !created.size) return;
+  if (!realDbEnabled || !conn || (!created.size && !createdRoles.size)) return;
   const c = await conn;
   const ids = [...created];
-  await c.execute(
-    `DELETE FROM users WHERE email LIKE ? AND id IN (${ids.map(() => '?').join(',')})`,
-    [`%@${E2E_EMAIL_DOMAIN}`, ...ids],
-  );
+  if (ids.length) {
+    await c.execute(
+      `DELETE FROM users WHERE email LIKE ? AND id IN (${ids.map(() => '?').join(',')})`,
+      [`%@${E2E_EMAIL_DOMAIN}`, ...ids],
+    );
+  }
+  const roleIds = [...createdRoles];
+  if (roleIds.length) {
+    await c.execute(
+      `DELETE FROM roles WHERE role_key LIKE ? AND is_system = 0 AND id IN (${roleIds.map(() => '?').join(',')})`,
+      [`${E2E_ROLE_PREFIX}%`, ...roleIds],
+    );
+  }
   created.clear();
+  createdRoles.clear();
 }
 
 export async function closeRealDb(): Promise<void> {

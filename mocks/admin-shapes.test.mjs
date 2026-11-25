@@ -5,10 +5,10 @@ import { createMockBackend } from './backend.mjs';
 import { fixtures } from './fixtures.mjs';
 
 /**
- * The mock's admin responses have the shapes recorded from safeer_api rc1
+ * The mock's admin responses have the shapes recorded from safeer_api (v1.1.0)
  * (scripts/record-admin-shapes.mjs → fixtures/admin-shapes.json).
  */
-describe('mock admin responses match the recorded rc1 shapes', () => {
+describe('mock admin responses match the recorded API shapes', () => {
   const backend = createMockBackend(fixtures);
   const login = backend.handle({
     method: 'POST',

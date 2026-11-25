@@ -23,7 +23,7 @@ import { apiEnv, FRONTEND_ORIGIN } from './api-env.mjs';
 export { apiEnv, FRONTEND_ORIGIN };
 
 async function setCollation(apiDir, env) {
-  // mysql:8.0 creates MYSQL_DATABASE with the server default; match the API's utf8mb4_unicode_ci.
+  // The mysql service image creates MYSQL_DATABASE with the server default; match the API's utf8mb4_unicode_ci.
   const mysql = createRequire(join(apiDir, 'package.json'))('mysql2/promise');
   const conn = await mysql.createConnection({
     host: env.DB_HOST,

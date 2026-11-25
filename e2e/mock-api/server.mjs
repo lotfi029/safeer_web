@@ -8,7 +8,9 @@
  *   POST /__site         → merges a JSON body into the site settings (map specs); send nulls to restore
  *   POST /__auth-token   → {purpose: accept|reset, userId?} → a fresh single-use token (W16 specs)
  *   POST /__staff        → {role, status?, locked?, fresh?} → a new staff user with a known password
- *                          (the mock twin of e2e/support/real-db.ts seedStaff)
+ *                          (the mock twin of e2e/support/real-db.ts seedStaff); `role` is a role key
+ *   POST /__role         → {permissions, label?} → a custom role holding exactly those keys (the mock
+ *                          twin of real-db.ts seedRole) → {key}
  *   POST /__staff/:id/expire-lock → ends that user's lock now
  */
 import { createServer } from 'node:http';
@@ -105,6 +107,25 @@ const server = createServer(async (req, res) => {
       password: user.password,
       role,
     });
+  }
+  if (url.pathname === '/__role' && req.method === 'POST') {
+    const { permissions = [], label = 'role' } = (await readBody(req, url)) ?? {};
+    const rand = Math.random().toString(36).slice(2, 8);
+    const key = `e2e-${label}-${rand}`;
+    const at = new Date().toISOString();
+    backend.db.roles.push({
+      id: String(5000 + backend.db.roles.length),
+      key,
+      nameAr: `دور ${label}`,
+      nameEn: `E2E ${label}`,
+      descriptionAr: null,
+      descriptionEn: null,
+      isSystem: false,
+      permissions,
+      createdAt: at,
+      updatedAt: at,
+    });
+    return send(res, 200, { key });
   }
   const expire = /^\/__staff\/([^/]+)\/expire-lock$/.exec(url.pathname);
   if (expire && req.method === 'POST') {

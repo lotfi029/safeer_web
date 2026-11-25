@@ -1,13 +1,16 @@
 /**
  * Admin routes of the mock API (Stage 2). Shapes follow safeer_api (docs/api/src: the overview,
  * messages.service.ts, admin-newsletter.controller.ts) and
- * are checked against responses recorded from the real API (mocks/admin-shapes.test.mjs). Role
- * checks use the same matrix as `GET /admin/roles`; writes need the staff CSRF token.
+ * are checked against responses recorded from the real API (mocks/admin-shapes.test.mjs). Permission
+ * checks follow safeer_api v1.1.0 (mocks/permissions.mjs: the module from the path, the action from
+ * the method), read live from the user's role; writes need the staff CSRF token.
  *
  * Every route here is live in the real API; the e2e suite runs against both.
  */
 
 import { contentRoutes } from './admin-content.mjs';
+import { rolePermissions } from './backend.mjs';
+import { can, permissionsFor } from './permissions.mjs';
 import { systemRoutes } from './admin-system.mjs';
 
 /**
@@ -27,14 +30,26 @@ export function adminRoutes(ctx) {
   db.audit ??= [];
   db.seq ??= 184;
 
-  /** Signed-in staff allowed in `area` (and, for writes, holding the CSRF token), or a problem. */
-  function guard(req, area, { write = false } = {}) {
+  /** The signed-in user's live row: role key and permission set (a role edit applies at once). */
+  function liveStaff(s) {
+    const row = (db.fixtures.staff ?? []).find((u) => u.id === s.user.id);
+    const roleKey = row?.role ?? s.user.role?.key;
+    return { ...s.user, roleKey, permissions: new Set(rolePermissions(roleKey, db.roles)) };
+  }
+
+  /**
+   * Signed-in staff holding the permissions this request needs (`permissionsFor`: path + method; the
+   * second argument names the area for readability only) and, for writes, the CSRF token; or a problem.
+   */
+  function guard(req, _area, { write = false } = {}) {
     const s = staffFrom(req);
     if (!s) return { error: problem(401, 'UNAUTHENTICATED') };
     if (write && !checkCsrf(req, s.csrfToken)) return { error: problem(403, 'FORBIDDEN') };
-    if (area && !(db.fixtures.roles.matrix[area] ?? []).includes(s.user.role))
-      return { error: problem(403, 'FORBIDDEN') };
-    return { staff: s.user };
+    const staff = liveStaff(s);
+    const path = new URL(req.url, 'http://mock').pathname;
+    if (!permissionsFor(req.method, path).every((key) => can(staff.permissions, key)))
+      return { error: problem(403, 'FORBIDDEN', { title: 'Insufficient permission' }) };
+    return { staff };
   }
 
   /** An audit row as the API stores it (the overview adds `actorName`; the audit list doesn't). */
@@ -62,10 +77,10 @@ export function adminRoutes(ctx) {
 
   /** `GET /admin/overview` without the application blocks (removed with the scholarship feature). */
   function overview(staff) {
-    const can = (area) => (db.fixtures.roles.matrix[area] ?? []).includes(staff.role);
+    const holds = (key) => can(staff.permissions, key);
     const statCards = {};
     const badges = {};
-    if (can('inbox')) {
+    if (holds('messages.view')) {
       statCards.unreadMessages = db.messages.filter((m) => m.status === 'unread').length;
       badges.unreadMessages = statCards.unreadMessages;
     }
@@ -77,7 +92,7 @@ export function adminRoutes(ctx) {
         pagesNeedingReviewCount: 0,
       },
       badges,
-      recentAuditLog: can('audit')
+      recentAuditLog: holds('audit.view')
         ? db.audit.slice(0, 10).map((row) => ({
             id: row.id,
             action: row.action,

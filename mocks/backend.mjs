@@ -14,15 +14,31 @@ import { collapseBilingual, resolveLang } from './collapse.mjs';
 export const MOCK_STAFF_PASSWORD = 'mock-password';
 const FIXTURE_STAFF = new Set(['admin', 'editor', 'support'].map((r) => `${r}@mock.invalid`));
 
+/**
+ * The role object user responses carry (v1.1.0: `{id, key, nameAr, nameEn}`). Mock staff rows keep
+ * their role's key in `role`; `roles` is the mock's role table (`db.roles`).
+ */
+export function roleRef(key, roles) {
+  const r = roles.find((x) => x.key === key);
+  return r
+    ? { id: r.id, key: r.key, nameAr: r.nameAr, nameEn: r.nameEn }
+    : { id: '0', key, nameAr: key, nameEn: key };
+}
+
+/** The permission keys of a role (by key): `["*"]` for admin. */
+export function rolePermissions(key, roles) {
+  return roles.find((x) => x.key === key)?.permissions ?? [];
+}
+
 /** A staff row as the API returns it (PublicUser): never the password, lock state as isLocked/lockedUntil. */
-export function publicStaff(user) {
+export function publicStaff(user, roles) {
   const { password: _password, ...rest } = user;
   const lockedUntil = user.lockedUntil ?? null;
   return {
     id: rest.id,
     name: rest.name,
     email: rest.email,
-    role: rest.role,
+    role: roleRef(rest.role, roles),
     status: user.status ?? 'active',
     isLocked: !!lockedUntil && Date.parse(lockedUntil) > Date.now(),
     lockedUntil,
@@ -114,6 +130,9 @@ export function createMockBackend(fixtures) {
     audit: [],
     seq: 184,
   };
+  // v1.1.0: the role table (the seeded system roles, recorded from the real API) and the catalog.
+  db.roles = clone(fixtures.roles.roles);
+  db.permissionCatalog = clone(fixtures.roles.catalog);
 
   const collapse = (value, lang) => collapseBilingual(clone(value), lang);
 
@@ -464,7 +483,7 @@ export function createMockBackend(fixtures) {
         const at = nowIso();
         db.staffSessions.set(sid, {
           id: String(++db.seq),
-          user: publicStaff(user),
+          user: publicStaff(user, db.roles),
           csrfToken,
           userAgent: req.headers['user-agent'] ?? null,
           createdAt: at,
@@ -472,7 +491,7 @@ export function createMockBackend(fixtures) {
         });
         return json(
           200,
-          { user: publicStaff(user), csrfToken },
+          { user: publicStaff(user, db.roles), csrfToken },
           { 'set-cookie': `sf_sid=${sid}; Path=/; SameSite=Strict` },
         );
       },
@@ -482,9 +501,15 @@ export function createMockBackend(fixtures) {
       /^\/api\/v1\/admin\/me$/,
       ({ req }) => {
         const s = staffFrom(req);
-        return s
-          ? json(200, { ...s.user, csrfToken: s.csrfToken })
-          : problem(401, 'UNAUTHENTICATED');
+        if (!s) return problem(401, 'UNAUTHENTICATED');
+        // Read live (a role edit applies on the next request, like the API).
+        const user = (db.fixtures.staff ?? []).find((u) => u.id === s.user.id) ?? s.user;
+        const key = typeof user.role === 'string' ? user.role : user.role.key;
+        return json(200, {
+          ...publicStaff({ ...user, role: key }, db.roles),
+          permissions: rolePermissions(key, db.roles),
+          csrfToken: s.csrfToken,
+        });
       },
     ],
     [
@@ -538,15 +563,6 @@ export function createMockBackend(fixtures) {
         return json(200, { ok: true });
       },
     ],
-    [
-      'GET',
-      /^\/api\/v1\/admin\/roles$/,
-      ({ req }) =>
-        staffFrom(req)
-          ? json(200, { roles: db.fixtures.roles.roles, matrix: db.fixtures.roles.matrix })
-          : problem(401, 'UNAUTHENTICATED'),
-    ],
-
     // ---------- admin (mocks/admin.mjs) ----------
     ...adminRoutes({ db, json, problem, clone, nowIso, token, staffFrom, checkCsrf }),
   ];

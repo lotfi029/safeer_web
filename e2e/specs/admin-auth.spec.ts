@@ -30,7 +30,8 @@ test.describe('staff auth', () => {
     await page.waitForLoadState('networkidle');
     await submitLogin(page, admin.email, admin.password);
     await expect(page).toHaveURL(/\/en\/admin\/messages$/);
-    await expect(page.getByTestId('admin-user')).toContainText('Administrator');
+    // v1.1.0: the role's own name (roles.name_en), not a fixed label.
+    await expect(page.getByTestId('admin-user')).toContainText('Admin');
     await page.getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/en\/admin\/login$/);
     await page.goto('/en/admin');
@@ -114,7 +115,7 @@ test.describe('staff auth', () => {
     }
   });
 
-  test('roleGuard: an editor opening the inbox gets the no-access page (GET /admin/roles)', async ({
+  test('permissionGuard: an editor opening the inbox gets the no-access page (messages.view)', async ({
     page,
   }) => {
     const editor = await staffAccount('editor', { fresh: true });
