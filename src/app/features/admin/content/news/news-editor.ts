@@ -30,6 +30,7 @@ import { confirmAction } from '../../shared/confirm-dialog';
 import { COLLECTIONS } from '../crud/collections';
 import { emptyModel, modelFromRow, pick, toBody, validate } from '../crud/crud-config';
 import { CrudFields, toFieldErrors } from '../crud/crud-fields';
+import { StaffSessionStore } from '../../../../core/auth/staff-session.store';
 
 /** safeer_api `RESERVED_POST_SLUGS` (common/validation/slug.ts: 12 words at rc1). */
 export const RESERVED_POST_SLUGS = new Set([
@@ -167,32 +168,36 @@ export function slugProblem(slug: string): 'required' | 'slug' | 'reserved' | nu
         <div
           class="sticky bottom-0 -mx-5 -mb-5 flex flex-wrap items-center gap-3 rounded-b-card border-t border-border bg-card px-5 py-4 md:static md:m-0 md:border-0 md:p-0"
         >
-          <button appButton type="submit" [busy]="busy()" [disabled]="busy()">
-            {{ 'common.save' | transloco }}
-          </button>
-          @if (published()) {
-            <button
-              appButton
-              variant="line"
-              type="button"
-              [disabled]="busy()"
-              (click)="save($event, false)"
-            >
-              {{ 'admin.content.news.unpublish' | transloco }}
-            </button>
-          } @else {
-            <button
-              appButton
-              variant="soft"
-              type="button"
-              [disabled]="busy()"
-              (click)="save($event, true)"
-            >
-              {{ 'admin.content.news.publish' | transloco }}
+          @if (canManage()) {
+            <button appButton type="submit" [busy]="busy()" [disabled]="busy()">
+              {{ 'common.save' | transloco }}
             </button>
           }
+          @if (canManage()) {
+            @if (published()) {
+              <button
+                appButton
+                variant="line"
+                type="button"
+                [disabled]="busy()"
+                (click)="save($event, false)"
+              >
+                {{ 'admin.content.news.unpublish' | transloco }}
+              </button>
+            } @else {
+              <button
+                appButton
+                variant="soft"
+                type="button"
+                [disabled]="busy()"
+                (click)="save($event, true)"
+              >
+                {{ 'admin.content.news.publish' | transloco }}
+              </button>
+            }
+          }
           <span class="grow"></span>
-          @if (post()) {
+          @if (post() && canDelete()) {
             <button appButton variant="danger" type="button" [disabled]="busy()" (click)="remove()">
               <app-icon name="trash-2" [size]="16" />{{ 'admin.common.delete' | transloco }}
             </button>
@@ -205,6 +210,9 @@ export function slugProblem(slug: string): 'required' | 'slug' | 'reserved' | nu
   `,
 })
 export class NewsEditor {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canManage = computed(() => this.store.can('news.manage'));
+  protected readonly canDelete = computed(() => this.store.can('news.delete'));
   /** Route param; absent on `news/new`. */
   readonly id = input<string | undefined>();
 
@@ -292,6 +300,10 @@ export class NewsEditor {
 
   /** Save; `publish` true/false also (un)publishes in the same request. */
   protected async save(event: Event, publish: boolean | null): Promise<void> {
+    if (!this.canManage()) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
     this.tried.set(true);
     this.errorKey.set(null);

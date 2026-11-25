@@ -36,6 +36,7 @@ import { ToastService } from '../../../shared/ui/toast/toast';
 import { type CrudField, modelFromRow, toBody, validate } from '../content/crud/crud-config';
 import { CrudFields, toFieldErrors } from '../content/crud/crud-fields';
 import { AdminPageHead } from '../layout/admin-page-head';
+import { StaffSessionStore } from '../../../core/auth/staff-session.store';
 
 const TABS = ['settings', 'templates', 'log'] as const;
 type Tab = (typeof TABS)[number];
@@ -348,61 +349,65 @@ export class TemplateEditor {
               @if (errorKey(); as key) {
                 <p class="note note-warn m-0" role="alert">{{ key | transloco }}</p>
               }
-              <button
-                appButton
-                type="submit"
-                class="self-start"
-                [busy]="busy()"
-                [disabled]="busy()"
-              >
-                {{ 'common.save' | transloco }}
-              </button>
-            </form>
-            <section class="card flex flex-col gap-4" aria-labelledby="test-title">
-              <h2 class="t-h4 m-0 text-heading" id="test-title">
-                {{ 'admin.system.channel.test' | transloco }}
-              </h2>
-              <app-field [label]="'admin.system.channel.testTo' | transloco">
-                <input
-                  appControl
-                  dir="ltr"
-                  type="email"
-                  [value]="testTo()"
-                  (input)="testTo.set($any($event.target).value)"
-                />
-              </app-field>
-              <button
-                appButton
-                variant="line"
-                type="button"
-                class="self-start"
-                [disabled]="busy() || !testTo().trim()"
-                (click)="test()"
-              >
-                <app-icon name="send" [size]="16" />{{
-                  'admin.system.channel.sendTest' | transloco
-                }}
-              </button>
-              @if (s.lastTestAt) {
-                <p
-                  class="note m-0"
-                  [class.note-ok]="s.lastTestOk"
-                  [class.note-warn]="!s.lastTestOk"
-                  role="status"
-                  data-testid="last-test"
+              @if (canManage()) {
+                <button
+                  appButton
+                  type="submit"
+                  class="self-start"
+                  [busy]="busy()"
+                  [disabled]="busy()"
                 >
-                  {{
-                    (s.lastTestOk
-                      ? 'admin.system.channel.lastTestOk'
-                      : 'admin.system.channel.lastTestFailed'
-                    ) | transloco: { time: (s.lastTestAt | localDate: 'datetime') }
-                  }}
-                  @if (!s.lastTestOk && s.lastTestError) {
-                    <span class="block text-sm" dir="ltr">{{ s.lastTestError }}</span>
-                  }
-                </p>
+                  {{ 'common.save' | transloco }}
+                </button>
               }
-            </section>
+            </form>
+            @if (canManage()) {
+              <section class="card flex flex-col gap-4" aria-labelledby="test-title">
+                <h2 class="t-h4 m-0 text-heading" id="test-title">
+                  {{ 'admin.system.channel.test' | transloco }}
+                </h2>
+                <app-field [label]="'admin.system.channel.testTo' | transloco">
+                  <input
+                    appControl
+                    dir="ltr"
+                    type="email"
+                    [value]="testTo()"
+                    (input)="testTo.set($any($event.target).value)"
+                  />
+                </app-field>
+                <button
+                  appButton
+                  variant="line"
+                  type="button"
+                  class="self-start"
+                  [disabled]="busy() || !testTo().trim()"
+                  (click)="test()"
+                >
+                  <app-icon name="send" [size]="16" />{{
+                    'admin.system.channel.sendTest' | transloco
+                  }}
+                </button>
+                @if (s.lastTestAt) {
+                  <p
+                    class="note m-0"
+                    [class.note-ok]="s.lastTestOk"
+                    [class.note-warn]="!s.lastTestOk"
+                    role="status"
+                    data-testid="last-test"
+                  >
+                    {{
+                      (s.lastTestOk
+                        ? 'admin.system.channel.lastTestOk'
+                        : 'admin.system.channel.lastTestFailed'
+                      ) | transloco: { time: (s.lastTestAt | localDate: 'datetime') }
+                    }}
+                    @if (!s.lastTestOk && s.lastTestError) {
+                      <span class="block text-sm" dir="ltr">{{ s.lastTestError }}</span>
+                    }
+                  </p>
+                }
+              </section>
+            }
           </div>
         } @else if (settings.error()) {
           <p class="note note-warn" role="alert">{{ 'admin.common.loadError' | transloco }}</p>
@@ -435,16 +440,18 @@ export class TemplateEditor {
                     ) | transloco
                   }}</span
                 >
-                <button
-                  appButton
-                  variant="link"
-                  size="sm"
-                  type="button"
-                  (click)="editTemplate(tpl)"
-                >
-                  {{ 'admin.content.editShort' | transloco
-                  }}<span class="sr-only">: {{ tpl.key }}</span>
-                </button>
+                @if (canManage()) {
+                  <button
+                    appButton
+                    variant="link"
+                    size="sm"
+                    type="button"
+                    (click)="editTemplate(tpl)"
+                  >
+                    {{ 'admin.content.editShort' | transloco
+                    }}<span class="sr-only">: {{ tpl.key }}</span>
+                  </button>
+                }
               </li>
             }
           </ul>
@@ -504,7 +511,7 @@ export class TemplateEditor {
                     [class.pill-plain]="row.status === 'queued' || row.status === 'skipped'"
                     >{{ 'admin.system.channel.logStatus.' + row.status | transloco }}</span
                   >
-                  @if (canRetry(row)) {
+                  @if (canManage() && canRetry(row)) {
                     <button
                       appButton
                       variant="soft"
@@ -535,6 +542,8 @@ export class TemplateEditor {
   `,
 })
 export class AdminChannel {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canManage = computed(() => this.store.can('mail.manage'));
   /** Route data. */
   readonly channel = input.required<Channel>();
   /** Query params. */

@@ -25,6 +25,31 @@ Session 1 (Phases 0–6 plus the W1–W24 fix pass) built the public site, the a
 > «المنصب في الهيكل التنظيمي» select. Contract: safeer_api `feat/org-chart` (migration 023,
 > `docs/backend/API-CHANGES.md` there, "Organisational structure").
 
+> **Custom roles and permissions (safeer_api `v1.1.0`, migration 024).** Staff roles are database rows
+> holding `<module>.<action>` permissions (`view` / `manage` / `delete`). The dashboard reads
+> `GET /admin/me` → `permissions` (`["*"]` for admin) through `StaffSessionStore.can(key)`;
+> `core/auth/permissions.ts` mirrors the API catalog (drift-tested by `permissions.node.test.ts`) and
+> replaces `role-matrix.ts` — there is no fallback matrix: if `admin/me` fails nothing is granted.
+> `permissionGuard` + route data `{ permission: '<module>.view' }` (news/new: `news.manage`); the
+> sidebar filters by the same keys. Write buttons are hidden without the key: the CRUD kit's config
+> names a `module` (New/Edit/publish/reorder/flag → `.manage`, Delete → `.delete`), and the news,
+> pages, media, org chart, messages (convert also needs `testimonials.manage`), newsletter, settings
+> (cache purge = `settings.delete`), mail and overview quick actions do the same. New **System →
+> Roles** (`/admin/system/roles`, `roles.view`): list with system badge and user count; editor with
+> names, descriptions, key (create only; `^[a-z][a-z0-9-]{2,63}$`, reserved keys) and the permission
+> grid (delete ticks manage + view; clearing view clears the row; permissions you don't hold are
+> disabled; `admin` and your own role are read-only). **Users** picks roles from
+> `GET /admin/users/assignable-roles` and sends `roleId`; role names come from the API (`nameAr`/
+> `nameEn`), not fixed labels. Mock API: `mocks/permissions.mjs` derives each route's permission from
+> its path and method like the API; roles and the catalog are recorded from v1.1.0
+> (`mocks/fixtures/roles.json`), shapes re-recorded (`admin-shapes.json`). Real-API e2e:
+> `real-db.ts` seeds `role_id` and custom roles (`seedRole`, `e2e-` keys, cleaned up);
+> `e2e/specs/admin-roles.spec.ts` covers a news-only role (menu = Overview + News, other URLs → no
+> access), view-only hiding, the grid, assignment and ROLE_IN_USE. CI: `e2e-real` defaults to
+> `v1.1.0` on mysql 8.4. **`SAFEER_API_REF` was `main`**, so the API merge would have turned the
+> nightly red — set it to the tag (`v1.1.0`) once that tag is pushed. Role edits reach other users'
+> dashboards on their next full load (the API enforces them on the next request).
+
 - **PRs:**
   - Phases #1–#8 are merged.
   - The fix pass is lotfi029/safeer_web#9 (`fix/session-1-review`). It was still an open draft when Stage 2 started.

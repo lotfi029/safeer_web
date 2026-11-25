@@ -34,6 +34,7 @@ async function asAdmin(
 test.describe('admin system', () => {
   const SCREENS = [
     ['admin-users', '/admin/system/users'],
+    ['admin-roles', '/admin/system/roles'],
     ['admin-settings', '/admin/system/settings'],
     ['admin-mail', '/admin/system/mail'],
     ['admin-mail-templates', '/admin/system/mail?tab=templates'],
@@ -68,7 +69,7 @@ test.describe('admin system', () => {
     await page.getByRole('button', { name: 'Invite a user' }).click();
     await dialog(page).getByLabel('Name').fill('E2E Invitee');
     await dialog(page).getByLabel('Email').fill(email);
-    await dialog(page).getByLabel('Role').selectOption('editor');
+    await dialog(page).getByLabel('Role').selectOption({ label: 'Editor' });
     await dialog(page).getByRole('button', { name: 'Send invitation' }).click();
     const row = page.locator(`[data-user="${email}"]`);
     await expect(row.getByTestId('user-status')).toHaveText('Invitation pending');
@@ -96,12 +97,12 @@ test.describe('admin system', () => {
     await page.reload();
     await expect(row.getByTestId('user-status')).toHaveText('Active');
     await row.getByRole('button', { name: /^Edit/ }).click();
-    await dialog(page).getByLabel('Role').selectOption('editor');
+    await dialog(page).getByLabel('Role').selectOption({ label: 'Support' });
     await dialog(page)
       .getByLabel(/Disable the account/)
       .check();
     await dialog(page).getByRole('button', { name: 'Save' }).click();
-    await expect(row).toContainText('Editor');
+    await expect(row.getByTestId('user-role-name')).toHaveText('Support');
     await expect(row.getByTestId('user-status')).toHaveText('Disabled');
 
     await gotoHydrated(other, '/en/admin/login');
@@ -114,7 +115,7 @@ test.describe('admin system', () => {
     await expect(row).toHaveCount(0);
   });
 
-  test('users: unlock a locked account; your own role is fixed; the matrix follows GET /admin/roles', async ({
+  test('users: unlock a locked account; your own role is fixed; roles live on their own screen', async ({
     page,
   }) => {
     const locked = await staffAccount('support', { locked: true });
@@ -130,12 +131,11 @@ test.describe('admin system', () => {
     await expect(dialog(page).getByLabel('Role')).toBeDisabled();
     await dialog(page).getByRole('button', { name: 'Cancel' }).click();
 
-    const matrixRows = page.getByTestId('role-matrix').locator('tbody tr');
-    // Seven areas: the two applications areas left with the reviewer role.
-    await expect(matrixRows).toHaveCount(7);
-    // Deleting redirects: admin only.
-    const redirectsRow = matrixRows.filter({ hasText: 'Deleting redirects' });
-    await expect(redirectsRow.getByText('Allowed', { exact: true })).toHaveCount(1);
+    // v1.1.0: the role list and permission grid moved to System → Roles.
+    await expect(page.getByTestId('role-matrix')).toHaveCount(0);
+    await page.getByTestId('roles-link').click();
+    await expect(page).toHaveURL(/\/en\/admin\/system\/roles$/);
+    await expect(page.locator('h1')).toHaveText('Roles and permissions');
   });
 
   test('settings: the map only takes allowed hosts; a save shows up in the audit log', async ({

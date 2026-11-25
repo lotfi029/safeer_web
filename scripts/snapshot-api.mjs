@@ -3,7 +3,7 @@
  * W23: re-snapshot the backend contract into docs/api/ from a pinned safeer_api ref (a tag or SHA),
  * read with `git show` so the API checkout's working tree doesn't matter.
  * Usage: node scripts/snapshot-api.mjs <path-to-safeer_api> <ref>
- * Example: node scripts/snapshot-api.mjs ../safeer_api v1.0.0-rc1
+ * Example: node scripts/snapshot-api.mjs ../safeer_api v1.1.0
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -30,7 +30,9 @@ const KEEP = [
   /^src\/common\/query\/list-params\.ts$/,
   /^src\/admin-overview\/admin-overview\.service\.ts$/,
   /^src\/home\/home\.service\.ts$/,
-  /^src\/auth\/(role-matrix|argon2-options|session-token\.util)\.ts$/,
+  /^src\/auth\/(permissions|argon2-options|session-token\.util)\.ts$/,
+  // v1.1.0: roles and their safety rules (the role/permission response shapes are in public-role.ts).
+  /^src\/roles\/roles\.service\.ts$/,
   // Stage 2: services whose return values are the admin response shapes (no public mapper).
   /^src\/(messages\/messages|users\/users|media\/media|contact\/contact)\.service\.ts$/,
   /^src\/mail\/mail-(settings|templates)\.service\.ts$/,

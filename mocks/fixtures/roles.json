@@ -1,13 +1,231 @@
 {
-  "_source": "B17: GET /admin/roles, copied from safeer_api src/auth/role-matrix.ts (docs/api/src/auth/role-matrix.ts).",
-  "roles": ["admin", "editor", "support"],
-  "matrix": {
-    "content": ["admin", "editor"],
-    "redirects.delete": ["admin"],
-    "inbox": ["admin", "support"],
-    "inbox.delete": ["admin"],
-    "users": ["admin"],
-    "settings": ["admin"],
-    "audit": ["admin"]
-  }
+  "_source": "GET /admin/permissions and GET /admin/roles recorded from safeer_api v1.1.0 (40e52a1): the catalog and the three seeded system roles (migration 024). userCount is computed by the mock.",
+  "catalog": {
+    "actions": ["view", "manage", "delete"],
+    "groups": [
+      {
+        "key": "content",
+        "labelAr": "المحتوى",
+        "labelEn": "Content",
+        "modules": [
+          {
+            "key": "pages",
+            "labelAr": "الصفحات",
+            "labelEn": "Pages",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "news",
+            "labelAr": "الأخبار وتصنيفاتها",
+            "labelEn": "News and categories",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "workAreas",
+            "labelAr": "مجالات العمل",
+            "labelEn": "Work areas",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "board",
+            "labelAr": "مجلس الإدارة",
+            "labelEn": "Board",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "orgChart",
+            "labelAr": "الهيكل التنظيمي",
+            "labelEn": "Org chart",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "partners",
+            "labelAr": "الشركاء",
+            "labelEn": "Partners",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "documents",
+            "labelAr": "الوثائق وتصنيفاتها",
+            "labelEn": "Documents and categories",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "licences",
+            "labelAr": "التراخيص",
+            "labelEn": "Licences",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "stats",
+            "labelAr": "الإحصاءات",
+            "labelEn": "Stats",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "aboutItems",
+            "labelAr": "عناصر من نحن",
+            "labelEn": "About items",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "media",
+            "labelAr": "مكتبة الوسائط",
+            "labelEn": "Media",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "redirects",
+            "labelAr": "التحويلات",
+            "labelEn": "Redirects",
+            "actions": ["view", "manage", "delete"]
+          }
+        ]
+      },
+      {
+        "key": "inbox",
+        "labelAr": "الوارد",
+        "labelEn": "Inbox",
+        "modules": [
+          {
+            "key": "messages",
+            "labelAr": "الرسائل",
+            "labelEn": "Messages",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "testimonials",
+            "labelAr": "الشهادات ومحاورها",
+            "labelEn": "Testimonials and themes",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "newsletter",
+            "labelAr": "النشرة البريدية",
+            "labelEn": "Newsletter",
+            "actions": ["view", "delete"]
+          }
+        ]
+      },
+      {
+        "key": "system",
+        "labelAr": "النظام",
+        "labelEn": "System",
+        "modules": [
+          {
+            "key": "users",
+            "labelAr": "المستخدمون",
+            "labelEn": "Users",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "roles",
+            "labelAr": "الأدوار والصلاحيات",
+            "labelEn": "Roles",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "settings",
+            "labelAr": "إعدادات الموقع والذاكرة المؤقتة",
+            "labelEn": "Site settings and cache",
+            "actions": ["view", "manage", "delete"]
+          },
+          {
+            "key": "mail",
+            "labelAr": "البريد",
+            "labelEn": "Mail",
+            "actions": ["view", "manage"]
+          },
+          {
+            "key": "audit",
+            "labelAr": "سجل التدقيق",
+            "labelEn": "Audit log",
+            "actions": ["view"]
+          }
+        ]
+      }
+    ]
+  },
+  "roles": [
+    {
+      "id": "1",
+      "key": "admin",
+      "nameAr": "مدير عام",
+      "nameEn": "Admin",
+      "descriptionAr": "كل الصلاحيات، ولا يمكن تعديله أو حذفه.",
+      "descriptionEn": "Every permission; cannot be edited or deleted.",
+      "isSystem": true,
+      "permissions": ["*"],
+      "createdAt": "2026-11-25T16:43:34.215Z",
+      "updatedAt": "2026-11-25T16:43:34.215Z"
+    },
+    {
+      "id": "2",
+      "key": "editor",
+      "nameAr": "محرر محتوى",
+      "nameEn": "Editor",
+      "descriptionAr": "إدارة محتوى الموقع.",
+      "descriptionEn": "Manages the site content.",
+      "isSystem": true,
+      "permissions": [
+        "pages.view",
+        "pages.manage",
+        "pages.delete",
+        "news.view",
+        "news.manage",
+        "news.delete",
+        "workAreas.view",
+        "workAreas.manage",
+        "workAreas.delete",
+        "board.view",
+        "board.manage",
+        "board.delete",
+        "orgChart.view",
+        "orgChart.manage",
+        "orgChart.delete",
+        "partners.view",
+        "partners.manage",
+        "partners.delete",
+        "documents.view",
+        "documents.manage",
+        "documents.delete",
+        "licences.view",
+        "licences.manage",
+        "licences.delete",
+        "stats.view",
+        "stats.manage",
+        "stats.delete",
+        "aboutItems.view",
+        "aboutItems.manage",
+        "aboutItems.delete",
+        "media.view",
+        "media.manage",
+        "media.delete",
+        "redirects.view",
+        "redirects.manage"
+      ],
+      "createdAt": "2026-11-25T16:43:34.215Z",
+      "updatedAt": "2026-11-25T16:43:34.215Z"
+    },
+    {
+      "id": "3",
+      "key": "support",
+      "nameAr": "دعم ومراسلات",
+      "nameEn": "Support",
+      "descriptionAr": "الرسائل والشهادات والنشرة البريدية.",
+      "descriptionEn": "Messages, testimonials and the newsletter.",
+      "isSystem": true,
+      "permissions": [
+        "messages.view",
+        "messages.manage",
+        "testimonials.view",
+        "testimonials.manage",
+        "testimonials.delete",
+        "newsletter.view",
+        "newsletter.delete"
+      ],
+      "createdAt": "2026-11-25T16:43:34.215Z",
+      "updatedAt": "2026-11-25T16:43:34.215Z"
+    }
+  ]
 }

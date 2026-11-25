@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '../config/api-base-url';
-import type { OkResponse, RolesResponse, StaffMe, StaffUser } from './models';
+import type { OkResponse, StaffMe, StaffUser } from './models';
 
 /** Staff auth endpoints (StaffSessionStore, login/forgot/accept/reset). Feature APIs: core/api/admin. */
 @Injectable({ providedIn: 'root' })
@@ -43,9 +43,5 @@ export class StaffApi {
       `${API_PREFIX}/admin/auth/reset/${encodeURIComponent(token)}`,
       { password },
     );
-  }
-
-  roles(): Observable<RolesResponse> {
-    return this.http.get<RolesResponse>(`${API_PREFIX}/admin/roles`);
   }
 }

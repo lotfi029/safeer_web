@@ -230,6 +230,11 @@ export const en: Translation = {
       UNKNOWN_VARIABLE: 'The template uses an unknown variable.',
       FEATURE_DISABLED: 'This feature is currently turned off.',
       NOT_IMPLEMENTED: 'This action is not available yet.',
+      ROLE_IN_USE:
+        'This role is still assigned to users. Move them to another role before deleting it.',
+      ROLE_IMMUTABLE:
+        'The administrator role cannot be changed, and system roles cannot be deleted.',
+      ROLE_KEY_TAKEN: 'Another role already uses this key.',
       INTERNAL_ERROR: 'Something went wrong. Please try again.',
     },
   },

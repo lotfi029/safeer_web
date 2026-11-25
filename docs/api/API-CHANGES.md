@@ -190,3 +190,357 @@ application's locale.
   password is limited to 5 attempts per 15 minutes.
 - **English text (C39).** Admin DTOs trim every `*En` field.
 
+## VPS deploy (S1–S4, BF-2, BF-4, D1)
+
+**The HTTP contract is unchanged.** No route, DTO or response shape moved;
+`openapi.json` is identical. What changed for whoever runs the API:
+
+- **`POST applications` under load (S1/BF-2).** Concurrent creates by
+  different applicants no longer deadlock into a `500`. The answers are
+  unchanged: `201` with a reference, or `409 APPLICATION_EXISTS`.
+- **New env vars (D1, BF-4):**
+  - `TRUST_PROXY`: Express trust-proxy hop count, `0`–`10`, default `1`.
+    It was hardcoded to `1`.
+  - `HOST`: the bind address. **Default `127.0.0.1`**, where the API used to
+    bind every interface. A bare-host deploy with its proxy on another
+    machine must now set `HOST` explicitly. The Docker image sets `0.0.0.0`.
+  - An empty value (`KEY=`) means the default, so `TRUST_PROXY=` is `1`,
+    not `0`.
+- **Production database: MySQL 8.4** (S4), in a container on the VPS.
+  `safeer-web`'s `API_INTERNAL_URL` is `http://safeer-api:3900` (the api service's alias; the plain name `api` collides with other projects on the shared edge network) on the private
+  Compose network (`deploy/docker-compose.yml`).
+
+
+## Governance and contact (branch `feat/governance-contact`)
+
+The owner removed the scholarship feature (application form, applicant
+portal, review, interviews, the `scholarships` page), SMS and the `reviewer`
+role, kept the contact form with new subjects, and added governance sections
+and licences. Each item below names its commit (A1–A8).
+
+### Admin overview (A1)
+
+`GET admin/overview` moved to its own module (`src/admin-overview/`). The
+response is now exactly:
+
+```json
+{
+  "statCards": { "unreadMessages": 3 },
+  "contentAlerts": { "noPublishedPartners": false, "legacyPostsCount": 0, "pagesNeedingReviewCount": 0 },
+  "badges": { "unreadMessages": 3 },
+  "recentAuditLog": []
+}
+```
+
+Removed fields: `statCards.newApplications`, `statCards.underReview`,
+`statCards.acceptedThisMonth`, `badges.newApplications`, `series` (the
+6-month received/accepted chart) and `latestApplications`. The role rules
+are unchanged: `unreadMessages` only for admin and support, `recentAuditLog`
+non-empty only for admin.
+
+### Removed routes (A2, A3)
+
+All of these now answer 404 (no route). The `sf_app_sid` applicant cookie is
+never set or read again.
+
+| Removed | Was |
+|---|---|
+| `POST applications` | start a scholarship application |
+| `POST portal/auth/request-otp`, `POST portal/auth/verify-otp`, `POST portal/auth/logout` | applicant OTP sign-in |
+| `GET portal/me`, `GET portal/notifications` | applicant portal |
+| `PATCH portal/application`, `PATCH portal/application/corrections`, `POST portal/application/submit` | application form |
+| `GET/POST portal/documents`, `GET portal/documents/{id}/file`, `DELETE portal/documents/{id}` | applicant documents |
+| `GET portal/interview-slots`, `POST/DELETE portal/interview` | interview booking |
+| `GET admin/applications`, `GET admin/applications/counts`, `GET admin/applications/assignees`, `GET admin/applications/export.csv`, `POST admin/applications/bulk` | application review list |
+| `GET/PATCH/DELETE admin/applications/{id}`, `POST admin/applications/{id}/request-documents`, `PATCH admin/applications/{id}/documents/{docId}`, `GET admin/applications/{id}/documents/{docId}/file`, `POST admin/applications/{id}/notes` | one application |
+| `GET/POST admin/interview-slots`, `GET/PATCH/DELETE admin/interview-slots/{id}` | interview slots |
+| `GET/PUT admin/sms/settings`, `POST admin/sms/test`, `GET admin/sms/templates`, `GET/PUT admin/sms/templates/{key}`, `GET admin/sms/templates/{key}/variables`, `POST admin/sms/templates/{key}/preview`, `GET admin/sms/log` | SMS |
+| `GET __dev/otp/{applicationId}` (development/test only, not in openapi.json) | OTP peek |
+
+Also gone:
+
+- **Error codes:** `APPLICATION_LOCKED`, `OTP_INVALID`, `DOCUMENTS_INCOMPLETE`,
+  `SLOT_ALREADY_BOOKED`, `INTERVIEW_NOT_AVAILABLE`, `INVALID_STATUS_TRANSITION`,
+  `APPLICATION_EXISTS`, `INVALID_ASSIGNEE`, `QUOTA_EXCEEDED`,
+  `DOCUMENT_NOT_REVIEWABLE`, `DOCUMENT_SUPERSEDED`.
+- **`GET meta/enums`:** `applicationStatus`, `degreeLevel` and `gender`. It
+  now returns `{partnerCategory, contactSubject}` only.
+- **`GET about-items`:** the kinds `scholarship_step` and `requirement` (now a
+  400 like any unknown kind). `vision`, `mission`, `goal` and `care_pillar`
+  remain; `GET /home`'s `aboutItems.carePillars` is unchanged.
+- **The `scholarships` page** (`GET pages/scholarships` is 404) and its nav
+  entry. Home-page buttons that pointed at `/apply`, `/portal/…` or
+  `/scholarships` now point at `/contact` (their labels are content, edited in
+  the admin).
+- **Admin settings:** `notifyEmailOnStatusChange`, `notifySmsOnStatusChange`
+  and `applicationRefPrefix` are gone from `GET/PUT admin/settings`; sending
+  them is a 400 (the DTO is strict).
+- **The `reviewer` role** (A3): `GET admin/roles` returns
+  `roles: ["admin", "editor", "support"]` and no `applications` /
+  `applications.delete` areas. `POST admin/auth/invite` and
+  `PATCH admin/users/:id` answer 400 `VALIDATION_FAILED` for
+  `role: "reviewer"`.
+- **Mail templates:** `application_started`, `application_submitted`,
+  `application_status_changed`, `application_resume`, `document_rejected`,
+  `documents_requested`, `otp_code`, `interview_booked`,
+  `interview_cancelled`, `interview_updated` (`GET admin/mail/templates` no
+  longer lists them).
+
+### Contact subjects (A5)
+
+`POST contact`'s `subject` is one of `inquiry`, `partnership`, `support`,
+`feedback`, `other` (there is no default; it is required). `scholarship` is
+now a 400. Migration 021 turned every stored `scholarship` message into
+`inquiry`, so the admin inbox (`GET admin/messages`) only ever shows the new
+values. `GET meta/enums` → `contactSubject` (labels collapsed by locale, like
+every public response):
+
+| value | ar | en |
+|---|---|---|
+| `inquiry` | استفسار | Inquiry |
+| `partnership` | شراكة | Partnership |
+| `support` | دعم وتبرع | Support and donations |
+| `feedback` | ملاحظات | Feedback |
+| `other` | أخرى | Other |
+
+The staff notification mail (`contact_notify`) carries the Arabic label.
+
+### Governance sections (A6, migration 022)
+
+Every public response collapses `xxxAr`/`xxxEn` pairs into `xxx` for the
+request's locale (`?lang=` → `Accept-Language` → `ar`, English falling back
+to Arabic). The shapes below show the collapsed form the frontend receives.
+
+**`GET documents/sections`** — published categories in the `governance`
+group, ordered by `sortOrder` then id, each with its count of published
+documents (0 included). Cached under `documents`.
+
+```json
+[
+  { "id": "2", "slug": "bylaws-policies", "name": "اللوائح والسياسات", "sectionGroup": "governance", "count": 1 },
+  { "id": "5", "slug": "financial-reports", "name": "التقارير المالية", "sectionGroup": "governance", "count": 0 }
+]
+```
+
+The seeded order: `bylaws-policies`, `financial-reports`, `general-assembly`,
+`strategic-plan`, `operational-plan`, `annual-reports`, `project-reports`,
+`committees`, `committee-decisions`. (`policies-regulations` was renamed
+`bylaws-policies` and `meeting-minutes` `general-assembly`; their ids and
+documents are unchanged. `licences` is now unpublished and in the `other`
+group — its documents moved to the licences table.)
+
+**`GET documents/sections/:slug`** — one published category of any group,
+with its published documents (ordered by `sortOrder`, then id). An unknown or
+unpublished slug is **404** `NOT_FOUND`.
+
+```json
+{
+  "category": { "id": "5", "slug": "financial-reports", "name": "Financial reports", "sectionGroup": "governance" },
+  "documents": [
+    {
+      "id": "12",
+      "title": "Financial statements 2025",
+      "meta": "Financial year 2025",
+      "docDate": "2026-03-01",
+      "asset": { "id": "40", "publicId": "…", "kind": "pdf", "mimeType": "application/pdf", "sizeBytes": 123456, "widthPx": null, "heightPx": null, "alt": null },
+      "sortOrder": 0
+    }
+  ]
+}
+```
+
+**`GET documents`** (unchanged route) — each `category` gains
+`sectionGroup`, each document gains `meta` (from `metaAr`/`metaEn`, nullable).
+
+**Admin:** `admin/doc-categories` create/update accept `sectionGroup`
+(`"governance"` default | `"other"`); `admin/documents` create/update accept
+`metaAr`, `metaEn` (string ≤ 190, trimmed, nullable). Both come back raw in
+admin responses.
+
+**Nav:** `GET /site` lists a new `governance` page (الحوكمة / Governance) in
+the slot `documents` held: `home, about, board, work, news, testimonials,
+partners, governance, contact`. `GET pages/governance` serves it;
+`GET pages/documents` still works but is out of the nav.
+
+### Licences (A7, migration 022)
+
+**`GET licences`** — published licences, the primary first, then by
+`sortOrder`, then id. A plain array (no paging). Cached under `licences`.
+
+```json
+[
+  {
+    "id": "3",
+    "title": "ترخيص المركز الوطني لتنمية القطاع غير الربحي",
+    "number": "1234",
+    "issuer": "المركز الوطني لتنمية القطاع غير الربحي",
+    "issuedOn": "2024-01-15",
+    "expiresOn": "2027-01-14",
+    "isPrimary": true,
+    "asset": { "id": "41", "publicId": "…", "kind": "pdf", "mimeType": "application/pdf", "sizeBytes": 98765, "widthPx": null, "heightPx": null, "alt": null }
+  }
+]
+```
+
+`number`, `issuer`, `issuedOn`, `expiresOn` and `asset` may be null. The file
+is fetched like every asset, `GET /files/{publicId}` — public once the
+licence is published.
+
+**`GET /site` and `GET /home`** — `settings` gains `licenceNo` and
+`licenceIssuer` (from `licenceIssuerAr`/`licenceIssuerEn`): the primary
+**published** licence's number and issuer, or `null` when there is none. They
+are written by every licence write; `PUT admin/settings` refuses them (400).
+
+**Admin (`admin/licences`, area `content`: admin and editor):**
+
+| Route | Body / notes |
+|---|---|
+| `GET admin/licences` | paged `{data, total, page, limit}`; `?q=` searches title/number; `?published=true|false` |
+| `GET admin/licences/:id` | the raw row |
+| `POST admin/licences` | `titleAr` (required, ≤ 191), `titleEn` (≤ 191), `number` (≤ 100), `issuerAr`, `issuerEn` (≤ 190), `issuedOn`, `expiresOn` (`YYYY-MM-DD`), `assetId` (media asset id), `isPrimary`, `isPublished`, `sortOrder` — all but `titleAr` optional/nullable |
+| `PATCH admin/licences/:id` | any subset of the above |
+| `PATCH admin/licences/:id/publish` | `{isPublished?: boolean}` (default true) |
+| `PATCH admin/licences/:id/primary` | no body — makes it the one primary licence |
+| `POST admin/licences/reorder` | `[{id, sortOrder}]` |
+| `DELETE admin/licences/:id` | `{deleted: true}` |
+
+Rules: at most one licence is primary (making one primary clears the
+others); an `assetId` that doesn't exist is 400 `VALIDATION_FAILED` with
+`field: "assetId"`; an image asset needs Arabic alt text (409
+`ALT_TEXT_REQUIRED`); `expiresOn` before `issuedOn` is 400. Deleting a media
+asset a licence uses is 409 `ASSET_IN_USE` with
+`usages: [{entity: "licences", id, label}]`.
+
+022 turned the documents filed under the old `licences` category into
+licences (title, file and visibility carried over; no number, issuer or
+primary yet).
+
+## Organisational structure (023, branch `feat/org-chart`)
+
+The association's org chart («الهيكل التنظيمي»), ported from ta3lom. A tree
+of positions; a board or executive member can hold one, and a position shows
+the names of its published holders.
+
+### Public
+
+`GET org-chart` → a forest, published positions only, siblings in
+`sortOrder`:
+
+```ts
+interface OrgNode {
+  id: string;
+  name: string;            // locale-collapsed (nameAr/nameEn)
+  tone: 'neutral' | 'sky' | 'green' | 'brand';  // `auto` already resolved by depth
+  holders: { id: string; name: string }[];       // [] unless the position shows holders
+  children: OrgNode[];
+}
+```
+
+A position under an unpublished parent is hidden with its whole branch; only
+published members appear as holders. Cached under `org_chart`, purged by
+every admin/org-positions and admin/board write.
+
+### Admin (`content` area)
+
+| Route | Body / result |
+|---|---|
+| `GET admin/org-positions` | paged `{data, total, page, limit}`; `?q=`, `?published=`, `?parentId=` |
+| `GET admin/org-positions/:id` | the raw row |
+| `POST admin/org-positions` | `nameAr` (required, ≤ 190), `nameEn`, `parentId` (or null for a top box), `tone` (`auto` default, `neutral`, `sky`, `green`, `brand`), `showHolders` (default true), `isPublished` (default true), `sortOrder` |
+| `PATCH admin/org-positions/:id` | any subset of the above |
+| `PATCH admin/org-positions/:id/publish` | `{isPublished?: boolean}` |
+| `POST admin/org-positions/reorder` | `[{id, sortOrder}]` |
+| `DELETE admin/org-positions/:id` | `{deleted: true}` |
+
+Rules: `parentId` is 400 `VALIDATION_FAILED` with `field: "parentId"` and
+`reason` one of `SELF_PARENT`, `PARENT_NOT_FOUND`, `CYCLE` (reports to one of
+its own sub-positions), `TOO_DEEP` (more than 5 levels, counted including the
+position's own sub-tree). A new position, or one moved to another parent,
+goes last among its siblings unless `sortOrder` is sent. Deleting a position
+that sub-positions or members still point at is 409 `RESOURCE_IN_USE` with
+`usages: [{entity: "org_positions" | "board_members", id, label}]`.
+
+`admin/board` rows gain `orgPositionId` (nullable); an id that doesn't exist
+is 400 `VALIDATION_FAILED` with `field: "orgPositionId"`.
+
+## Custom roles and permissions (v1.1.0, branch `feat/custom-roles`, migration 024)
+
+Staff permissions move from three fixed roles to roles stored in the
+database, each a set of `<module>.<action>` keys (`ARCHITECTURE.md`, "Roles
+and permissions"). The three system roles are seeded with exactly what each
+reached before, so existing users see no change.
+
+### Breaking
+
+- **`GET admin/roles` changes shape and gate.** It was `{roles, matrix}` for
+  any staff member. It is now an array of roles, and it needs `roles.view`
+  (only `admin` by default):
+
+  ```ts
+  interface Role {
+    id: string; key: string; nameAr: string; nameEn: string | null;
+    descriptionAr: string | null; descriptionEn: string | null;
+    isSystem: boolean;
+    permissions: string[];   // catalog order; ["*"] for admin
+    userCount: number;
+    createdAt: string; updatedAt: string;
+  }
+  ```
+
+  For the invite and edit dialogs' role picker, use
+  `GET admin/users/assignable-roles` instead (below).
+- **The user `role` field is an object** in every user response (`GET
+  admin/users[/:id]`, `PATCH admin/users/:id`, `POST admin/auth/invite`,
+  `POST admin/auth/login`'s `user`, `GET admin/me`): it was `"admin" |
+  "editor" | "support"` and is now `{id, key, nameAr, nameEn}`.
+- **`POST admin/auth/invite` and `PATCH admin/users/:id` take `roleId`**
+  (a numeric string) in place of `role`. Sending `role` is a 400 (strict
+  body). An unknown `roleId` is 400 `VALIDATION_FAILED` (`errors[0].path:
+  "roleId"`).
+- **`GET admin/preview-token` needs `news.view`.** It was open to any staff
+  member.
+
+### New
+
+| Route | Permission | Body / result |
+|---|---|---|
+| `GET admin/permissions` | any staff | `{actions: ["view","manage","delete"], groups: [{key, labelAr, labelEn, modules: [{key, labelAr, labelEn, actions}]}]}` — the grid for the role editor; a module lists only the actions it has (`audit`: view; `mail`: view, manage; `newsletter`: view, delete) |
+| `GET admin/roles` | `roles.view` | `Role[]`, the system roles first |
+| `GET admin/roles/:id` | `roles.view` | `Role` |
+| `POST admin/roles` | `roles.manage` | `{key?, nameAr, nameEn?, descriptionAr?, descriptionEn?, permissions: string[]}` → 201 `Role`. A missing `key` is generated (`custom-<6 hex>`) |
+| `PATCH admin/roles/:id` | `roles.manage` | any of `nameAr, nameEn, descriptionAr, descriptionEn, permissions` → `Role`. `key` can't be changed |
+| `DELETE admin/roles/:id` | `roles.delete` | `{deleted: true}` |
+| `GET admin/users/assignable-roles` | `users.view` | `[{id, key, nameAr, nameEn}]` — the roles the caller may assign (every role whose permissions they hold) |
+
+- **`GET admin/me`** adds `permissions: string[]` (`["*"]` for admin). Show
+  a nav item for `<module>.view`, New/Edit/Publish/Reorder/Upload for
+  `.manage` and Delete for `.delete`; `*` means everything.
+- **Permissions on save** are closed under `delete ⇒ manage ⇒ view` (where
+  the module has them), deduplicated and returned in catalog order. Unknown
+  keys, `*`, and actions a module doesn't have are one 400 listing them.
+- **Role keys** match `^[a-z][a-z0-9-]{2,63}$`. `admin`, `editor`,
+  `support`, `owner`, `root` and `system` are reserved (400).
+
+### Errors
+
+| Status | Code | When |
+|---|---|---|
+| 403 | `FORBIDDEN` | the route's permission is missing; granting, or assigning a role with, permissions the caller doesn't hold; editing/deleting a role, or managing a user (or ending their session), whose permissions the caller doesn't hold; editing or deleting one's own role; changing one's own role |
+| 409 | `ROLE_IMMUTABLE` | editing or deleting the `admin` role; deleting `editor` or `support` |
+| 409 | `ROLE_IN_USE` | deleting a role still assigned; the body carries `userCount` |
+| 409 | `ROLE_KEY_TAKEN` | `POST admin/roles` with a key another role has |
+| 409 | `LAST_ADMIN` | unchanged, now keyed on the `admin` role |
+
+### Behaviour
+
+- A role edit applies on its users' **next request** — no re-login, no
+  forced sign-out.
+- `GET admin/overview`: message figures need `messages.view` (was: the inbox
+  roles), the audit feed needs `audit.view` (was: admin).
+- `DELETE admin/auth/sessions/:id` on another user's session needs
+  `users.manage` and a role that covers that user's (was: admin).
+- `POST admin/messages/:id/convert-to-testimonial` needs `messages.manage`
+  and `testimonials.manage`.
+- `DELETE admin/cache` is `settings.delete`.
+- Role writes are audited as `entityType: "roles"`, and user updates now
+  carry `permissions` in the audit row's before/after, next to `role`.

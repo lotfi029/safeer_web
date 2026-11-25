@@ -20,6 +20,7 @@ import { AdminPageHead } from '../../layout/admin-page-head';
 import { confirmAction } from '../../shared/confirm-dialog';
 import { MediaStore } from './media-store';
 import { MediaUploader } from './media-uploader';
+import { StaffSessionStore } from '../../../../core/auth/staff-session.store';
 
 type KindFilter = 'image' | 'pdf';
 
@@ -41,20 +42,22 @@ type KindFilter = 'image' | 'pdf';
           : null
       "
     >
-      <label
-        pageActions
-        class="btn btn-sm cursor-pointer focus-within:outline-2 focus-within:outline-secondary"
-      >
-        <app-icon name="upload" [size]="18" />{{ 'admin.media.upload' | transloco }}
-        <input
-          type="file"
-          class="sr-only"
-          accept="image/jpeg,image/png,image/webp,image/avif,application/pdf"
-          multiple
-          (change)="onFiles($event)"
-          data-testid="media-upload"
-        />
-      </label>
+      @if (canManage()) {
+        <label
+          pageActions
+          class="btn btn-sm cursor-pointer focus-within:outline-2 focus-within:outline-secondary"
+        >
+          <app-icon name="upload" [size]="18" />{{ 'admin.media.upload' | transloco }}
+          <input
+            type="file"
+            class="sr-only"
+            accept="image/jpeg,image/png,image/webp,image/avif,application/pdf"
+            multiple
+            (change)="onFiles($event)"
+            data-testid="media-upload"
+          />
+        </label>
+      }
     </app-admin-page-head>
 
     <nav class="mb-5 flex flex-wrap gap-2" [attr.aria-label]="'admin.media.filters' | transloco">
@@ -132,22 +135,24 @@ type KindFilter = 'image' | 'pdf';
               <span class="pill pill-warn self-start">{{ 'admin.media.noAlt' | transloco }}</span>
             }
             <div class="mt-auto flex flex-wrap items-center gap-1">
-              @if (a.kind === 'image') {
+              @if (a.kind === 'image' && canManage()) {
                 <button appButton variant="link" size="sm" type="button" (click)="editAlt(a)">
                   {{ 'admin.media.editAlt' | transloco
                   }}<span class="sr-only">: {{ a.originalName }}</span>
                 </button>
               }
               <span class="grow"></span>
-              <button
-                type="button"
-                class="icon-btn size-11 text-alert"
-                [attr.aria-label]="('admin.common.delete' | transloco) + ': ' + a.originalName"
-                [disabled]="busy()"
-                (click)="remove(a)"
-              >
-                <app-icon name="trash-2" [size]="18" />
-              </button>
+              @if (canDelete()) {
+                <button
+                  type="button"
+                  class="icon-btn size-11 text-alert"
+                  [attr.aria-label]="('admin.common.delete' | transloco) + ': ' + a.originalName"
+                  [disabled]="busy()"
+                  (click)="remove(a)"
+                >
+                  <app-icon name="trash-2" [size]="18" />
+                </button>
+              }
             </div>
           </li>
         }
@@ -160,6 +165,10 @@ export class MediaLibrary {
   readonly kind = input<string | null>(null);
 
   protected readonly store = inject(MediaStore);
+  private readonly staff = inject(StaffSessionStore);
+  /** v1.1.0: upload and alt text need `media.manage`, delete `media.delete`. */
+  protected readonly canManage = computed(() => this.staff.can('media.manage'));
+  protected readonly canDelete = computed(() => this.staff.can('media.delete'));
   private readonly api = inject(ContentApi);
   private readonly uploader = inject(MediaUploader);
   private readonly dialogs = inject(DialogService);

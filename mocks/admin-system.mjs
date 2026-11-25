@@ -1,13 +1,17 @@
 /**
- * Admin system routes of the mock API (Stage 2, Phase 9): users and invitations, site settings and
+ * Admin system routes of the mock API (Stage 2, Phase 9; roles: safeer_api v1.1.0): users and
+ * invitations, roles and the permission catalog, site settings and
  * cache, mail settings, templates, test sends and logs, audit, newsletter export/delete and account
  * (password, sessions). Rules follow safeer_api (users.service.ts, site-settings.dto.ts, the mail
  * services, auth.service.ts); seed values are recorded from the API (fixtures/adminSystem.json) and shapes are
  * drift-tested (mocks/admin-shapes.test.mjs).
  */
-import { publicStaff } from './backend.mjs';
+import { publicStaff, rolePermissions, roleRef } from './backend.mjs';
+import { isSubset, normalise, WILDCARD } from './permissions.mjs';
 
-const ROLES = ['admin', 'editor', 'support'];
+/** safeer_api src/roles/dto/role.dto.ts (R9). */
+const ROLE_KEY_RE = /^[a-z][a-z0-9-]{2,63}$/;
+const RESERVED_ROLE_KEYS = ['admin', 'editor', 'support', 'owner', 'root', 'system'];
 const MAP_EMBED_ALLOW_LIST = [
   { host: 'www.google.com', pathPrefix: '/maps/embed' },
   { host: 'www.openstreetmap.org', pathPrefix: '/' },
@@ -53,6 +57,23 @@ export function systemRoutes(ctx) {
   const staff = () => db.fixtures.staff;
   const invalid = (path, message, code = 'custom') =>
     problem(400, 'VALIDATION_FAILED', { issues: [{ path: [path], message, code }] });
+  const pub = (u) => publicStaff(u, db.roles);
+  const perms = (key) => rolePermissions(key, db.roles);
+  /** The user snapshot an audit row records (v1.1.0: with the role's permission list). */
+  const snap = (u) => ({ ...pub(u), permissions: perms(u.role) });
+  const roleById = (id) => db.roles.find((r) => r.id === String(id));
+  const userCount = (key) => staff().filter((u) => u.role === key).length;
+  const publicRole = (r) => ({ ...clone(r), userCount: userCount(r.key) });
+  const forbidden = (title) => problem(403, 'FORBIDDEN', { title });
+  /** Rule 3: the role to hand out must exist (400) and hold nothing the caller lacks (403). */
+  const assignable = (caller, roleId) => {
+    const role = roleById(roleId);
+    if (!role) return { error: invalid('roleId', 'No role with that id') };
+    if (!isSubset(caller.permissions, role.permissions))
+      return { error: forbidden('You cannot assign a role with permissions you do not hold') };
+    return { role };
+  };
+  const coversUser = (caller, u) => isSubset(caller.permissions, perms(u.role));
   const activeAdmins = (exceptId) =>
     staff().filter(
       (u) => u.role === 'admin' && (u.status ?? 'active') === 'active' && u.id !== exceptId,
@@ -73,9 +94,28 @@ export function systemRoutes(ctx) {
       /^\/api\/v1\/admin\/users$/,
       ({ req }) => {
         const g = guard(req, 'users');
-        return g.error ?? json(200, staff().map(publicStaff));
+        return g.error ?? json(200, staff().map(pub));
       },
     ],
+    // v1.1.0 (before `users/:id`, which would match it): the invite/edit picker (users.view): every role the caller covers.
+    [
+      'GET',
+      /^\/api\/v1\/admin\/users\/assignable-roles$/,
+      ({ req }) => {
+        const g = guard(req, 'users');
+        if (g.error) return g.error;
+        const ordered = [...db.roles].sort(
+          (a, b) => Number(b.isSystem) - Number(a.isSystem) || Number(a.id) - Number(b.id),
+        );
+        return json(
+          200,
+          ordered
+            .filter((r) => isSubset(g.staff.permissions, r.permissions))
+            .map((r) => roleRef(r.key, db.roles)),
+        );
+      },
+    ],
+
     [
       'POST',
       /^\/api\/v1\/admin\/auth\/invite$/,
@@ -84,7 +124,10 @@ export function systemRoutes(ctx) {
         if (g.error) return g.error;
         if (!body?.email || !EMAIL_RE.test(body.email)) return invalid('email', 'Invalid email');
         if (!body?.name || String(body.name).length > 120) return invalid('name', 'Required');
-        if (!ROLES.includes(body?.role)) return invalid('role', 'Invalid enum value');
+        if (body?.role !== undefined) return invalid('role', 'Unrecognized key');
+        if (!/^\d+$/.test(String(body?.roleId ?? ''))) return invalid('roleId', 'A role id');
+        const a = assignable(g.staff, body.roleId);
+        if (a.error) return a.error;
         if (staff().some((u) => u.email.toLowerCase() === String(body.email).toLowerCase())) {
           return problem(409, 'VALIDATION_FAILED', {
             title: 'A user with that email already exists',
@@ -94,7 +137,7 @@ export function systemRoutes(ctx) {
           id: String(++db.seq),
           name: body.name,
           email: body.email,
-          role: body.role,
+          role: a.role.key,
           status: 'invited',
           lockedUntil: null,
           lastLoginAt: null,
@@ -104,8 +147,8 @@ export function systemRoutes(ctx) {
         };
         staff().push(user);
         db.authTokens.set(`accept:${token()}`, user.id);
-        audit(g.staff, 'create', 'users', user.id, user.email);
-        return json(201, publicStaff(user));
+        audit(g.staff, 'create', 'users', user.id, user.email, { before: null, after: snap(user) });
+        return json(201, pub(user));
       },
     ],
     [
@@ -115,7 +158,7 @@ export function systemRoutes(ctx) {
         const g = guard(req, 'users');
         if (g.error) return g.error;
         const u = staff().find((x) => x.id === params[0]);
-        return u ? json(200, publicStaff(u)) : problem(404, 'NOT_FOUND');
+        return u ? json(200, pub(u)) : problem(404, 'NOT_FOUND');
       },
     ],
     [
@@ -127,17 +170,23 @@ export function systemRoutes(ctx) {
         const u = staff().find((x) => x.id === params[0]);
         if (!u) return problem(404, 'NOT_FOUND');
         const b = body ?? {};
-        if (b.role !== undefined && !ROLES.includes(b.role))
-          return invalid('role', 'Invalid enum value');
+        if (b.role !== undefined) return invalid('role', 'Unrecognized key');
+        if (b.roleId !== undefined && !/^\d+$/.test(String(b.roleId)))
+          return invalid('roleId', 'A role id');
         if (b.status !== undefined && !['active', 'disabled'].includes(b.status))
           return invalid('status', 'Invalid enum value');
         if (b.email !== undefined && !EMAIL_RE.test(b.email))
           return invalid('email', 'Invalid email');
-        if (b.role !== undefined && b.role !== u.role && u.id === g.staff.id) {
-          return problem(403, 'FORBIDDEN', { title: 'You cannot change your own role' });
+        if (!coversUser(g.staff, u)) return forbidden('This user has permissions you do not hold');
+        let newRole = null;
+        if (b.roleId !== undefined && String(b.roleId) !== roleRef(u.role, db.roles).id) {
+          if (u.id === g.staff.id) return forbidden('You cannot change your own role');
+          const a = assignable(g.staff, b.roleId);
+          if (a.error) return a.error;
+          newRole = a.role;
         }
         const isActiveAdmin = u.role === 'admin' && (u.status ?? 'active') === 'active';
-        if (isActiveAdmin && b.role && b.role !== 'admin' && !activeAdmins(u.id))
+        if (isActiveAdmin && newRole && newRole.key !== 'admin' && !activeAdmins(u.id))
           return problem(409, 'LAST_ADMIN');
         if (isActiveAdmin && b.status === 'disabled' && !activeAdmins(u.id))
           return problem(409, 'LAST_ADMIN');
@@ -152,13 +201,14 @@ export function systemRoutes(ctx) {
         ) {
           return problem(409, 'CONFLICT');
         }
-        const before = publicStaff(u);
-        for (const k of ['name', 'email', 'role', 'status']) if (b[k] !== undefined) u[k] = b[k];
+        const before = snap(u);
+        for (const k of ['name', 'email', 'status']) if (b[k] !== undefined) u[k] = b[k];
+        if (newRole) u.role = newRole.key;
         if (b.unlock === true) Object.assign(u, { lockedUntil: null, failedLogins: 0 });
         if (b.status === 'disabled') revokeSessions(u.id);
         u.updatedAt = nowIso();
-        audit(g.staff, 'update', 'users', u.id, u.email, { before, after: publicStaff(u) });
-        return json(200, publicStaff(u));
+        audit(g.staff, 'update', 'users', u.id, u.email, { before, after: snap(u) });
+        return json(200, pub(u));
       },
     ],
     [
@@ -172,11 +222,148 @@ export function systemRoutes(ctx) {
         const u = staff()[i];
         if (u.id === g.staff.id)
           return problem(403, 'FORBIDDEN', { title: 'You cannot delete your own account' });
+        if (!coversUser(g.staff, u)) return forbidden('This user has permissions you do not hold');
         if (u.role === 'admin' && (u.status ?? 'active') === 'active' && !activeAdmins(u.id))
           return problem(409, 'LAST_ADMIN');
         staff().splice(i, 1);
         revokeSessions(u.id);
-        audit(g.staff, 'delete', 'users', u.id, u.email, { before: publicStaff(u), after: null });
+        audit(g.staff, 'delete', 'users', u.id, u.email, { before: snap(u), after: null });
+        return json(200, { deleted: true });
+      },
+    ],
+    // ---------- roles (v1.1.0) ----------
+    [
+      'GET',
+      /^\/api\/v1\/admin\/permissions$/,
+      ({ req }) => {
+        const g = guard(req, null);
+        return g.error ?? json(200, clone(db.permissionCatalog));
+      },
+    ],
+    [
+      'GET',
+      /^\/api\/v1\/admin\/roles$/,
+      ({ req }) => {
+        const g = guard(req, 'roles');
+        if (g.error) return g.error;
+        const ordered = [...db.roles].sort(
+          (a, b) => Number(b.isSystem) - Number(a.isSystem) || Number(a.id) - Number(b.id),
+        );
+        return json(200, ordered.map(publicRole));
+      },
+    ],
+    [
+      'GET',
+      /^\/api\/v1\/admin\/roles\/([^/]+)$/,
+      ({ req, params }) => {
+        const g = guard(req, 'roles');
+        if (g.error) return g.error;
+        const r = roleById(params[0]);
+        return r
+          ? json(200, publicRole(r))
+          : problem(404, 'NOT_FOUND', { title: 'Role not found' });
+      },
+    ],
+    [
+      'POST',
+      /^\/api\/v1\/admin\/roles$/,
+      ({ req, body }) => {
+        const g = guard(req, 'roles', { write: true });
+        if (g.error) return g.error;
+        const b = body ?? {};
+        if (!String(b.nameAr ?? '').trim()) return invalid('nameAr', 'Required');
+        if (!Array.isArray(b.permissions)) return invalid('permissions', 'Required');
+        if (b.key !== undefined && !ROLE_KEY_RE.test(b.key)) return invalid('key', 'Invalid key');
+        const key = b.key ?? `custom-${token().slice(0, 6)}`;
+        if (RESERVED_ROLE_KEYS.includes(key)) return invalid('key', 'Reserved');
+        const n = normalise(b.permissions, db.permissionCatalog);
+        if (n.unknown)
+          return invalid('permissions', `Unknown permission(s): ${n.unknown.join(', ')}`);
+        if (!isSubset(g.staff.permissions, n.keys))
+          return forbidden('You can only grant permissions you hold yourself');
+        if (db.roles.some((r) => r.key === key))
+          return problem(409, 'ROLE_KEY_TAKEN', {
+            title: `A role with the key "${key}" already exists`,
+          });
+        const at = nowIso();
+        const role = {
+          id: String(++db.seq),
+          key,
+          nameAr: String(b.nameAr).trim(),
+          nameEn: b.nameEn?.trim() || null,
+          descriptionAr: b.descriptionAr?.trim() || null,
+          descriptionEn: b.descriptionEn?.trim() || null,
+          isSystem: false,
+          permissions: n.keys,
+          createdAt: at,
+          updatedAt: at,
+        };
+        db.roles.push(role);
+        audit(g.staff, 'create', 'roles', role.id, role.nameAr, {
+          before: null,
+          after: clone(role),
+        });
+        return json(201, publicRole(role));
+      },
+    ],
+    [
+      'PATCH',
+      /^\/api\/v1\/admin\/roles\/([^/]+)$/,
+      ({ req, params, body }) => {
+        const g = guard(req, 'roles', { write: true });
+        if (g.error) return g.error;
+        const r = roleById(params[0]);
+        if (!r) return problem(404, 'NOT_FOUND', { title: 'Role not found' });
+        const b = body ?? {};
+        if (b.key !== undefined) return invalid('key', 'Unrecognized key');
+        if (r.key === 'admin')
+          return problem(409, 'ROLE_IMMUTABLE', { title: 'The admin role cannot be changed' });
+        if (g.staff.roleKey === r.key) return forbidden('You cannot edit your own role');
+        if (!isSubset(g.staff.permissions, r.permissions))
+          return forbidden('This role holds permissions you do not have');
+        let keys = null;
+        if (b.permissions !== undefined) {
+          const n = normalise(b.permissions, db.permissionCatalog);
+          if (n.unknown)
+            return invalid('permissions', `Unknown permission(s): ${n.unknown.join(', ')}`);
+          if (!isSubset(g.staff.permissions, n.keys))
+            return forbidden('You can only grant permissions you hold yourself');
+          keys = n.keys;
+        }
+        if (b.nameAr !== undefined && !String(b.nameAr).trim())
+          return invalid('nameAr', 'Required');
+        const before = clone(r);
+        if (keys) r.permissions = keys;
+        for (const k of ['nameAr', 'nameEn', 'descriptionAr', 'descriptionEn']) {
+          if (b[k] !== undefined)
+            r[k] = k === 'nameAr' ? String(b[k]).trim() : b[k]?.trim() || null;
+        }
+        r.updatedAt = nowIso();
+        audit(g.staff, 'update', 'roles', r.id, r.nameAr, { before, after: clone(r) });
+        return json(200, publicRole(r));
+      },
+    ],
+    [
+      'DELETE',
+      /^\/api\/v1\/admin\/roles\/([^/]+)$/,
+      ({ req, params }) => {
+        const g = guard(req, 'roles', { write: true });
+        if (g.error) return g.error;
+        const r = roleById(params[0]);
+        if (!r) return problem(404, 'NOT_FOUND', { title: 'Role not found' });
+        if (r.isSystem)
+          return problem(409, 'ROLE_IMMUTABLE', { title: 'A system role cannot be deleted' });
+        if (g.staff.roleKey === r.key) return forbidden('You cannot delete your own role');
+        if (!isSubset(g.staff.permissions, r.permissions))
+          return forbidden('This role holds permissions you do not have');
+        const count = userCount(r.key);
+        if (count > 0)
+          return problem(409, 'ROLE_IN_USE', {
+            title: `This role is still assigned to ${count} user(s)`,
+            userCount: count,
+          });
+        db.roles.splice(db.roles.indexOf(r), 1);
+        audit(g.staff, 'delete', 'roles', r.id, r.nameAr, { before: clone(r), after: null });
         return json(200, { deleted: true });
       },
     ],
@@ -378,8 +565,13 @@ export function systemRoutes(ctx) {
         if (g.error) return g.error;
         const hit = [...db.staffSessions.entries()].find(([, s]) => s.id === params[0]);
         if (!hit) return problem(404, 'NOT_FOUND', { title: 'Session not found' });
-        if (hit[1].user.id !== g.staff.id && g.staff.role !== 'admin')
-          return problem(403, 'FORBIDDEN');
+        if (hit[1].user.id !== g.staff.id) {
+          // v1.1.0: users.manage, and a role covering the session owner's.
+          const owner = staff().find((u) => u.id === hit[1].user.id);
+          if (!g.staff.permissions.has(WILDCARD) && !g.staff.permissions.has('users.manage'))
+            return problem(403, 'FORBIDDEN');
+          if (owner && !coversUser(g.staff, owner)) return problem(403, 'FORBIDDEN');
+        }
         db.staffSessions.delete(hit[0]);
         return json(200, { ok: true });
       },

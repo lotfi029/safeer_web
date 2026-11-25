@@ -6,6 +6,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { filter } from 'rxjs';
 import { StaffSessionStore } from '../../../core/auth/staff-session.store';
 import { LocaleService } from '../../../core/i18n/locale.service';
+import type { StaffRoleRef } from '../../../core/api/models';
+import { roleName } from '../../../core/auth/role-name';
 import { LangSwitch } from '../../../layout/public-shell/lang-switch';
 import { ThemeToggle } from '../../../layout/public-shell/theme-toggle';
 import { DigitsPipe } from '../../../shared/pipes/format';
@@ -125,7 +127,7 @@ export class AdminNavDrawer {
 /**
  * Dashboard chrome (prototype `adminShell`): the sidebar at xl+, an icon rail at lg, and a drawer
  * below lg; a top bar with language, theme, "view site" and the signed-in staff member. Menu items
- * come from `GET /admin/roles` (AdminNav), badges from `GET /admin/overview` (AdminBadges).
+ * come from `GET /admin/me` → `permissions` (AdminNav), badges from `GET /admin/overview` (AdminBadges).
  */
 @Component({
   selector: 'app-admin-shell',
@@ -220,9 +222,7 @@ export class AdminNavDrawer {
               </span>
               <span class="flex flex-col leading-tight">
                 <span class="max-w-44 truncate text-sm">{{ user.name }}</span>
-                <span class="text-xs font-medium text-text-muted">{{
-                  'admin.shell.roles.' + user.role | transloco
-                }}</span>
+                <span class="text-xs font-medium text-text-muted">{{ roleName(user.role) }}</span>
               </span>
             </a>
           }
@@ -247,6 +247,10 @@ export class AdminShell {
 
   protected readonly me = this.store.me;
   /** First letter of the name; placeholder names like "[…]" get an icon instead. */
+  protected roleName(role: StaffRoleRef): string {
+    return roleName(role, this.locale.lang());
+  }
+
   protected readonly initial = computed(() => {
     const first = this.me()?.name?.trim()[0] ?? '';
     return /\p{L}/u.test(first) ? first : null;

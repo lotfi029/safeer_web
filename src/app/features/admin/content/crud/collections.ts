@@ -8,7 +8,7 @@ const bool = (row: ContentRow, key: string) => row[key] === true;
 export const WORK_AREA_ITEMS: CrudConfig = {
   id: 'workAreaItems',
   endpoint: 'work-area-items',
-  area: 'content',
+  module: 'workAreas',
   publish: 'route',
   sortable: true,
   fields: [
@@ -25,7 +25,7 @@ export const WORK_AREA_ITEMS: CrudConfig = {
 export const ORG_POSITIONS: CrudConfig = {
   id: 'orgPositions',
   endpoint: 'org-positions',
-  area: 'content',
+  module: 'orgChart',
   publish: 'field',
   sortable: true,
   fields: [
@@ -69,7 +69,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   workAreas: {
     id: 'workAreas',
     endpoint: 'work-areas',
-    area: 'content',
+    module: 'workAreas',
     publish: 'route',
     sortable: true,
     fields: [
@@ -82,7 +82,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   board: {
     id: 'board',
     endpoint: 'board',
-    area: 'content',
+    module: 'board',
     publish: 'route',
     sortable: true,
     searchable: true,
@@ -117,7 +117,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   testimonials: {
     id: 'testimonials',
     endpoint: 'testimonials',
-    area: 'inbox',
+    module: 'testimonials',
     publish: 'status',
     sortable: true,
     searchable: true,
@@ -152,7 +152,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   themes: {
     id: 'themes',
     endpoint: 'testimonial-themes',
-    area: 'inbox',
+    module: 'testimonials',
     sortable: true,
     fields: [
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },
@@ -172,7 +172,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   partners: {
     id: 'partners',
     endpoint: 'partners',
-    area: 'content',
+    module: 'partners',
     publish: 'route',
     sortable: true,
     searchable: true,
@@ -200,7 +200,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   docCategories: {
     id: 'docCategories',
     endpoint: 'doc-categories',
-    area: 'content',
+    module: 'documents',
     publish: 'field',
     sortable: true,
     fields: [
@@ -229,7 +229,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   documents: {
     id: 'documents',
     endpoint: 'documents',
-    area: 'content',
+    module: 'documents',
     publish: 'route',
     searchable: true,
     fields: [
@@ -268,7 +268,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   licences: {
     id: 'licences',
     endpoint: 'licences',
-    area: 'content',
+    module: 'licences',
     publish: 'route',
     sortable: true,
     fields: [
@@ -302,7 +302,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   stats: {
     id: 'stats',
     endpoint: 'stats',
-    area: 'content',
+    module: 'stats',
     publish: 'route',
     sortable: true,
     fields: [
@@ -316,7 +316,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   aboutItems: {
     id: 'aboutItems',
     endpoint: 'about-items',
-    area: 'content',
+    module: 'aboutItems',
     publish: 'route',
     sortable: true,
     tabs: {
@@ -341,7 +341,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   pages: {
     id: 'pages',
     endpoint: 'pages',
-    area: 'content',
+    module: 'pages',
     publish: 'route',
     searchable: true,
     fields: [
@@ -381,7 +381,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   pageSections: {
     id: 'pageSections',
     endpoint: 'page-sections',
-    area: 'content',
+    module: 'pages',
     publish: 'route',
     sortable: true,
     fields: [
@@ -444,12 +444,11 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
       [String(r['sectionKey'] ?? ''), pick(r, 'label', l)].filter(Boolean).join(' · '),
     thumb: 'imageAssetId',
   },
-  /** Redirects (content; delete is admin-only). Chains and duplicates come back as REDIRECT_CHAIN. */
+  /** Redirects (delete needs `redirects.delete`, admin-only among the seeded roles). Chains and duplicates come back as REDIRECT_CHAIN. */
   redirects: {
     id: 'redirects',
     endpoint: 'redirects',
-    area: 'content',
-    deleteArea: 'redirects.delete',
+    module: 'redirects',
     searchable: true,
     fields: [
       {
@@ -482,7 +481,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   news: {
     id: 'news',
     endpoint: 'news',
-    area: 'content',
+    module: 'news',
     publish: 'route',
     fields: [
       { key: 'title', type: 'text', label: 'title', bilingual: true, required: true, max: 191 },
@@ -519,7 +518,7 @@ export const COLLECTIONS: Record<string, CrudConfig> = {
   newsCategories: {
     id: 'newsCategories',
     endpoint: 'news-categories',
-    area: 'content',
+    module: 'news',
     sortable: true,
     fields: [
       { key: 'slug', type: 'slug', label: 'slug', required: true, max: 180 },

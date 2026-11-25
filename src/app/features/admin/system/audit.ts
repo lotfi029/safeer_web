@@ -20,6 +20,7 @@ const PAGE = 50;
 /** Entity types the API audits (audit.interceptor.ts and the services that set auditContext). */
 export const AUDIT_ENTITIES = [
   'users',
+  'roles',
   'sessions',
   'site_settings',
   'mail_settings',
@@ -63,7 +64,7 @@ export function diffLines(diff: AuditRow['diff']): DiffLine[] {
 }
 
 /**
- * Audit log (admin only, `GET admin/audit`): newest first, filtered by entity type and actor (the
+ * Audit log (`audit.view`, `GET admin/audit`): newest first, filtered by entity type and actor (the
  * API's only filters), each row expanding to the fields that changed.
  */
 @Component({

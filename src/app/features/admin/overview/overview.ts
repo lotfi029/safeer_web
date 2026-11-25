@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { AdminOverview } from '../../../core/api/models';
 import { StaffSessionStore } from '../../../core/auth/staff-session.store';
+import type { PermissionKey } from '../../../core/auth/permissions';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import { SeoService } from '../../../core/seo/seo.service';
 import { DigitsPipe, LocalDatePipe, RelTimePipe } from '../../../shared/pipes/format';
@@ -109,12 +110,12 @@ const STATS: readonly { key: StatKey; icon: IconName }[] = [
             } @else {
               <p class="t-muted m-0">{{ 'admin.overview.alerts.none' | transloco }}</p>
             }
-            @if (canContent()) {
+            @if (quickActions().length) {
               <h2 class="t-h4 m-0 mt-2 text-heading">
                 {{ 'admin.overview.quick.title' | transloco }}
               </h2>
               <ul class="m-0 flex list-none flex-col gap-2 p-0" data-testid="quick-actions">
-                @for (q of quick; track q.key) {
+                @for (q of quickActions(); track q.key) {
                   <li>
                     <a
                       class="tile flex min-h-12 items-center gap-3 font-semibold text-heading no-underline"
@@ -198,14 +199,22 @@ export class AdminOverviewPage {
     ].filter((x) => x.on);
   });
 
-  protected readonly showAudit = computed(() => this.store.can('audit'));
-  protected readonly canContent = computed(() => this.store.can('content'));
+  protected readonly showAudit = computed(() => this.store.can('audit.view'));
   /** Prototype "quick actions" (content roles). */
-  protected readonly quick = [
-    { key: 'addNews', path: '/admin/news/new', query: null },
-    { key: 'addDocument', path: '/admin/documents', query: null },
-    { key: 'addPartner', path: '/admin/partners', query: null },
+  private readonly quick: readonly {
+    key: string;
+    path: string;
+    query: null;
+    permission: PermissionKey;
+  }[] = [
+    { key: 'addNews', path: '/admin/news/new', query: null, permission: 'news.manage' },
+    { key: 'addDocument', path: '/admin/documents', query: null, permission: 'documents.manage' },
+    { key: 'addPartner', path: '/admin/partners', query: null, permission: 'partners.manage' },
   ];
+  /** Each quick action needs the permission to create what it opens (v1.1.0). */
+  protected readonly quickActions = computed(() =>
+    this.quick.filter((q) => this.store.can(q.permission)),
+  );
 
   constructor() {
     inject(SeoService).noindex('Admin', this.locale.lang());

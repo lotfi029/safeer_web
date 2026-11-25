@@ -30,6 +30,7 @@ import { Pagination } from '../../../shared/ui/pagination/pagination';
 import { ToastService } from '../../../shared/ui/toast/toast';
 import { AdminPageHead } from '../layout/admin-page-head';
 import { confirmAction } from '../shared/confirm-dialog';
+import { StaffSessionStore } from '../../../core/auth/staff-session.store';
 
 const STATUSES: readonly SubscriberStatus[] = ['subscribed', 'pending', 'unsubscribed'];
 const PAGE = 20;
@@ -120,15 +121,17 @@ const PAGE = 20;
                 [class.pill-warn]="statusOf(s) === 'unsubscribed'"
                 >{{ 'admin.system.newsletter.status.' + statusOf(s) | transloco }}</span
               >
-              <button
-                type="button"
-                class="icon-btn size-11 text-alert"
-                [attr.aria-label]="('admin.common.delete' | transloco) + ': ' + s.email"
-                [disabled]="busy()"
-                (click)="remove(s)"
-              >
-                <app-icon name="trash-2" [size]="18" />
-              </button>
+              @if (canDelete()) {
+                <button
+                  type="button"
+                  class="icon-btn size-11 text-alert"
+                  [attr.aria-label]="('admin.common.delete' | transloco) + ': ' + s.email"
+                  [disabled]="busy()"
+                  (click)="remove(s)"
+                >
+                  <app-icon name="trash-2" [size]="18" />
+                </button>
+              }
             </li>
           }
         </ul>
@@ -144,6 +147,8 @@ const PAGE = 20;
   `,
 })
 export class AdminNewsletter {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canDelete = computed(() => this.store.can('newsletter.delete'));
   readonly status = input<string | null>(null);
   readonly page = input(1, { transform: (v: unknown) => numberAttribute(v, 1) });
 

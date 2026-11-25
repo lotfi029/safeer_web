@@ -30,6 +30,7 @@ import { AdminPageHead } from '../../layout/admin-page-head';
 import { confirmAction } from '../../shared/confirm-dialog';
 import { pick } from '../crud/crud-config';
 import { MediaStore } from '../media/media-store';
+import { StaffSessionStore } from '../../../../core/auth/staff-session.store';
 
 export type NewsFilter = 'published' | 'draft' | 'legacy';
 const FILTERS: readonly NewsFilter[] = ['published', 'draft', 'legacy'];
@@ -81,9 +82,11 @@ export function newsQuery(filter: string | null, q: string | null, page: number)
       >
         {{ 'admin.content.newsCategories.title' | transloco }}
       </a>
-      <a pageActions appButton size="sm" [routerLink]="locale.link('/admin/news/new')">
-        <app-icon name="plus" [size]="18" />{{ 'admin.content.news.new' | transloco }}
-      </a>
+      @if (canManage()) {
+        <a pageActions appButton size="sm" [routerLink]="locale.link('/admin/news/new')">
+          <app-icon name="plus" [size]="18" />{{ 'admin.content.news.new' | transloco }}
+        </a>
+      }
     </app-admin-page-head>
 
     <div class="flex flex-col gap-5">
@@ -131,7 +134,7 @@ export function newsQuery(filter: string | null, q: string | null, page: number)
         </label>
       </div>
 
-      @if (legacyCount()) {
+      @if (legacyCount() && canDelete()) {
         <div
           class="note note-warn flex flex-wrap items-center gap-3"
           role="region"
@@ -236,6 +239,9 @@ export function newsQuery(filter: string | null, q: string | null, page: number)
   `,
 })
 export class AdminNewsList {
+  private readonly store = inject(StaffSessionStore);
+  protected readonly canManage = computed(() => this.store.can('news.manage'));
+  protected readonly canDelete = computed(() => this.store.can('news.delete'));
   readonly filter = input<string | null>(null);
   readonly q = input<string | null>(null);
   readonly page = input(1, { transform: (v: unknown) => numberAttribute(v, 1) });

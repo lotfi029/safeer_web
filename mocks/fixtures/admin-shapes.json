@@ -1,10 +1,15 @@
 {
-  "_source": "Recorded from safeer_api by scripts/record-admin-shapes.mjs (shapes only, no values) (hand-edited for the governance/contact and org-chart changes; re-record once the API ships them)",
+  "_source": "Recorded from safeer_api by scripts/record-admin-shapes.mjs (shapes only, no values)",
   "me": {
     "id": "string",
     "name": "string",
     "email": "string",
-    "role": "string",
+    "role": {
+      "id": "string",
+      "key": "string",
+      "nameAr": "string",
+      "nameEn": "string"
+    },
     "status": "string",
     "isLocked": "boolean",
     "lockedUntil": null,
@@ -12,20 +17,50 @@
     "lastLoginAt": "string",
     "createdAt": "string",
     "updatedAt": "string",
+    "permissions": ["string"],
     "csrfToken": "string"
   },
-  "roles": {
-    "roles": ["string"],
-    "matrix": {
-      "content": ["string"],
-      "redirects.delete": ["string"],
-      "inbox": ["string"],
-      "inbox.delete": ["string"],
-      "users": ["string"],
-      "settings": ["string"],
-      "audit": ["string"]
+  "roles": [
+    {
+      "id": "string",
+      "key": "string",
+      "nameAr": "string",
+      "nameEn": "string",
+      "descriptionAr": "string",
+      "descriptionEn": "string",
+      "isSystem": "boolean",
+      "permissions": ["string"],
+      "userCount": "number",
+      "createdAt": "string",
+      "updatedAt": "string"
     }
+  ],
+  "permissions": {
+    "actions": ["string"],
+    "groups": [
+      {
+        "key": "string",
+        "labelAr": "string",
+        "labelEn": "string",
+        "modules": [
+          {
+            "key": "string",
+            "labelAr": "string",
+            "labelEn": "string",
+            "actions": ["string"]
+          }
+        ]
+      }
+    ]
   },
+  "assignableRoles": [
+    {
+      "id": "string",
+      "key": "string",
+      "nameAr": "string",
+      "nameEn": "string"
+    }
+  ],
   "overview": {
     "statCards": {
       "unreadMessages": "number"
@@ -77,8 +112,8 @@
     "body": "string",
     "status": "string",
     "locale": "string",
-    "ipHash": "string",
-    "userAgent": "string",
+    "ipHash": null,
+    "userAgent": null,
     "createdAt": "string",
     "updatedAt": "string",
     "replies": []
@@ -89,9 +124,9 @@
         "id": "string",
         "email": "string",
         "locale": "string",
-        "confirmedAt": "string",
+        "confirmedAt": null,
         "ipHash": "string",
-        "unsubscribedAt": "string",
+        "unsubscribedAt": null,
         "createdAt": "string"
       }
     ],
@@ -142,6 +177,7 @@
         "roleAr": "string",
         "roleEn": "string",
         "grp": "string",
+        "orgPositionId": "string",
         "isLead": "boolean",
         "bioAr": null,
         "bioEn": null,
@@ -149,8 +185,7 @@
         "isPublished": "boolean",
         "sortOrder": "number",
         "createdAt": "string",
-        "updatedAt": "string",
-        "orgPositionId": null
+        "updatedAt": "string"
       }
     ],
     "total": "number",
@@ -169,7 +204,7 @@
         "status": "string",
         "isFeatured": "boolean",
         "source": "string",
-        "sourceMessageId": "string",
+        "sourceMessageId": null,
         "sortOrder": "number",
         "createdAt": "string",
         "updatedAt": "string"
@@ -244,6 +279,48 @@
         "assetId": "string",
         "docDate": "string",
         "downloadCount": "number",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "licences": {
+    "data": [
+      {
+        "id": "string",
+        "titleAr": "string",
+        "titleEn": "string",
+        "number": null,
+        "issuerAr": null,
+        "issuerEn": null,
+        "issuedOn": null,
+        "expiresOn": null,
+        "assetId": "string",
+        "isPrimary": "boolean",
+        "isPublished": "boolean",
+        "sortOrder": "number",
+        "createdAt": "string",
+        "updatedAt": "string"
+      }
+    ],
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  },
+  "orgPositions": {
+    "data": [
+      {
+        "id": "string",
+        "nameAr": "string",
+        "nameEn": "string",
+        "parentId": "string",
+        "tone": "string",
+        "showHolders": "boolean",
         "isPublished": "boolean",
         "sortOrder": "number",
         "createdAt": "string",
@@ -351,10 +428,10 @@
         "slug": "string",
         "titleAr": "string",
         "titleEn": "string",
-        "excerptAr": null,
-        "excerptEn": null,
-        "bodyAr": "string",
-        "bodyEn": "string",
+        "excerptAr": "string",
+        "excerptEn": "string",
+        "bodyAr": null,
+        "bodyEn": null,
         "categoryId": "string",
         "coverAssetId": "string",
         "publishedOn": "string",
@@ -400,7 +477,7 @@
         "widthPx": "number",
         "heightPx": "number",
         "altAr": "string",
-        "altEn": null,
+        "altEn": "string",
         "uploadedBy": null,
         "createdAt": "string",
         "updatedAt": "string"
@@ -415,7 +492,12 @@
       "id": "string",
       "name": "string",
       "email": "string",
-      "role": "string",
+      "role": {
+        "id": "string",
+        "key": "string",
+        "nameAr": "string",
+        "nameEn": "string"
+      },
       "status": "string",
       "isLocked": "boolean",
       "lockedUntil": null,
@@ -481,9 +563,9 @@
     "fromEmail": "string",
     "replyTo": "string",
     "notifyEmail": "string",
-    "lastTestAt": null,
-    "lastTestOk": null,
-    "lastTestError": null,
+    "lastTestAt": "string",
+    "lastTestOk": "boolean",
+    "lastTestError": "string",
     "updatedBy": null,
     "updatedAt": "string",
     "passwordIsSet": "boolean"
@@ -537,7 +619,46 @@
         "entityType": "string",
         "entityId": "string",
         "entityLabel": "string",
-        "diff": null,
+        "diff": {
+          "after": {
+            "id": "string",
+            "name": "string",
+            "role": {
+              "id": "string",
+              "key": "string",
+              "nameAr": "string",
+              "nameEn": "string"
+            },
+            "email": "string",
+            "status": "string",
+            "isLocked": "boolean",
+            "createdAt": "string",
+            "updatedAt": "string",
+            "lastLoginAt": null,
+            "lockedUntil": null,
+            "permissions": ["string"],
+            "failedLogins": "number"
+          },
+          "before": {
+            "id": "string",
+            "name": "string",
+            "role": {
+              "id": "string",
+              "key": "string",
+              "nameAr": "string",
+              "nameEn": "string"
+            },
+            "email": "string",
+            "status": "string",
+            "isLocked": "boolean",
+            "createdAt": "string",
+            "updatedAt": "string",
+            "lastLoginAt": null,
+            "lockedUntil": "string",
+            "permissions": ["string"],
+            "failedLogins": "number"
+          }
+        },
         "ipHash": "string",
         "createdAt": "string"
       }
@@ -560,47 +681,5 @@
       "lastSeenAt": "string",
       "isCurrent": "boolean"
     }
-  ],
-  "licences": {
-    "data": [
-      {
-        "id": "string",
-        "titleAr": "string",
-        "titleEn": "string",
-        "number": "string",
-        "issuerAr": "string",
-        "issuerEn": "string",
-        "issuedOn": "string",
-        "expiresOn": "string",
-        "assetId": "string",
-        "isPrimary": "boolean",
-        "isPublished": "boolean",
-        "sortOrder": "number",
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ],
-    "total": "number",
-    "page": "number",
-    "limit": "number"
-  },
-  "orgPositions": {
-    "data": [
-      {
-        "id": "string",
-        "nameAr": "string",
-        "nameEn": "string",
-        "parentId": null,
-        "tone": "string",
-        "showHolders": "boolean",
-        "isPublished": "boolean",
-        "sortOrder": "number",
-        "createdAt": "string",
-        "updatedAt": "string"
-      }
-    ],
-    "total": "number",
-    "page": "number",
-    "limit": "number"
-  }
+  ]
 }

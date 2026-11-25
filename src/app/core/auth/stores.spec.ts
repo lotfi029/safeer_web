@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { csrfInterceptor, problemDetailsInterceptor } from '../http/interceptors';
 import { CsrfTokens } from './csrf-tokens';
-import { ROLE_MATRIX } from './role-matrix';
 import { StaffSessionStore } from './staff-session.store';
 
 function setup() {
@@ -28,51 +27,54 @@ function setup() {
 const tick = () => new Promise((r) => setTimeout(r));
 
 describe('StaffSessionStore', () => {
-  it('loads me + csrf token + role matrix from GET /admin/roles (B17)', async () => {
+  const me = (permissions: string[], extra: Record<string, unknown> = {}) => ({
+    id: '1',
+    name: 'x',
+    email: 'a@b.c',
+    role: { id: '2', key: 'editor', nameAr: 'محرر محتوى', nameEn: 'Editor' },
+    isLocked: false,
+    lastLoginAt: null,
+    csrfToken: 't1',
+    permissions,
+    ...extra,
+  });
+
+  it('loads me, the csrf token and the role permissions from GET /admin/me (v1.1.0)', async () => {
     const { ctrl, tokens } = setup();
     const store = TestBed.inject(StaffSessionStore);
     const loaded = store.ensureLoaded();
-    ctrl.expectOne('/api/v1/admin/me').flush({
-      id: '1',
-      name: 'x',
-      email: 'a@b.c',
-      role: 'editor',
-      isLocked: false,
-      lastLoginAt: null,
-      csrfToken: 't1',
-    });
-    await tick();
-    ctrl.expectOne('/api/v1/admin/roles').flush({
-      roles: ['admin', 'editor'],
-      matrix: { content: ['admin', 'editor'], users: ['admin'] },
-    });
+    ctrl.expectOne('/api/v1/admin/me').flush(me(['news.view', 'news.manage', 'pages.view']));
     expect(await loaded).toBe(true);
+    ctrl.verify(); // no second call: there is no matrix to fetch any more
     expect(tokens.staff()).toBe('t1');
-    expect(store.can('content')).toBe(true);
-    expect(store.can('users')).toBe(false);
-    expect(store.can('inbox')).toBe(false);
+    expect(store.role()?.key).toBe('editor');
+    expect(store.can('news.manage')).toBe(true);
+    expect(store.can('pages.view')).toBe(true);
+    expect(store.can('news.delete')).toBe(false);
+    expect(store.can('users.view')).toBe(false);
   });
 
-  it('falls back to the typed matrix when /admin/roles fails', async () => {
+  it('treats * as every permission', async () => {
     const { ctrl } = setup();
     const store = TestBed.inject(StaffSessionStore);
     const loaded = store.ensureLoaded();
-    ctrl.expectOne('/api/v1/admin/me').flush({
-      id: '1',
-      name: 'x',
-      email: 'a@b.c',
-      role: 'support',
-      isLocked: false,
-      lastLoginAt: null,
-      csrfToken: 't',
-    });
-    await tick();
-    ctrl.expectOne('/api/v1/admin/roles').flush({}, { status: 404, statusText: 'Not Found' });
+    ctrl.expectOne('/api/v1/admin/me').flush(me(['*']));
     await loaded;
-    expect(store.matrix()).toBe(ROLE_MATRIX);
-    expect(store.can('inbox')).toBe(true);
-    expect(store.can('content')).toBe(false);
-    expect(store.can('settings')).toBe(false);
+    expect(store.can('users.delete')).toBe(true);
+    expect(store.can('audit.view')).toBe(true);
+  });
+
+  it('after login reads admin/me for the permissions; grants nothing if that read fails', async () => {
+    const { ctrl } = setup();
+    const store = TestBed.inject(StaffSessionStore);
+    const done = store.login('a@b.c', 'pw');
+    ctrl.expectOne('/api/v1/admin/auth/login').flush({ user: me([]), csrfToken: 't2' });
+    await tick();
+    ctrl.expectOne('/api/v1/admin/me').flush({}, { status: 500, statusText: 'x' });
+    await done;
+    expect(store.isAuthenticated()).toBe(true);
+    expect(store.permissions().size).toBe(0);
+    expect(store.can('news.view')).toBe(false);
   });
 
   it('is anonymous on 401 and shares one in-flight load', async () => {

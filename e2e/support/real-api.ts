@@ -9,6 +9,7 @@ import { MOCK_API_URL, usingMockApi } from './env';
 import {
   expireLock,
   insertAuthToken,
+  seedRole,
   seedStaff,
   type StaffRole,
   type StaffStatus,
@@ -24,24 +25,43 @@ export interface StaffAccount {
   name: string;
   email: string;
   password: string;
-  role: StaffRole;
+  /** A system role key, or a custom one from `customRole()`. */
+  role: string;
 }
 
 /**
- * A staff login for `role`. Real API: a fresh seeded user (its own login-limiter budget). Mock: the
- * fixture account, or a fresh mock user when a status/lock variant (or `fresh`) is asked for.
+ * A custom role holding exactly `permissions` (write them closed: delete ⇒ manage ⇒ view). Real API:
+ * seeded in MySQL (real-db.ts, removed with the file's seeded users); mock: the `/__role` hook.
+ * Returns its key, for `staffAccount()`.
+ */
+export async function customRole(permissions: string[], label = 'role'): Promise<string> {
+  if (!usingMockApi) return seedRole(permissions, label);
+  const ctx = await pwRequest.newContext();
+  try {
+    const res = await ctx.post(`${MOCK_API_URL}/__role`, { data: { permissions, label } });
+    return ((await res.json()) as { key: string }).key;
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/**
+ * A staff login for `role` (a system role key, or one from `customRole()`). Real API: a fresh seeded
+ * user (its own login-limiter budget). Mock: the fixture account, or a fresh mock user when a
+ * status/lock variant (or `fresh`, or a custom role) is asked for.
  */
 export async function staffAccount(
-  role: StaffRole,
+  role: StaffRole | (string & {}),
   opts: { status?: StaffStatus; locked?: boolean; fresh?: boolean } = {},
 ): Promise<StaffAccount> {
   if (!usingMockApi) {
     const s = await seedStaff(role, opts);
     return { ...s, id: String(s.id) };
   }
-  if (!opts.status && !opts.locked && !opts.fresh) {
+  const fixtureId = ({ admin: '1', editor: '3', support: '4' } as Record<string, string>)[role];
+  if (fixtureId && !opts.status && !opts.locked && !opts.fresh) {
     return {
-      id: { admin: '1', editor: '3', support: '4' }[role],
+      id: fixtureId,
       name: '[...]',
       email: `${role}@mock.invalid`,
       password: MOCK_STAFF_PASSWORD,

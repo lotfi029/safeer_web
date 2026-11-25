@@ -1,6 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { StaffSessionStore } from '../../../core/auth/staff-session.store';
-import type { StaffArea } from '../../../core/auth/role-matrix';
+import type { PermissionKey } from '../../../core/auth/permissions';
 import { LocaleService } from '../../../core/i18n/locale.service';
 import type { IconName } from '../../../shared/ui/icon/icon-names';
 import { AdminBadges } from './admin-badges';
@@ -11,8 +11,8 @@ export interface AdminNavItem {
   /** Key under `admin.shell.items`. */
   label: string;
   icon: IconName;
-  /** Role-matrix area; no area = any staff member. */
-  area?: StaffArea;
+  /** The `<module>.view` permission the screen needs; none = any staff member. */
+  permission?: PermissionKey;
   badge?: 'unreadMessages';
   exact?: boolean;
 }
@@ -23,7 +23,7 @@ export interface AdminNavGroup {
   items: AdminNavItem[];
 }
 
-/** Sidebar groups (prototype `ANAV`), filtered by `GET /admin/roles`: never by hard-coded roles. */
+/** Sidebar groups (prototype `ANAV`), filtered by `GET /admin/me` → `permissions`: never by role names. */
 export const ADMIN_NAV: readonly AdminNavGroup[] = [
   {
     label: 'main',
@@ -33,37 +33,58 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
         path: 'messages',
         label: 'messages',
         icon: 'mail',
-        area: 'inbox',
+        permission: 'messages.view',
         badge: 'unreadMessages',
       },
-      { path: 'newsletter', label: 'newsletter', icon: 'mail-check', area: 'inbox' },
+      {
+        path: 'newsletter',
+        label: 'newsletter',
+        icon: 'mail-check',
+        permission: 'newsletter.view',
+      },
     ],
   },
   {
     label: 'content',
     items: [
-      { path: 'pages', label: 'pages', icon: 'panels-top-left', area: 'content' },
-      { path: 'news', label: 'news', icon: 'newspaper', area: 'content' },
-      { path: 'work-areas', label: 'workAreas', icon: 'target', area: 'content' },
-      { path: 'board', label: 'board', icon: 'users', area: 'content' },
-      { path: 'org-chart', label: 'orgChart', icon: 'building-2', area: 'content' },
-      { path: 'testimonials', label: 'testimonials', icon: 'quote', area: 'inbox' },
-      { path: 'partners', label: 'partners', icon: 'handshake', area: 'content' },
-      { path: 'documents', label: 'documents', icon: 'folder', area: 'content' },
-      { path: 'licences', label: 'licences', icon: 'badge-check', area: 'content' },
-      { path: 'stats', label: 'stats', icon: 'chart-column', area: 'content' },
-      { path: 'about-items', label: 'aboutItems', icon: 'list-checks', area: 'content' },
-      { path: 'media', label: 'media', icon: 'image', area: 'content' },
-      { path: 'redirects', label: 'redirects', icon: 'corner-up-right', area: 'content' },
+      { path: 'pages', label: 'pages', icon: 'panels-top-left', permission: 'pages.view' },
+      { path: 'news', label: 'news', icon: 'newspaper', permission: 'news.view' },
+      { path: 'work-areas', label: 'workAreas', icon: 'target', permission: 'workAreas.view' },
+      { path: 'board', label: 'board', icon: 'users', permission: 'board.view' },
+      { path: 'org-chart', label: 'orgChart', icon: 'building-2', permission: 'orgChart.view' },
+      {
+        path: 'testimonials',
+        label: 'testimonials',
+        icon: 'quote',
+        permission: 'testimonials.view',
+      },
+      { path: 'partners', label: 'partners', icon: 'handshake', permission: 'partners.view' },
+      { path: 'documents', label: 'documents', icon: 'folder', permission: 'documents.view' },
+      { path: 'licences', label: 'licences', icon: 'badge-check', permission: 'licences.view' },
+      { path: 'stats', label: 'stats', icon: 'chart-column', permission: 'stats.view' },
+      {
+        path: 'about-items',
+        label: 'aboutItems',
+        icon: 'list-checks',
+        permission: 'aboutItems.view',
+      },
+      { path: 'media', label: 'media', icon: 'image', permission: 'media.view' },
+      {
+        path: 'redirects',
+        label: 'redirects',
+        icon: 'corner-up-right',
+        permission: 'redirects.view',
+      },
     ],
   },
   {
     label: 'system',
     items: [
-      { path: 'system/users', label: 'users', icon: 'user-cog', area: 'users' },
-      { path: 'system/settings', label: 'settings', icon: 'settings', area: 'settings' },
-      { path: 'system/mail', label: 'mail', icon: 'mail', area: 'settings' },
-      { path: 'system/audit', label: 'audit', icon: 'history', area: 'audit' },
+      { path: 'system/users', label: 'users', icon: 'user-cog', permission: 'users.view' },
+      { path: 'system/roles', label: 'roles', icon: 'shield-check', permission: 'roles.view' },
+      { path: 'system/settings', label: 'settings', icon: 'settings', permission: 'settings.view' },
+      { path: 'system/mail', label: 'mail', icon: 'mail', permission: 'mail.view' },
+      { path: 'system/audit', label: 'audit', icon: 'history', permission: 'audit.view' },
     ],
   },
 ];
@@ -80,14 +101,13 @@ export class AdminNav {
   private readonly badges = inject(AdminBadges);
 
   readonly groups = computed(() => {
-    // Read the signals the filter depends on so the menu follows role and matrix changes.
-    this.store.role();
-    this.store.matrix();
+    // Read the signal the filter depends on so the menu follows a permission change.
+    this.store.permissions();
     const counts = this.badges.counts();
     return ADMIN_NAV.map((group) => ({
       label: group.label,
       items: group.items
-        .filter((item) => !item.area || this.store.can(item.area))
+        .filter((item) => !item.permission || this.store.can(item.permission))
         .map<ResolvedNavItem>((item) => ({
           ...item,
           link: this.locale.link(`/admin${item.path ? `/${item.path}` : ''}`),
