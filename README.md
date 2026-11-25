@@ -6,7 +6,7 @@ There are three parts:
 - **Student portal** and **admin dashboard**: client-rendered, `no-store`, `noindex`.
 
 Arabic RTL is the default; English is LTR. The backend is [`safeer_api`](https://github.com/lotfi029/safeer_api), and
-this frontend targets `v1.0.0-rc1` (contract snapshot in [`docs/api/`](docs/api/)).
+this frontend targets `v1.1.0` (custom roles and permissions; contract snapshot in [`docs/api/`](docs/api/)).
 
 | Doc | What |
 |---|---|
@@ -69,7 +69,7 @@ See [`docs/frontend/deployment.md`](docs/frontend/deployment.md) §3 for the val
 | Job | What |
 |---|---|
 | **build-test** | lint → unit (app + server) → build + budgets → e2e against the mock API |
-| **e2e-real** | The same e2e suite against the real `safeer_api` at the `SAFEER_API_REF` repository variable (default `v1.0.0-rc1`), on MySQL 8 with the API's dev seed. `e2e/support/real-db.ts` seeds per-role staff and auth tokens |
+| **e2e-real** | The same e2e suite against the real `safeer_api` at the `SAFEER_API_REF` repository variable (default `v1.1.0`; keep it on a tag or SHA, never `main`), on MySQL 8.4 with the API's dev seed. `e2e/support/real-db.ts` seeds staff per role, custom roles (`e2e-…` keys) and auth tokens |
 | **lighthouse** | `npm run lighthouse`, median of 7 runs. Performance ≥ 90; Accessibility, Best practices and SEO ≥ 95 |
 
 The full matrix (6 viewports × 2 locales × light/dark) runs on both backends nightly, and on PRs labelled
@@ -81,10 +81,10 @@ reason. List them with `npx playwright test --list --grep @mock-only`.
 ### Run e2e against the real API locally
 
 You need Docker and a built `safeer_api` checkout at the pinned ref next to this repo
-(`git checkout v1.0.0-rc1 && npm ci && npm run build` there):
+(`git checkout v1.1.0 && npm ci && npm run build` there):
 
 ```bash
-docker run -d --name safeer-e2e-db -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=safeer -p 3307:3306 mysql:8.0
+docker run -d --name safeer-e2e-db -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=safeer -p 3307:3306 mysql:8.4
 ```
 
 ```bash
