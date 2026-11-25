@@ -1,8 +1,10 @@
-# safeer_api contract notes (`v1.0.0-rc1`, `e86b3b5`)
+# safeer_api contract notes (`v1.1.0`, `40e52a1`)
 
-These notes describe the **live** API at `lotfi029/safeer_api@v1.0.0-rc1`, read from its source (the snapshot in `src/` next to this file). What changed and why is in `API-CHANGES.md`, a copy of the backend's own file. The role matrix and the rest of the backend architecture are in `ARCHITECTURE.md`. `openapi.json` types requests only; response shapes come from `src/**/public-*.ts`, the controllers and the listed services. Re-snapshot with `node scripts/snapshot-api.mjs <path-to-safeer_api> <ref>` (see `README.md`).
+These notes describe the **live** API at `lotfi029/safeer_api@v1.1.0`, read from its source (the snapshot in `src/` next to this file). What changed and why is in `API-CHANGES.md`, a copy of the backend's own file. The permission model and the rest of the backend architecture are in `ARCHITECTURE.md`. `openapi.json` types requests only; response shapes come from `src/**/public-*.ts`, the controllers and the listed services. Re-snapshot with `node scripts/snapshot-api.mjs <path-to-safeer_api> <ref>` (see `README.md`).
 
 Nothing below is mocked or planned: every B-item (B1–B19), C-item (C1–C47) and A-item (A1–A12) is in this release.
+
+> **Removed since rc1** (migration 021, `API-CHANGES.md` "Governance and contact"): the apply flow, the applicant portal and OTP, applications and interview slots, SMS and the `reviewer` role. The "Apply + portal" section and the application parts of "Staff" below are kept for history only; those routes no longer exist. Governance sections, licences (022) and the org chart (023) are in `API-CHANGES.md`.
 
 ## Transport
 - Base: `/api/v1`. Files: `/files/:publicId` (original) and `/files/:publicId/:variant`, both **outside** `/api/v1`.
@@ -29,7 +31,7 @@ Nothing below is mocked or planned: every B-item (B1–B19), C-item (C1–C47) a
 ```
 - Validation: `code: "VALIDATION_FAILED"`, `extra.issues` = zod v4 issues `[{ path: (string|number)[], message, code }]`. Map `path[0]` to the form field.
 - `DOCUMENTS_INCOMPLETE` → `extra.missing: DocType[]`. `INVALID_STATUS_TRANSITION` → `extra.{from,to}`.
-- Codes (`src/common/problem-details/error-codes.ts`): `VALIDATION_FAILED UNAUTHENTICATED FORBIDDEN NOT_FOUND ASSET_IN_USE RESOURCE_IN_USE ALT_TEXT_REQUIRED LAST_ADMIN SLUG_TAKEN PUBLISH_BLOCKED RATE_LIMITED UNSUPPORTED_PROVIDER SOURCE_TYPE_MISMATCH UNKNOWN_VARIABLE FEATURE_DISABLED NOT_IMPLEMENTED APPLICATION_LOCKED OTP_INVALID DOCUMENTS_INCOMPLETE SLOT_ALREADY_BOOKED INTERVIEW_NOT_AVAILABLE INVALID_STATUS_TRANSITION APPLICATION_EXISTS INVALID_ASSIGNEE QUOTA_EXCEEDED DOCUMENT_NOT_REVIEWABLE DOCUMENT_SUPERSEDED REDIRECT_CHAIN`, plus the fallbacks `CONFLICT INTERNAL_ERROR`.
+- Codes (`src/common/problem-details/error-codes.ts`): `VALIDATION_FAILED UNAUTHENTICATED FORBIDDEN NOT_FOUND ASSET_IN_USE RESOURCE_IN_USE ALT_TEXT_REQUIRED LAST_ADMIN SLUG_TAKEN PUBLISH_BLOCKED RATE_LIMITED UNSUPPORTED_PROVIDER SOURCE_TYPE_MISMATCH UNKNOWN_VARIABLE FEATURE_DISABLED NOT_IMPLEMENTED REDIRECT_CHAIN ROLE_IN_USE ROLE_IMMUTABLE ROLE_KEY_TAKEN`, plus the fallbacks `CONFLICT INTERNAL_ERROR`. (The application, OTP and document codes went with 021.)
 - **Rate limits** (429 `RATE_LIMITED`, per IP unless noted):
   - `POST /contact`: 3/h
   - `POST /newsletter`: 5/h; `newsletter/confirm` and `newsletter/unsubscribe`: 10/h each
@@ -109,22 +111,44 @@ Nothing below is mocked or planned: every B-item (B1–B19), C-item (C1–C47) a
 - **Login (A2, A3, C3, C12):** a disabled account can't log in, reset or accept an invite. Every refused login takes the same time, whether or not the email exists. Ten failed logins lock the account for 15, then 30, then 60 min, **never longer than 1 h**. The backoff resets 24 h after the last lock, and the failure count 24 h after the last wrong password.
 - `PublicUser` → `{ id, name, email, role, status: active|disabled|invited, isLocked, lockedUntil, failedLogins, lastLoginAt, createdAt, updatedAt }`. `PATCH /admin/users/:id` takes `{ status }` and `{ unlock: true }`.
 - `POST /admin/auth/forgot` answers without waiting for the mail (C33).
-- **Roles (B17):** `GET /admin/roles` (any staff) → `{ roles, matrix }`, where `matrix` maps an **area** to its roles (`src/auth/role-matrix.ts`). The frontend's `core/auth/role-matrix.ts` is a typed copy used only if the call fails.
+- **Roles and permissions (v1.1.0, migration 024):** a user has one role; a role is a set of
+  `<module>.<action>` keys (`view` list/read, `manage` create/edit/publish/reorder/upload, `delete`).
+  `delete` implies `manage` implies `view`, where the module has them. The catalog is
+  `GET /admin/permissions` (any staff; `src/auth/permissions.ts`):
 
-  | Area | Roles | Covers |
-  |---|---|---|
-  | `applications` | admin, reviewer | applications, documents, notes, interview slots, CSV export |
-  | `applications.delete` | admin | anonymise an application |
-  | `content` | admin, editor | pages/sections, news + categories, work areas, board, stats, about items, partners, documents, media, redirects |
-  | `redirects.delete` | admin | delete a redirect |
-  | `inbox` | admin, support | contact messages, testimonials + themes, newsletter subscribers |
-  | `inbox.delete` | admin | delete a contact message |
-  | `users` | admin | staff accounts, invitations |
-  | `settings` | admin | site settings, mail/SMS settings, templates and logs, cache |
-  | `audit` | admin | audit log |
+  | Group | Modules (actions: view, manage, delete unless noted) |
+  |---|---|
+  | content | `pages` (pages + sections), `news` (posts, categories, preview tokens), `workAreas` (+ items), `board`, `orgChart`, `partners`, `documents` (+ categories), `licences`, `stats`, `aboutItems`, `media`, `redirects` |
+  | inbox | `messages`, `testimonials` (+ themes), `newsletter` (view, delete) |
+  | system | `users` (+ invitations, other users' sessions), `roles`, `settings` (site settings, cache), `mail` (view, manage), `audit` (view) |
 
-  `admin/me`, `admin/auth/*`, `admin/overview`, `admin/preview-token` and `admin/roles` are open to any signed-in staff member.
-- **Overview (C20, A5):** `GET /admin/overview` → `{ statCards, series?, latestApplications?, contentAlerts, badges, recentAuditLog }`. Application figures (`statCards.newApplications|underReview|acceptedThisMonth`, `badges.newApplications`, `series`, `latestApplications`) are **admin + reviewer only**. `statCards.unreadMessages` and `badges.unreadMessages` are **admin + support only**: editors get no message counts at all. `recentAuditLog` is admin-only (an empty array otherwise), each entry `{ id, action, entityType, entityId, entityLabel, actorId, actorName, createdAt }` with no diff and no IP hash.
+  - `GET /admin/me` adds `role: {id, key, nameAr, nameEn}` and **`permissions: string[]`** (`["*"]`
+    for admin). This is the only source the dashboard reads; there is no fallback matrix.
+  - Seeded system roles: `admin` (`*`, read-only), `editor` (every content module, all three actions,
+    except `redirects.delete`), `support` (`messages` view/manage, `testimonials` all three,
+    `newsletter` view/delete). `editor`/`support` are editable but never deletable.
+  - `GET /admin/roles` (`roles.view`) → `[{id, key, nameAr, nameEn, descriptionAr, descriptionEn,
+    isSystem, permissions, userCount, createdAt, updatedAt}]`; `GET /admin/roles/:id`;
+    `POST` (`roles.manage`) `{key?, nameAr, nameEn?, descriptionAr?, descriptionEn?, permissions}`;
+    `PATCH /:id` (`roles.manage`, no `key`); `DELETE /:id` (`roles.delete`) → `{deleted: true}`.
+    Keys match `^[a-z][a-z0-9-]{2,63}$` (missing → `custom-xxxxxx`); `admin editor support owner
+    root system` are reserved. Saved permissions come back closed and in catalog order.
+  - `GET /admin/users/assignable-roles` (`users.view`) → `[{id, key, nameAr, nameEn}]`: the roles the
+    caller may assign. The invite and user-edit pickers use it, so they don't need `roles.view`.
+  - `POST /admin/auth/invite` (`users.manage`) and `PATCH /admin/users/:id` take **`roleId`** (numeric
+    string), not `role`. `PublicUser.role` is `{id, key, nameAr, nameEn}`.
+  - **Rules** (403 `FORBIDDEN` unless noted): you grant only permissions you hold; you can't edit or
+    delete a role holding more than you, nor your own role, nor change your own role; you assign only
+    roles you cover and manage (or end the session of) only users whose role you cover. Editing or
+    deleting `admin`, or deleting a system role: 409 `ROLE_IMMUTABLE`. Deleting a role still assigned:
+    409 `ROLE_IN_USE` with `userCount`. Duplicate key: 409 `ROLE_KEY_TAKEN`. Last usable admin:
+    409 `LAST_ADMIN`.
+  - A role edit applies on its users' next request.
+  - Each admin route needs one permission (GET → `.view`, POST/PATCH/PUT → `.manage`, DELETE →
+    `.delete`). Open to any signed-in staff member: `admin/me`, `admin/auth/*` (invite needs
+    `users.manage`), `admin/overview`, `admin/permissions`. `GET admin/preview-token` needs
+    `news.view`.
+- **Overview (C20, A5):** `GET /admin/overview` → `{ statCards, series?, latestApplications?, contentAlerts, badges, recentAuditLog }`. Application figures (`statCards.newApplications|underReview|acceptedThisMonth`, `badges.newApplications`, `series`, `latestApplications`) are **admin + reviewer only**. `statCards.unreadMessages` and `badges.unreadMessages` need **`messages.view`**: without it there are no message counts at all. `recentAuditLog` needs **`audit.view`** (an empty array otherwise), each entry `{ id, action, entityType, entityId, entityLabel, actorId, actorName, createdAt }` with no diff and no IP hash.
 - **Applications:**
   - Status changes are transactional: of two conflicting changes, exactly one succeeds and the other is 409 (C6).
   - Reviewing a superseded document, or one on a draft/accepted/rejected application, is 409 `DOCUMENT_NOT_REVIEWABLE` (C34).

@@ -1,4 +1,4 @@
-Snapshot of the `safeer_api` contract at **`v1.0.0-rc1`** (`e86b3b5`, 2026-09-27): the same ref as the `SAFEER_API_REF` repo variable. `SNAPSHOT.json` records the exact ref.
+Snapshot of the `safeer_api` contract at **`v1.1.0`** (`40e52a1`, 2026-11-25): the ref CI's `e2e-real` job should run (`SAFEER_API_REF`). `SNAPSHOT.json` records the exact ref.
 
 - `CONTRACT-NOTES.md`: the contract as the frontend uses it. Start here.
 - `API-CHANGES.md`, `ARCHITECTURE.md`: copies of the backend's `docs/backend/` files.
@@ -7,7 +7,7 @@ Snapshot of the `safeer_api` contract at **`v1.0.0-rc1`** (`e86b3b5`, 2026-09-27
 Refresh this folder whenever the backend contract changes, from a pinned tag or SHA (never a moving branch):
 
 ```bash
-node scripts/snapshot-api.mjs ../safeer_api v1.0.0-rc1
+node scripts/snapshot-api.mjs ../safeer_api v1.1.0
 ```
 
 Then update `SAFEER_API_REF` (`gh variable set SAFEER_API_REF --body <ref>`) and `CONTRACT-NOTES.md` together.
