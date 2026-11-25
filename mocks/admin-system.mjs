@@ -151,6 +151,48 @@ export function systemRoutes(ctx) {
         return json(201, pub(user));
       },
     ],
+    // v1.2.0: an active account with an admin-set password; no mail, no token (users.manage).
+    [
+      'POST',
+      /^\/api\/v1\/admin\/users$/,
+      ({ req, body }) => {
+        const g = guard(req, 'users', { write: true });
+        if (g.error) return g.error;
+        const extra = Object.keys(body ?? {}).find(
+          (k) => !['email', 'name', 'roleId', 'password'].includes(k),
+        );
+        if (extra) return invalid(extra, 'Unrecognized key');
+        if (!body?.email || !EMAIL_RE.test(body.email)) return invalid('email', 'Invalid email');
+        if (!body?.name || String(body.name).length > 120) return invalid('name', 'Required');
+        if (!/^\d+$/.test(String(body?.roleId ?? ''))) return invalid('roleId', 'A role id');
+        const pw = String(body?.password ?? '');
+        if (pw.length < 8 || pw.length > 200) {
+          return invalid('password', 'String must contain at least 8 character(s)');
+        }
+        const a = assignable(g.staff, body.roleId);
+        if (a.error) return a.error;
+        if (staff().some((u) => u.email.toLowerCase() === String(body.email).toLowerCase())) {
+          return problem(409, 'VALIDATION_FAILED', {
+            title: 'A user with that email already exists',
+          });
+        }
+        const user = {
+          id: String(++db.seq),
+          name: body.name,
+          email: body.email,
+          role: a.role.key,
+          status: 'active',
+          lockedUntil: null,
+          lastLoginAt: null,
+          password: pw,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        };
+        staff().push(user);
+        audit(g.staff, 'create', 'users', user.id, user.email, { before: null, after: snap(user) });
+        return json(201, pub(user));
+      },
+    ],
     [
       'GET',
       /^\/api\/v1\/admin\/users\/([^/]+)$/,
